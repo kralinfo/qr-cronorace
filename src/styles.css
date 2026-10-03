@@ -1,0 +1,10 @@
+body { font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial; margin:0; padding:0; }
+.app header { display:flex; align-items:center; justify-content:space-between; padding:12px; background:#1e88e5; color:white;}
+.app header nav button { margin-left:8px; }
+main { padding:16px; }
+.video-wrap { position:relative; width:100%; max-width:600px; height:360px; background:#000; margin-bottom:8px; }
+.reticle { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:rgba(255,255,255,0.7); font-size:30px;}
+.controls { margin-top:8px; }
+.admin .form input { display:block; margin:6px 0; padding:8px; width:280px; }
+.file-label input { display:block; margin-top:6px; }
+footer { padding:8px; font-size:12px; text-align:center; color:#666; }
