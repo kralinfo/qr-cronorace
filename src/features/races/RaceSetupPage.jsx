@@ -6,14 +6,19 @@ import { buildRegistrationLink } from './share-link.service.js'
 import { formatDateOnlyBR } from './date-only.formatter.js'
 import CopyableField from './CopyableField.jsx'
 import StartTimeField from './StartTimeField.jsx'
+import EditRaceForm from './EditRaceForm.jsx'
+import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
+import ActionsMenu from '../../shared/ActionsMenu.jsx'
 
 export default function RaceSetupPage() {
-  const { races, loading, error, createRace, setStartTime } = useRaces()
+  const { races, loading, error, createRace, setStartTime, editRace, removeRace } = useRaces()
   const { selectRace } = useActiveRace()
   const [name, setName] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [sharingRaceId, setSharingRaceId] = useState(null)
   const [editingStartTimeId, setEditingStartTimeId] = useState(null)
+  const [editingRaceId, setEditingRaceId] = useState(null)
+  const [deletingRace, setDeletingRace] = useState(null)
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -31,6 +36,17 @@ export default function RaceSetupPage() {
 
   const toggleStartTime = (raceId) => {
     setEditingStartTimeId(prev => prev === raceId ? null : raceId)
+  }
+
+  const toggleEdit = (raceId) => {
+    setEditingRaceId(prev => prev === raceId ? null : raceId)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (deletingRace) {
+      await removeRace(deletingRace.id)
+      setDeletingRace(null)
+    }
   }
 
   return (
@@ -71,21 +87,28 @@ export default function RaceSetupPage() {
                   </span>
                   <div className="race-row-actions">
                     <button onClick={() => selectRace(race)}>Entrar</button>
-                    <button className="secondary-btn" onClick={() => toggleStartTime(race.id)}>
-                      {editingStartTimeId === race.id ? 'Fechar' : 'Largada'}
-                    </button>
-                    <button className="secondary-btn" onClick={() => toggleShare(race.id)}>
-                      {sharingRaceId === race.id ? 'Fechar' : 'Link de cadastro'}
-                    </button>
+                    <ActionsMenu items={[
+                      { label: 'Largada', onClick: () => toggleStartTime(race.id) },
+                      { label: 'Link de cadastro', onClick: () => toggleShare(race.id) },
+                      { label: 'Editar', onClick: () => toggleEdit(race.id) },
+                      { label: 'Excluir', onClick: () => setDeletingRace(race), danger: true }
+                    ]} />
                   </div>
                 </div>
+                {editingRaceId === race.id && (
+                  <div className="share-panel">
+                    <EditRaceForm race={race} onSave={editRace} onCancel={() => setEditingRaceId(null)} />
+                  </div>
+                )}
                 {editingStartTimeId === race.id && (
                   <div className="share-panel">
+                    <button className="close-panel-btn" onClick={() => toggleStartTime(race.id)}>Fechar ✕</button>
                     <StartTimeField race={race} onSave={setStartTime} />
                   </div>
                 )}
                 {sharingRaceId === race.id && (
                   <div className="share-panel">
+                    <button className="close-panel-btn" onClick={() => toggleShare(race.id)}>Fechar ✕</button>
                     <p>Envie o link e o código abaixo para a pessoa que vai ajudar a cadastrar corredores:</p>
                     <CopyableField label="Link" value={buildRegistrationLink()} />
                     <CopyableField label="Código da corrida" value={race.id} />
@@ -96,6 +119,15 @@ export default function RaceSetupPage() {
           </ul>
         )}
       </section>
+
+      {deletingRace && (
+        <ConfirmDialog
+          message={`Tem certeza que deseja excluir a corrida "${deletingRace.name}"? Essa ação não pode ser desfeita.`}
+          confirmLabel="Excluir corrida"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeletingRace(null)}
+        />
+      )}
     </div>
   )
 }

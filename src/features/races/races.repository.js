@@ -1,5 +1,5 @@
 // Responsabilidade única: persistência das corridas cadastradas (Cloud Firestore).
-import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
 
 /** @param {import('./races.types.js').Race} race */
@@ -15,6 +15,20 @@ export async function addRace(race) {
 export async function updateRaceStartTime(raceId, startTime) {
   await updateDoc(doc(db, COLLECTIONS.races, raceId), { startTime })
 }
+
+/**
+ * @param {string} raceId
+ * @param {{ name: string, eventDate: string }} details
+ */
+export async function updateRaceDetails(raceId, details) {
+  await updateDoc(doc(db, COLLECTIONS.races, raceId), details)
+}
+
+/** @param {string} raceId */
+export async function deleteRace(raceId) {
+  await deleteDoc(doc(db, COLLECTIONS.races, raceId))
+}
+
 
 /** @returns {Promise<Array<import('./races.types.js').Race>>} */
 export async function getAllRaces() {

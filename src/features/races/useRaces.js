@@ -1,6 +1,6 @@
-// Responsabilidade única: orquestrar criação/listagem de corridas.
+// Responsabilidade única: orquestrar criação/listagem/edição/exclusão de corridas.
 import { useCallback, useEffect, useState } from 'react'
-import { addRace, getAllRaces, updateRaceStartTime } from './races.repository.js'
+import { addRace, deleteRace, getAllRaces, updateRaceDetails, updateRaceStartTime } from './races.repository.js'
 import { generateRaceId } from './race-id.service.js'
 
 export function useRaces() {
@@ -53,5 +53,37 @@ export function useRaces() {
     }
   }, [loadRaces])
 
-  return { races, loading, error, createRace, setStartTime }
+  const editRace = useCallback(async (raceId, { name, eventDate }) => {
+    setError(null)
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      setError('Informe o nome da corrida.')
+      return false
+    }
+    if (!eventDate) {
+      setError('Informe a data da corrida.')
+      return false
+    }
+    try {
+      await updateRaceDetails(raceId, { name: trimmedName, eventDate })
+      await loadRaces()
+      return true
+    } catch (e) {
+      setError('Falha ao editar corrida.')
+      return false
+    }
+  }, [loadRaces])
+
+  const removeRace = useCallback(async (raceId) => {
+    setError(null)
+    try {
+      await deleteRace(raceId)
+      await loadRaces()
+    } catch (e) {
+      setError('Falha ao excluir corrida.')
+    }
+  }, [loadRaces])
+
+  return { races, loading, error, createRace, setStartTime, editRace, removeRace }
 }
+
