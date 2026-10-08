@@ -6,25 +6,16 @@ import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 
 export default function ScannerPage() {
   const { activeRace } = useActiveRace()
-  const { videoRef, status, message, lastArrival, startScanning, stopScanning, reset } = useScanner(activeRace?.id)
-  const isScanning = status === 'scanning'
+  const { videoRef, status, message, lastArrival } = useScanner(activeRace?.id)
 
   return (
     <div className="scanner-page">
       <div className="video-wrap">
         <video ref={videoRef} muted playsInline autoPlay style={{ width: '100%', height: '100%' }} />
-        <div className="reticle">⊞</div>
+        <div className="reticle" />
       </div>
 
       <div className="controls">
-        {!isScanning ? (
-          <button onClick={startScanning}>Iniciar Câmera</button>
-        ) : (
-          <button onClick={stopScanning}>Parar</button>
-        )}
-        {status !== 'idle' && status !== 'scanning' && (
-          <button onClick={reset}>Nova leitura</button>
-        )}
         <p>{message}</p>
       </div>
 
@@ -52,4 +43,5 @@ export default function ScannerPage() {
     </div>
   )
 }
+
 
