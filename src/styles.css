@@ -175,6 +175,19 @@ form button[type="submit"] {
   margin-top: 4px;
 }
 
+form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.race-event-date {
+  font-size: 0.85rem;
+  color: #607d8b;
+  font-weight: 400;
+}
+
 /* Sections */
 section { margin-bottom: 24px; }
 section h2 { font-size: 1.1rem; margin-bottom: 8px; }
@@ -225,6 +238,40 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   margin: 8px 0 0;
   font-size: 0.9rem;
   color: #455a64;
+}
+
+.start-now-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  background: #2e7d32;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.start-now-btn:active { background: #1b5e20; }
+
+/* Cronômetro ao vivo */
+.race-chronometer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.app-header-chronometer {
+  margin-left: auto;
+  font-size: 1.1rem;
+}
+
+.start-time-chronometer {
+  font-size: 1.8rem;
+  text-align: center;
+  margin-bottom: 12px;
+  color: #2e7d32;
+}
+
+.public-ranking-chronometer {
+  font-size: 1.6rem;
+  color: #ffd54f;
 }
 
 /* Compartilhar ranking por WhatsApp/E-mail */

@@ -6,6 +6,7 @@ import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
 import { formatDateTimeBR } from './date.formatter.js'
 import { formatDuration } from './duration.formatter.js'
+import RaceChronometer from '../races/RaceChronometer.jsx'
 
 /** @returns {string|null} id da corrida informado na URL (?corrida=...) */
 function getRaceIdFromUrl() {
@@ -46,6 +47,7 @@ export default function PublicRankingPage() {
     <div className="public-ranking-page">
       <header className="public-ranking-header">
         <h1>{race?.name ?? 'Carregando...'}</h1>
+        <RaceChronometer startTime={race?.startTime} className="public-ranking-chronometer" />
         <span className="live-badge">● Ao vivo</span>
       </header>
 

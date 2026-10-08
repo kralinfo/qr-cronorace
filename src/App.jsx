@@ -7,6 +7,7 @@ import PublicRankingPage from './features/results/PublicRankingPage.jsx'
 import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import AppMenu from './shared/AppMenu.jsx'
+import RaceChronometer from './features/races/RaceChronometer.jsx'
 
 /** @returns {boolean} true quando a URL atual pede a tela pública de cadastro (link compartilhado) */
 function isPublicRegisterRequest() {
@@ -47,6 +48,7 @@ function AppContent() {
       <header className="app-header">
         <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
         <h1>{TAB_TITLES[tab]}</h1>
+        <RaceChronometer startTime={activeRace.startTime} className="app-header-chronometer" />
       </header>
 
       <AppMenu

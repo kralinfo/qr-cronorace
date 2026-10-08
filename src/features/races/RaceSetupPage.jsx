@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useRaces } from './useRaces.js'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { buildRegistrationLink } from './share-link.service.js'
+import { formatDateOnlyBR } from './date-only.formatter.js'
 import CopyableField from './CopyableField.jsx'
 import StartTimeField from './StartTimeField.jsx'
 
@@ -10,14 +11,16 @@ export default function RaceSetupPage() {
   const { races, loading, error, createRace, setStartTime } = useRaces()
   const { selectRace } = useActiveRace()
   const [name, setName] = useState('')
+  const [eventDate, setEventDate] = useState('')
   const [sharingRaceId, setSharingRaceId] = useState(null)
   const [editingStartTimeId, setEditingStartTimeId] = useState(null)
 
   const handleCreate = async (e) => {
     e.preventDefault()
-    const race = await createRace(name)
+    const race = await createRace(name, eventDate)
     if (race) {
       setName('')
+      setEventDate('')
       selectRace(race)
     }
   }
@@ -41,6 +44,13 @@ export default function RaceSetupPage() {
             onChange={e => setName(e.target.value)}
             required
           />
+          <label>Data da corrida</label>
+          <input
+            type="date"
+            value={eventDate}
+            onChange={e => setEventDate(e.target.value)}
+            required
+          />
           <button type="submit">Criar e entrar na corrida</button>
         </form>
         {error && <p className="error">{error}</p>}
@@ -55,7 +65,10 @@ export default function RaceSetupPage() {
             {races.map(race => (
               <li key={race.id}>
                 <div className="race-row">
-                  <span>{race.name}</span>
+                  <span>
+                    {race.name}
+                    {race.eventDate && <span className="race-event-date"> — {formatDateOnlyBR(race.eventDate)}</span>}
+                  </span>
                   <div className="race-row-actions">
                     <button onClick={() => selectRace(race)}>Entrar</button>
                     <button className="secondary-btn" onClick={() => toggleStartTime(race.id)}>

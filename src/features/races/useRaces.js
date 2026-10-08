@@ -21,15 +21,19 @@ export function useRaces() {
 
   useEffect(() => { loadRaces() }, [loadRaces])
 
-  const createRace = useCallback(async (name) => {
+  const createRace = useCallback(async (name, eventDate) => {
     setError(null)
     const trimmedName = name.trim()
     if (!trimmedName) {
       setError('Informe o nome da corrida.')
       return null
     }
+    if (!eventDate) {
+      setError('Informe a data da corrida.')
+      return null
+    }
     try {
-      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString(), startTime: null }
+      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString(), eventDate, startTime: null }
       await addRace(race)
       await loadRaces()
       return race
