@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { useRaces } from './useRaces.js'
 import { useRunners } from '../runners/useRunners.js'
+import { useResults } from '../results/useResults.js'
 import { formatDateOnlyBR } from './date-only.formatter.js'
 import { buildRegistrationLink, buildRankingLink } from './share-link.service.js'
 import RaceChronometer from './RaceChronometer.jsx'
@@ -13,10 +14,12 @@ import CopyableField from './CopyableField.jsx'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 
-export default function RaceHomePage() {
+/** @param {{ onOpenScanner?: () => void }} props */
+export default function RaceHomePage({ onOpenScanner }) {
   const { activeRace, clearActiveRace } = useActiveRace()
   const { setStartTime, finishRace, editRace, removeRace } = useRaces()
   const { runners } = useRunners(activeRace?.id)
+  const { placements } = useResults(activeRace?.id)
   const [panel, setPanel] = useState(/** @type {'start'|'edit'|'register-link'|'ranking-link'|null} */(null))
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [confirmingFinish, setConfirmingFinish] = useState(false)
@@ -39,6 +42,8 @@ export default function RaceHomePage() {
   const handleStartNow = async () => {
     await setStartTime(activeRace.id, new Date().toISOString())
   }
+
+  const arrivedCount = new Set(placements.map(p => p.barcode).filter(Boolean)).size
 
   return (
     <div className="race-home-page">
@@ -74,17 +79,24 @@ export default function RaceHomePage() {
             </p>
           </div>
         ) : activeRace.startTime ? (
-          <div className="race-home-status running">
-            <span className="race-home-label">Largada às {new Date(activeRace.startTime).toLocaleString('pt-BR')}</span>
-            <RaceChronometer startTime={activeRace.startTime} className="race-home-chronometer" />
-            <p className="race-home-meta">
-              {runners.length} corredor{runners.length === 1 ? '' : 'es'}
-              {activeRace.distanceKm ? ` · ${activeRace.distanceKm} km` : ''}
-            </p>
-            <button type="button" className="danger-btn end-race-btn" onClick={() => setConfirmingFinish(true)}>
-              Encerrar corrida
+          <>
+            <div className="race-home-status running">
+              <span className="race-home-label">Largada às {new Date(activeRace.startTime).toLocaleString('pt-BR')}</span>
+              <RaceChronometer startTime={activeRace.startTime} className="race-home-chronometer" />
+              <p className="race-home-meta">
+                {arrivedCount} de {runners.length} chegaram
+                {' · '}
+                {runners.length} corredor{runners.length === 1 ? '' : 'es'}
+                {activeRace.distanceKm ? ` · ${activeRace.distanceKm} km` : ''}
+              </p>
+              <button type="button" className="danger-btn end-race-btn" onClick={() => setConfirmingFinish(true)}>
+                Encerrar corrida
+              </button>
+            </div>
+            <button type="button" className="secondary-btn race-home-scanner-shortcut" onClick={() => onOpenScanner?.()}>
+              📷 Marcar chegada (Scanner)
             </button>
-          </div>
+          </>
         ) : (
           <div className="race-home-status pending">
             <span className="race-home-label">Corrida ainda não iniciada</span>

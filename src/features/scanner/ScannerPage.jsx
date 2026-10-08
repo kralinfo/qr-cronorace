@@ -7,7 +7,8 @@ import { useRunners } from '../runners/useRunners.js'
 import { addResult } from '../results/results.repository.js'
 import ManualArrivalForm from './ManualArrivalForm.jsx'
 
-export default function ScannerPage() {
+/** @param {{ onBack?: () => void }} props */
+export default function ScannerPage({ onBack }) {
   const { activeRace } = useActiveRace()
   const { videoRef, status, message, lastArrival } = useScanner(activeRace?.id)
   const { runners } = useRunners(activeRace?.id)
@@ -31,6 +32,10 @@ export default function ScannerPage() {
 
   return (
     <div className="scanner-page">
+      <button type="button" className="secondary-btn scanner-back-btn" onClick={() => onBack?.()}>
+        ← Voltar
+      </button>
+
       <div className="video-wrap">
         <video ref={videoRef} muted playsInline autoPlay style={{ width: '100%', height: '100%' }} />
         <div className="reticle" />
