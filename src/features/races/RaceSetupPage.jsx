@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useRaces } from './useRaces.js'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { buildRegistrationLink } from './share-link.service.js'
+import CopyableField from './CopyableField.jsx'
 
 export default function RaceSetupPage() {
   const { races, loading, error, createRace } = useRaces()
@@ -59,10 +60,8 @@ export default function RaceSetupPage() {
                 {sharingRaceId === race.id && (
                   <div className="share-panel">
                     <p>Envie o link e o código abaixo para a pessoa que vai ajudar a cadastrar corredores:</p>
-                    <label>Link</label>
-                    <input readOnly value={buildRegistrationLink()} onFocus={e => e.target.select()} />
-                    <label>Código da corrida</label>
-                    <input readOnly value={race.id} onFocus={e => e.target.select()} />
+                    <CopyableField label="Link" value={buildRegistrationLink()} />
+                    <CopyableField label="Código da corrida" value={race.id} />
                   </div>
                 )}
               </li>

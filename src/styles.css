@@ -213,6 +213,27 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   margin-top: 8px;
 }
 
+.copyable-field-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.copyable-field-row input {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.copy-btn {
+  flex: 0 0 auto;
+  background: #1e88e5;
+  white-space: nowrap;
+}
+
+.copy-btn:active {
+  background: #1565c0;
+}
+
 /* Scanner */
 .scanner-page {
   display: flex;
