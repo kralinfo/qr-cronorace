@@ -17,3 +17,16 @@ export function buildArrivalResult(runnerData, raceId, readAt = new Date()) {
   }
 }
 
+/**
+ * Verifica se o corredor lido pertence à corrida ativa.
+ * Prioriza o raceId embutido no QR; caso ausente (QRs antigos), usa o raceId do cadastro.
+ * @param {{ raceId: string|null }} runnerData - dados decodificados do QR.
+ * @param {{ raceId: string }|undefined} runnerRecord - corredor encontrado no cadastro (se houver).
+ * @param {string} activeRaceId
+ * @returns {boolean}
+ */
+export function belongsToActiveRace(runnerData, runnerRecord, activeRaceId) {
+  const runnerRaceId = runnerData.raceId ?? runnerRecord?.raceId ?? null
+  return runnerRaceId === activeRaceId
+}
+

@@ -4,9 +4,9 @@ import { BrowserQRCodeReader } from '@zxing/browser'
 import { addResult } from '../results/results.repository.js'
 import { getRunnerById } from '../runners/runners.repository.js'
 import { decodeRunnerPayload } from '../runners/qrcode.service.js'
-import { buildArrivalResult } from './scanner.rules.js'
+import { buildArrivalResult, belongsToActiveRace } from './scanner.rules.js'
 
-/** @typedef {'idle'|'scanning'|'recorded'|'error'} ScanStatus */
+/** @typedef {'idle'|'scanning'|'recorded'|'invalid-race'|'error'} ScanStatus */
 
 /** @param {string} raceId */
 export function useScanner(raceId) {
@@ -60,8 +60,15 @@ export function useScanner(raceId) {
 
   const handleDecodedText = useCallback(async (text) => {
     const runnerData = decodeRunnerPayload(text)
-    const readAt = new Date()
     const runner = await getRunnerById(runnerData.id)
+
+    if (!belongsToActiveRace(runnerData, runner, raceId)) {
+      setStatus('invalid-race')
+      setMessage(`Este QR code não pertence a esta corrida (corredor: ${runner?.name ?? runnerData.name ?? runnerData.id}).`)
+      return
+    }
+
+    const readAt = new Date()
     const runnerName = runner?.name ?? runnerData.name ?? null
     const arrivalResult = { ...buildArrivalResult(runnerData, raceId, readAt), runnerName }
     await addResult(arrivalResult)
