@@ -97,7 +97,7 @@ export function useScanner(raceId) {
 
     if (!belongsToActiveRace(runnerData, runner, raceId)) {
       setStatus('invalid-race')
-      setMessage(`Este QR code não pertence a esta corrida (corredor: ${runner?.name ?? runnerData.name ?? runnerData.id}).`)
+      setMessage('Este corredor está cadastrado em outra corrida. Verifique se ele pertence a esta corrida.')
       resultTimeoutRef.current = setTimeout(() => {
         setStatus('scanning')
         setMessage('Aponte a câmera para o QR code')

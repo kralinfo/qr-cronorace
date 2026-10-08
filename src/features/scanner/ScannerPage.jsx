@@ -30,7 +30,7 @@ export default function ScannerPage() {
 
       {status === 'invalid-race' && (
         <section className="scan-result not-found">
-          <h3>QR code de outra corrida</h3>
+          <h3>Corredor não encontrado nesta corrida</h3>
           <p>{message}</p>
         </section>
       )}
