@@ -16,6 +16,7 @@ export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceN
   const items = hasActiveRace
     ? [
       { id: 'home', label: 'Início', icon: '🏠' },
+      { id: 'races', label: 'Corridas', icon: '🏁' },
       { id: 'runners', label: 'Corredores', icon: '🏃' },
       { id: 'scanner', label: 'Scanner', icon: '📷' },
       { id: 'results', label: 'Ranking', icon: '🏆' }
@@ -24,11 +25,6 @@ export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceN
 
   const handleNavigate = (tab) => {
     onNavigate(tab)
-    onClose()
-  }
-
-  const handleChangeRace = () => {
-    onChangeRace()
     onClose()
   }
 
@@ -51,12 +47,6 @@ export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceN
               {item.label}
             </button>
           ))}
-          {hasActiveRace && (
-            <button className="app-menu-item app-menu-change-race" onClick={handleChangeRace}>
-              <span className="app-menu-icon">🔄</span>
-              Trocar corrida
-            </button>
-          )}
         </nav>
       </aside>
     </>

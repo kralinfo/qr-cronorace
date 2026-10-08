@@ -21,6 +21,7 @@ function isPublicRankingRequest() {
 
 const TAB_TITLES = {
   home: 'Início',
+  races: 'Corridas',
   runners: 'Corredores',
   scanner: 'Scanner',
   results: 'Ranking'
@@ -72,6 +73,7 @@ function AppContent() {
 
       <main>
         {tab === 'home' && <RaceHomePage onOpenScanner={() => setTab('scanner')} />}
+        {tab === 'races' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={() => setTab('home')} />}
         {tab === 'results' && <ResultsPage />}
