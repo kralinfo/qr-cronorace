@@ -18,6 +18,7 @@ export default function ScannerPage() {
     const readAt = new Date()
     const result = {
       barcode: runner.id,
+      runnerNumber: runner.number ?? null,
       dateTime: readAt.toISOString(),
       timestamp: String(readAt.getTime()),
       raceId: activeRace.id,
@@ -56,6 +57,7 @@ export default function ScannerPage() {
         <section className="scan-result found">
           <h3>Chegada registrada manualmente</h3>
           <p><strong>Corredor:</strong> {manualConfirmation.runnerName}</p>
+          {manualConfirmation.runnerNumber && <p><strong>Número:</strong> {manualConfirmation.runnerNumber}</p>}
           <p><strong>Id:</strong> {manualConfirmation.barcode}</p>
           <p><strong>Data/Hora:</strong> {formatDateTimeBR(manualConfirmation.dateTime)}</p>
         </section>

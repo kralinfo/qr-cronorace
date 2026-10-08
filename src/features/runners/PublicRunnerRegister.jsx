@@ -56,11 +56,13 @@ export default function PublicRunnerRegister() {
 function RegisterForm({ race }) {
   const { error, lastQrCode, createRunner } = useRunners(race.id)
   const [name, setName] = useState('')
+  const [number, setNumber] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await createRunner(name)
+    await createRunner(name, number)
     setName('')
+    setNumber('')
   }
 
   return (
@@ -71,10 +73,16 @@ function RegisterForm({ race }) {
           <h2>Cadastrar corredor</h2>
           <form onSubmit={handleSubmit}>
             <input
+              placeholder="Número do corredor"
+              value={number}
+              onChange={e => setNumber(e.target.value)}
+              autoFocus
+              required
+            />
+            <input
               placeholder="Nome do corredor"
               value={name}
               onChange={e => setName(e.target.value)}
-              autoFocus
               required
             />
             <button type="submit">Criar + Gerar QR</button>
@@ -83,7 +91,7 @@ function RegisterForm({ race }) {
 
           {lastQrCode && (
             <div className="qr-preview">
-              <p>QR gerado para <strong>{lastQrCode.runner.name}</strong>:</p>
+              <p>QR gerado para <strong>{lastQrCode.runner.name}</strong> (nº {lastQrCode.runner.number}):</p>
               <img src={lastQrCode.qrDataUrl} alt={`QR de ${lastQrCode.runner.name}`} style={{ width: 200 }} />
               <a href={lastQrCode.qrDataUrl} download={buildQRFilename(lastQrCode.runner)}>Baixar PNG</a>
             </div>

@@ -13,14 +13,14 @@ export function generateRunnerQRCode(runner) {
 
 /** @param {import('./runners.types.js').Runner} runner @returns {string} */
 export function encodeRunnerPayload(runner) {
-  return JSON.stringify({ id: runner.id, name: runner.name, raceId: runner.raceId })
+  return JSON.stringify({ id: runner.id, number: runner.number ?? null, name: runner.name, raceId: runner.raceId })
 }
 
 /**
  * Decodifica o texto lido do QR code de volta para os dados do corredor.
  * Aceita tanto o formato JSON `{id,name,raceId}` quanto texto simples (tratado como id).
  * @param {string} text
- * @returns {{ id: string, name: string|null, raceId: string|null }}
+ * @returns {{ id: string, number: string|null, name: string|null, raceId: string|null }}
  */
 export function decodeRunnerPayload(text) {
   try {
@@ -28,6 +28,7 @@ export function decodeRunnerPayload(text) {
     if (parsed && typeof parsed === 'object' && parsed.id) {
       return {
         id: String(parsed.id),
+        number: parsed.number ? String(parsed.number) : null,
         name: parsed.name ? String(parsed.name) : null,
         raceId: parsed.raceId ? String(parsed.raceId) : null
       }
@@ -35,5 +36,5 @@ export function decodeRunnerPayload(text) {
   } catch (e) {
     /* não é JSON, trata como texto simples */
   }
-  return { id: text.trim(), name: null, raceId: null }
+  return { id: text.trim(), number: null, name: null, raceId: null }
 }

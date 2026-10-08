@@ -27,6 +27,7 @@ export default function RunnerQRItem({ runner }) {
     <li className="runner-qr-item">
       <div className="runner-info">
         <strong>{runner.name}</strong>
+        {runner.number ? <div>Nº {runner.number}</div> : null}
       </div>
       <div className="runner-actions">
         <button onClick={handleToggleView} disabled={loading}>

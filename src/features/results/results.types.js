@@ -5,6 +5,7 @@
  * @property {string} timestamp - Timestamp bruto (coluna "Timestamp").
  * @property {string} [raceId] - Id da corrida à qual o resultado pertence.
  * @property {string} [runnerName] - Nome do corredor no momento da leitura (quando disponível).
+ * @property {string|null} [runnerNumber] - Número do corredor quando disponível (ex.: chegada manual).
  */
 
 /**

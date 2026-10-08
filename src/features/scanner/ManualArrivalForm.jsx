@@ -4,8 +4,8 @@ import React, { useMemo, useState } from 'react'
 
 /**
  * @param {{
- *   runners: Array<{ id: string, name: string }>,
- *   onConfirm: (runner: { id: string, name: string }) => Promise<void>|void,
+ *   runners: Array<{ id: string, name: string, number?: string }>,
+ *   onConfirm: (runner: { id: string, name: string, number?: string }) => Promise<void>|void,
  *   onCancel: () => void
  * }} props
  */
@@ -18,7 +18,9 @@ export default function ManualArrivalForm({ runners, onConfirm, onCancel }) {
     const term = search.trim().toLowerCase()
     if (!term) return runners
     return runners.filter(r =>
-      r.name.toLowerCase().includes(term) || r.id.toLowerCase().includes(term)
+      r.name.toLowerCase().includes(term)
+      || r.id.toLowerCase().includes(term)
+      || String(r.number ?? '').toLowerCase().includes(term)
     )
   }, [runners, search])
 
@@ -37,11 +39,11 @@ export default function ManualArrivalForm({ runners, onConfirm, onCancel }) {
       <h3>Registrar chegada manualmente</h3>
       <p>Use esta opção quando não for possível ler o QR code do corredor.</p>
 
-      <label>Buscar corredor (nome ou id)</label>
+      <label>Buscar corredor (nome, número ou id)</label>
       <input
         value={search}
         onChange={e => { setSearch(e.target.value); setSelectedId('') }}
-        placeholder="Digite para buscar..."
+        placeholder="Digite nome, número ou id..."
         autoFocus
       />
 
@@ -55,7 +57,7 @@ export default function ManualArrivalForm({ runners, onConfirm, onCancel }) {
                 className={`manual-arrival-option ${selectedId === r.id ? 'selected' : ''}`}
                 onClick={() => setSelectedId(r.id)}
               >
-                {r.name} <span className="manual-arrival-option-id">#{r.id}</span>
+                Nº {r.number ?? '—'} · {r.name} <span className="manual-arrival-option-id">#{r.id}</span>
               </button>
             </li>
           ))}
@@ -64,7 +66,7 @@ export default function ManualArrivalForm({ runners, onConfirm, onCancel }) {
 
       {selectedRunner && (
         <p className="manual-arrival-selected">
-          Selecionado: <strong>{selectedRunner.name}</strong> (#{selectedRunner.id})
+          Selecionado: <strong>Nº {selectedRunner.number ?? '—'} · {selectedRunner.name}</strong> (#{selectedRunner.id})
         </p>
       )}
 

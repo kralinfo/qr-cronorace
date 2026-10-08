@@ -6,6 +6,10 @@ import { db, COLLECTIONS } from '../../shared/firebase.js'
  * @param {import('./runners.types.js').Runner} runner
  */
 export async function addRunner(runner) {
+  const hasDuplicateNumber = await raceAlreadyHasNumber(runner.raceId, runner.number)
+  if (hasDuplicateNumber) {
+    throw new Error('RUNNER_NUMBER_ALREADY_EXISTS')
+  }
   await setDoc(doc(db, COLLECTIONS.runners, runner.id), runner)
   return runner
 }
@@ -37,6 +41,19 @@ export function subscribeToRunnersByRace(raceId, onChange) {
   return onSnapshot(q, (snap) => {
     onChange(snap.docs.map(d => d.data()))
   })
+}
+
+/**
+ * @param {string} raceId
+ * @param {string|undefined} runnerNumber
+ * @returns {Promise<boolean>}
+ */
+async function raceAlreadyHasNumber(raceId, runnerNumber) {
+  const normalizedNumber = String(runnerNumber ?? '').trim().toLowerCase()
+  if (!normalizedNumber) return false
+
+  const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
+  return snap.docs.some(d => String(d.data().number ?? '').trim().toLowerCase() === normalizedNumber)
 }
 
 

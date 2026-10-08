@@ -36,6 +36,9 @@ export default function RaceHomePage() {
     setConfirmingFinish(false)
   }
 
+  const isRunning = Boolean(activeRace.startTime && !activeRace.endTime)
+  const startActionLabel = isRunning ? 'Restartar largada' : 'Definir largada'
+
   return (
     <div className="race-home-page">
       <div className="race-home-card">
@@ -45,7 +48,7 @@ export default function RaceHomePage() {
             {activeRace.eventDate && <p className="race-home-date">{formatDateOnlyBR(activeRace.eventDate)}</p>}
           </div>
           <ActionsMenu items={[
-            { label: 'Definir largada', onClick: () => setPanel('start') },
+            { label: startActionLabel, onClick: () => setPanel('start') },
             ...(activeRace.startTime && !activeRace.endTime
               ? [{ label: 'Encerrar corrida', onClick: () => setConfirmingFinish(true) }]
               : []),

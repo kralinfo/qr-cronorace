@@ -9,11 +9,13 @@ export default function RunnersPage() {
   const { activeRace } = useActiveRace()
   const { runners, loading, error, lastQrCode, createRunner } = useRunners(activeRace?.id)
   const [name, setName] = useState('')
+  const [number, setNumber] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await createRunner(name)
+    await createRunner(name, number)
     setName('')
+    setNumber('')
   }
 
   return (
@@ -21,6 +23,12 @@ export default function RunnersPage() {
       <section className="create-runner-section">
         <h2>Cadastrar corredor</h2>
         <form onSubmit={handleSubmit}>
+          <input
+            placeholder="Número do corredor"
+            value={number}
+            onChange={e => setNumber(e.target.value)}
+            required
+          />
           <input
             placeholder="Nome do corredor"
             value={name}
@@ -33,7 +41,7 @@ export default function RunnersPage() {
 
         {lastQrCode && (
           <div className="qr-preview">
-            <p>QR gerado para <strong>{lastQrCode.runner.name}</strong> (id: {lastQrCode.runner.id}):</p>
+            <p>QR gerado para <strong>{lastQrCode.runner.name}</strong> (nº {lastQrCode.runner.number}, id: {lastQrCode.runner.id}):</p>
             <img src={lastQrCode.qrDataUrl} alt={`QR de ${lastQrCode.runner.name}`} style={{ width: 200 }} />
             <a href={lastQrCode.qrDataUrl} download={buildQRFilename(lastQrCode.runner)}>Baixar PNG</a>
           </div>

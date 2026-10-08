@@ -22,25 +22,39 @@ export function useRunners(raceId) {
     return unsubscribe
   }, [raceId])
 
-  const createRunner = useCallback(async (name) => {
+  const createRunner = useCallback(async (name, number) => {
     setError(null)
     const trimmedName = name.trim()
+    const trimmedNumber = number.trim()
     if (!trimmedName) {
       setError('Informe o nome do corredor.')
+      return
+    }
+    if (!trimmedNumber) {
+      setError('Informe o número do corredor.')
       return
     }
     if (!raceId) {
       setError('Nenhuma corrida ativa selecionada.')
       return
     }
+    const duplicatedNumber = runners.some(r => String(r.number ?? '').trim().toLowerCase() === trimmedNumber.toLowerCase())
+    if (duplicatedNumber) {
+      setError('Número de corredor já cadastrado nesta corrida.')
+      return
+    }
     try {
       const sequenceNumber = runners.length + 1
-      const runner = { id: generateRunnerId(raceId, sequenceNumber), name: trimmedName, raceId }
+      const runner = { id: generateRunnerId(raceId, sequenceNumber), number: trimmedNumber, name: trimmedName, raceId }
       await addRunner(runner)
       const rawQrDataUrl = await generateRunnerQRCode(runner)
       const qrDataUrl = await composeQRWithLabel(rawQrDataUrl, runner.name)
       setLastQrCode({ runner, qrDataUrl })
     } catch (e) {
+      if (e instanceof Error && e.message === 'RUNNER_NUMBER_ALREADY_EXISTS') {
+        setError('Número de corredor já cadastrado nesta corrida.')
+        return
+      }
       setError('Falha ao criar corredor e gerar QR code.')
     }
   }, [raceId, runners])
