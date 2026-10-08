@@ -1,6 +1,5 @@
 // UI only: definição/edição do horário de largada de uma corrida.
 import React, { useState } from 'react'
-import RaceChronometer from './RaceChronometer.jsx'
 
 /** @param {Date} date @returns {string} valor compatível com <input type="datetime-local"> */
 function toDateTimeLocalValue(date) {
@@ -37,8 +36,6 @@ export default function StartTimeField({ race, onSave }) {
 
   return (
     <div className="start-time-field">
-      {race.startTime && <RaceChronometer startTime={race.startTime} className="start-time-chronometer" />}
-
       <button type="button" className="start-now-btn" onClick={handleStartNow} disabled={starting}>
         {starting ? 'Iniciando...' : '🏁 Iniciar corrida agora'}
       </button>
