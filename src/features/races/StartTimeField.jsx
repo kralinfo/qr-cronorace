@@ -11,7 +11,6 @@ function toDateTimeLocalValue(date) {
 export default function StartTimeField({ race, onSave }) {
   const [value, setValue] = useState(race.startTime ? toDateTimeLocalValue(new Date(race.startTime)) : '')
   const [saving, setSaving] = useState(false)
-  const [starting, setStarting] = useState(false)
 
   const handleSave = async () => {
     if (!value) return
@@ -23,28 +22,13 @@ export default function StartTimeField({ race, onSave }) {
     }
   }
 
-  const handleStartNow = async () => {
-    setStarting(true)
-    try {
-      const nowIso = new Date().toISOString()
-      await onSave(race.id, nowIso)
-      setValue(toDateTimeLocalValue(new Date(nowIso)))
-    } finally {
-      setStarting(false)
-    }
-  }
-
   return (
     <div className="start-time-field">
-      <button type="button" className="start-now-btn" onClick={handleStartNow} disabled={starting}>
-        {starting ? 'Iniciando...' : '🏁 Iniciar corrida agora'}
-      </button>
-
-      <label>Ou defina manualmente o horário da largada</label>
+      <label>Informe data/hora manualmente para editar a largada</label>
       <div className="copyable-field-row">
         <input type="datetime-local" value={value} onChange={e => setValue(e.target.value)} />
         <button type="button" onClick={handleSave} disabled={saving || !value}>
-          {saving ? 'Salvando...' : 'Salvar'}
+          {saving ? 'Definindo...' : 'Definir largada'}
         </button>
       </div>
       {race.startTime && (

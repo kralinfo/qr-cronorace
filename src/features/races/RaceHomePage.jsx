@@ -36,8 +36,9 @@ export default function RaceHomePage() {
     setConfirmingFinish(false)
   }
 
-  const isRunning = Boolean(activeRace.startTime && !activeRace.endTime)
-  const startActionLabel = isRunning ? 'Restartar largada' : 'Definir largada'
+  const handleStartNow = async () => {
+    await setStartTime(activeRace.id, new Date().toISOString())
+  }
 
   return (
     <div className="race-home-page">
@@ -48,9 +49,8 @@ export default function RaceHomePage() {
             {activeRace.eventDate && <p className="race-home-date">{formatDateOnlyBR(activeRace.eventDate)}</p>}
           </div>
           <ActionsMenu items={[
-            { label: startActionLabel, onClick: () => setPanel('start') },
-            ...(activeRace.startTime && !activeRace.endTime
-              ? [{ label: 'Encerrar corrida', onClick: () => setConfirmingFinish(true) }]
+            ...(activeRace.startTime
+              ? [{ label: 'Editar largada', onClick: () => setPanel('start') }]
               : []),
             { label: 'Editar corrida', onClick: () => setPanel('edit') },
             { label: 'Link de cadastro', onClick: () => setPanel('register-link') },
@@ -81,11 +81,14 @@ export default function RaceHomePage() {
               {runners.length} corredor{runners.length === 1 ? '' : 'es'}
               {activeRace.distanceKm ? ` · ${activeRace.distanceKm} km` : ''}
             </p>
+            <button type="button" className="danger-btn end-race-btn" onClick={() => setConfirmingFinish(true)}>
+              Encerrar corrida
+            </button>
           </div>
         ) : (
           <div className="race-home-status pending">
             <span className="race-home-label">Corrida ainda não iniciada</span>
-            <button className="start-now-btn" onClick={() => setPanel('start')}>🏁 Iniciar corrida agora</button>
+            <button className="start-now-btn" onClick={handleStartNow}>🏁 Iniciar corrida agora</button>
           </div>
         )}
       </div>

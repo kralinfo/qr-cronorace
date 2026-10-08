@@ -591,6 +591,11 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   color: #607d8b;
 }
 
+.end-race-btn {
+  margin-top: 12px;
+  width: 100%;
+}
+
 .public-ranking-meta {
   margin: 4px 0 0;
   font-size: 0.9rem;
