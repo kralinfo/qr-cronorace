@@ -5,9 +5,9 @@ import RunnersPage from './features/runners/RunnersPage.jsx'
 import PublicRunnerRegister from './features/runners/PublicRunnerRegister.jsx'
 import PublicRankingPage from './features/results/PublicRankingPage.jsx'
 import RaceSetupPage from './features/races/RaceSetupPage.jsx'
+import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import AppMenu from './shared/AppMenu.jsx'
-import RaceChronometer from './features/races/RaceChronometer.jsx'
 
 /** @returns {boolean} true quando a URL atual pede a tela pública de cadastro (link compartilhado) */
 function isPublicRegisterRequest() {
@@ -20,6 +20,7 @@ function isPublicRankingRequest() {
 }
 
 const TAB_TITLES = {
+  home: 'Início',
   runners: 'Corredores',
   scanner: 'Scanner',
   results: 'Ranking'
@@ -27,7 +28,7 @@ const TAB_TITLES = {
 
 function AppContent() {
   const { activeRace, loading, clearActiveRace } = useActiveRace()
-  const [tab, setTab] = useState('runners')
+  const [tab, setTab] = useState('home')
   const [menuOpen, setMenuOpen] = useState(false)
 
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
@@ -48,7 +49,6 @@ function AppContent() {
       <header className="app-header">
         <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
         <h1>{TAB_TITLES[tab]}</h1>
-        <RaceChronometer startTime={activeRace.startTime} className="app-header-chronometer" />
       </header>
 
       <AppMenu
@@ -61,6 +61,7 @@ function AppContent() {
       />
 
       <main>
+        {tab === 'home' && <RaceHomePage />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage />}
         {tab === 'results' && <ResultsPage />}

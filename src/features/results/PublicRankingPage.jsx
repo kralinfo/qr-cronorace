@@ -46,7 +46,14 @@ export default function PublicRankingPage() {
   return (
     <div className="public-ranking-page">
       <header className="public-ranking-header">
-        <h1>{race?.name ?? 'Carregando...'}</h1>
+        <div>
+          <h1>{race?.name ?? 'Carregando...'}</h1>
+          {race?.startTime && (
+            <p className="public-ranking-start-time">
+              Largada às {new Date(race.startTime).toLocaleString('pt-BR')}
+            </p>
+          )}
+        </div>
         <RaceChronometer startTime={race?.startTime} className="public-ranking-chronometer" />
         <span className="live-badge">● Ao vivo</span>
       </header>

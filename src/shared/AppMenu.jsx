@@ -13,6 +13,7 @@ import React from 'react'
  */
 export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceName, onChangeRace }) {
   const items = [
+    { id: 'home', label: 'Início', icon: '🏠' },
     { id: 'runners', label: 'Corredores', icon: '🏃' },
     { id: 'scanner', label: 'Scanner', icon: '📷' },
     { id: 'results', label: 'Ranking', icon: '🏆' }

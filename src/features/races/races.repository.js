@@ -13,8 +13,17 @@ export async function addRace(race) {
  * @param {string} startTime - Horário da largada (ISO).
  */
 export async function updateRaceStartTime(raceId, startTime) {
-  await updateDoc(doc(db, COLLECTIONS.races, raceId), { startTime })
+  await updateDoc(doc(db, COLLECTIONS.races, raceId), { startTime, endTime: null })
 }
+
+/**
+ * @param {string} raceId
+ * @param {string} endTime - Horário de encerramento da corrida (ISO).
+ */
+export async function updateRaceEndTime(raceId, endTime) {
+  await updateDoc(doc(db, COLLECTIONS.races, raceId), { endTime })
+}
+
 
 /**
  * @param {string} raceId

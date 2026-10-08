@@ -462,6 +462,12 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   margin: 0;
 }
 
+.public-ranking-start-time {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  color: #b0bec5;
+}
+
 .live-badge {
   color: #4caf50;
   font-weight: 600;
@@ -492,6 +498,68 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   font-size: 1.4rem;
   font-weight: 700;
   color: #ffd54f;
+}
+
+/* Painel inicial da corrida (RaceHomePage) */
+.race-home-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.race-home-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.race-home-card-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.race-home-date {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #607d8b;
+}
+
+.race-home-status {
+  text-align: center;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.race-home-status.running {
+  background: #e8f5e9;
+}
+
+.race-home-status.pending {
+  background: #fff3e0;
+}
+
+.race-home-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #455a64;
+  margin-bottom: 8px;
+}
+
+.race-home-chronometer {
+  font-size: 2.5rem;
+  color: #2e7d32;
+}
+
+.toggle-existing-races-btn {
+  background: transparent;
+  color: #1e88e5;
+  border: none;
+  padding: 8px 0;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 /* Scanner */
