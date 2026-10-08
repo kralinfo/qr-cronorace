@@ -15,7 +15,7 @@ const PAGE_SIZE = 35
 
 export default function RunnersPage() {
   const { races } = useRaces()
-  const { activeRace, selectRace } = useActiveRace()
+  const { activeRace } = useActiveRace()
 
   // Corrida selecionada para visualização/filtro: 'ALL' ou id da corrida
   const [selectedRaceId, setSelectedRaceId] = useState(activeRace?.id || 'ALL')
@@ -337,39 +337,6 @@ export default function RunnersPage() {
               </div>
             </div>
           )}
-        </section>
-      )}
-
-      {/* Banner de Contexto da Corrida Selecionada (somente se uma corrida específica estiver selecionada) */}
-      {selectedRace && (
-        <section className="runner-race-context-card">
-          <div className="runner-race-context-info">
-            <div className="runner-race-context-title-row">
-              <h2>🏁 {selectedRace.name}</h2>
-              {selectedRace.id === activeRace?.id ? (
-                <span className="race-current-badge">Corrida ativa no app</span>
-              ) : (
-                <button
-                  type="button"
-                  className="secondary-btn runner-make-active-btn"
-                  onClick={() => selectRace(selectedRace)}
-                  title="Tornar esta corrida a ativa no sistema"
-                >
-                  Tornar ativa
-                </button>
-              )}
-            </div>
-            <div className="runner-race-context-meta">
-              {selectedRace.eventDate && <span>📅 {formatDateOnlyBR(selectedRace.eventDate)}</span>}
-              {selectedRace.distanceKm && <span>📏 {selectedRace.distanceKm} km</span>}
-              <span className={`race-status-badge ${selectedRace.endTime ? 'finished' : selectedRace.startTime ? 'running' : 'pending'}`}>
-                {selectedRace.endTime ? 'Encerrada' : selectedRace.startTime ? 'Em andamento' : 'Não iniciada'}
-              </span>
-              <span className="runners-count-badge">
-                👥 {runners.length} {runners.length === 1 ? 'corredor inscrito' : 'corredores inscritos'}
-              </span>
-            </div>
-          </div>
         </section>
       )}
 
