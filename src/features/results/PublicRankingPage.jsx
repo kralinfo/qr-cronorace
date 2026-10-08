@@ -1,9 +1,11 @@
 // UI only: ranking público em tempo real, pensado para ser exibido em TV/telão (somente leitura).
 import React, { useEffect, useState } from 'react'
-import { getRaceById } from '../races/races.repository.js'
+import { subscribeToRace } from '../races/races.repository.js'
 import { useResults } from './useResults.js'
+import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
 import { formatDateTimeBR } from './date.formatter.js'
+import { formatDuration } from './duration.formatter.js'
 
 /** @returns {string|null} id da corrida informado na URL (?corrida=...) */
 function getRaceIdFromUrl() {
@@ -14,7 +16,7 @@ export default function PublicRankingPage() {
   const raceId = getRaceIdFromUrl()
   const [race, setRace] = useState(null)
   const [notFound, setNotFound] = useState(false)
-  const { placements, loading } = useResults(raceId)
+  const { placements: rawPlacements, loading } = useResults(raceId)
   const { runners } = useRunners(raceId)
 
   useEffect(() => {
@@ -22,13 +24,14 @@ export default function PublicRankingPage() {
       setNotFound(true)
       return
     }
-    (async () => {
-      const found = await getRaceById(raceId)
+    const unsubscribe = subscribeToRace(raceId, (found) => {
       if (found) setRace(found)
       else setNotFound(true)
-    })()
+    })
+    return unsubscribe
   }, [raceId])
 
+  const placements = withElapsedTime(rawPlacements, race?.startTime)
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
 
   if (notFound) {
@@ -56,7 +59,7 @@ export default function PublicRankingPage() {
               <th>Pos.</th>
               <th>Nome</th>
               <th>Id</th>
-              <th>Data/Hora</th>
+              <th>Tempo</th>
             </tr>
           </thead>
           <tbody>
@@ -65,7 +68,7 @@ export default function PublicRankingPage() {
                 <td>{p.position}º</td>
                 <td>{p.runnerName ?? runnerNameById[p.barcode] ?? '—'}</td>
                 <td>{p.barcode}</td>
-                <td>{formatDateTimeBR(p.dateTime)}</td>
+                <td>{p.elapsedMs != null ? formatDuration(p.elapsedMs) : formatDateTimeBR(p.dateTime)}</td>
               </tr>
             ))}
           </tbody>
@@ -74,3 +77,4 @@ export default function PublicRankingPage() {
     </div>
   )
 }
+

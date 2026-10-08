@@ -4,12 +4,14 @@ import { useRaces } from './useRaces.js'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { buildRegistrationLink } from './share-link.service.js'
 import CopyableField from './CopyableField.jsx'
+import StartTimeField from './StartTimeField.jsx'
 
 export default function RaceSetupPage() {
-  const { races, loading, error, createRace } = useRaces()
+  const { races, loading, error, createRace, setStartTime } = useRaces()
   const { selectRace } = useActiveRace()
   const [name, setName] = useState('')
   const [sharingRaceId, setSharingRaceId] = useState(null)
+  const [editingStartTimeId, setEditingStartTimeId] = useState(null)
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -22,6 +24,10 @@ export default function RaceSetupPage() {
 
   const toggleShare = (raceId) => {
     setSharingRaceId(prev => prev === raceId ? null : raceId)
+  }
+
+  const toggleStartTime = (raceId) => {
+    setEditingStartTimeId(prev => prev === raceId ? null : raceId)
   }
 
   return (
@@ -52,11 +58,19 @@ export default function RaceSetupPage() {
                   <span>{race.name}</span>
                   <div className="race-row-actions">
                     <button onClick={() => selectRace(race)}>Entrar</button>
+                    <button className="secondary-btn" onClick={() => toggleStartTime(race.id)}>
+                      {editingStartTimeId === race.id ? 'Fechar' : 'Largada'}
+                    </button>
                     <button className="secondary-btn" onClick={() => toggleShare(race.id)}>
                       {sharingRaceId === race.id ? 'Fechar' : 'Link de cadastro'}
                     </button>
                   </div>
                 </div>
+                {editingStartTimeId === race.id && (
+                  <div className="share-panel">
+                    <StartTimeField race={race} onSave={setStartTime} />
+                  </div>
+                )}
                 {sharingRaceId === race.id && (
                   <div className="share-panel">
                     <p>Envie o link e o código abaixo para a pessoa que vai ajudar a cadastrar corredores:</p>

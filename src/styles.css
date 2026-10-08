@@ -213,6 +213,40 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   margin-top: 8px;
 }
 
+/* Horário de largada */
+.start-time-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.start-time-current {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #455a64;
+}
+
+/* Compartilhar ranking por WhatsApp/E-mail */
+.share-buttons-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.share-btn {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.share-btn.whatsapp { background: #25d366; }
+.share-btn.email { background: #607d8b; }
+
 .copyable-field-row {
   display: flex;
   gap: 8px;

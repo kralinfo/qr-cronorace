@@ -37,4 +37,22 @@ function toComparableTime(result) {
   return Number.isFinite(parsedDate) ? parsedDate : Number.MAX_SAFE_INTEGER
 }
 
+/**
+ * Adiciona o tempo de prova (elapsedMs) de cada colocação a partir do horário de largada.
+ * Se não houver horário de largada definido, elapsedMs fica null.
+ * @param {Array<import('./results.types.js').PlacementResult>} placements
+ * @param {string|null|undefined} startTime - Horário da largada (ISO).
+ * @returns {Array<import('./results.types.js').PlacementResult & { elapsedMs: number|null }>}
+ */
+export function withElapsedTime(placements, startTime) {
+  const startMs = startTime ? Date.parse(startTime) : NaN
+  if (!Number.isFinite(startMs)) {
+    return placements.map(p => ({ ...p, elapsedMs: null }))
+  }
+  return placements.map(p => {
+    const arrivalMs = toComparableTime(p)
+    const elapsedMs = arrivalMs >= startMs ? arrivalMs - startMs : null
+    return { ...p, elapsedMs }
+  })
+}
 

@@ -1,6 +1,6 @@
 // Responsabilidade única: prover e gerenciar a corrida ativa em toda a aplicação.
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { getRaceById } from './races.repository.js'
+import { getRaceById, subscribeToRace } from './races.repository.js'
 import { getStoredActiveRaceId, setStoredActiveRaceId, clearStoredActiveRaceId } from './active-race.storage.js'
 
 const ActiveRaceContext = createContext(null)
@@ -20,6 +20,15 @@ export function ActiveRaceProvider({ children }) {
       setLoading(false)
     })()
   }, [])
+
+  // Mantém a corrida ativa sincronizada em tempo real (ex.: horário de largada definido depois).
+  useEffect(() => {
+    if (!activeRace?.id) return
+    const unsubscribe = subscribeToRace(activeRace.id, (race) => {
+      if (race) setActiveRace(race)
+    })
+    return unsubscribe
+  }, [activeRace?.id])
 
   const selectRace = useCallback((race) => {
     setStoredActiveRaceId(race.id)

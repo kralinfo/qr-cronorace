@@ -1,11 +1,19 @@
 // Responsabilidade única: persistência das corridas cadastradas (Cloud Firestore).
-import { collection, doc, getDoc, getDocs, orderBy, query, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
 
 /** @param {import('./races.types.js').Race} race */
 export async function addRace(race) {
   await setDoc(doc(db, COLLECTIONS.races, race.id), race)
   return race
+}
+
+/**
+ * @param {string} raceId
+ * @param {string} startTime - Horário da largada (ISO).
+ */
+export async function updateRaceStartTime(raceId, startTime) {
+  await updateDoc(doc(db, COLLECTIONS.races, raceId), { startTime })
 }
 
 /** @returns {Promise<Array<import('./races.types.js').Race>>} */
@@ -19,4 +27,18 @@ export async function getRaceById(id) {
   const snap = await getDoc(doc(db, COLLECTIONS.races, id))
   return snap.exists() ? snap.data() : undefined
 }
+
+/**
+ * Escuta em tempo real uma corrida específica (ex.: para refletir o horário de largada
+ * assim que for definido em outro dispositivo).
+ * @param {string} raceId
+ * @param {(race: import('./races.types.js').Race | undefined) => void} onChange
+ * @returns {() => void} função para cancelar a inscrição (unsubscribe)
+ */
+export function subscribeToRace(raceId, onChange) {
+  return onSnapshot(doc(db, COLLECTIONS.races, raceId), (snap) => {
+    onChange(snap.exists() ? snap.data() : undefined)
+  })
+}
+
 

@@ -1,6 +1,6 @@
 // Responsabilidade única: orquestrar criação/listagem de corridas.
 import { useCallback, useEffect, useState } from 'react'
-import { addRace, getAllRaces } from './races.repository.js'
+import { addRace, getAllRaces, updateRaceStartTime } from './races.repository.js'
 import { generateRaceId } from './race-id.service.js'
 
 export function useRaces() {
@@ -29,7 +29,7 @@ export function useRaces() {
       return null
     }
     try {
-      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString() }
+      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString(), startTime: null }
       await addRace(race)
       await loadRaces()
       return race
@@ -39,5 +39,15 @@ export function useRaces() {
     }
   }, [loadRaces])
 
-  return { races, loading, error, createRace }
+  const setStartTime = useCallback(async (raceId, startTime) => {
+    setError(null)
+    try {
+      await updateRaceStartTime(raceId, startTime)
+      await loadRaces()
+    } catch (e) {
+      setError('Falha ao salvar horário de largada.')
+    }
+  }, [loadRaces])
+
+  return { races, loading, error, createRace, setStartTime }
 }
