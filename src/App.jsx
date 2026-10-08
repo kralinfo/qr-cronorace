@@ -1,22 +1,66 @@
 import React, { useState } from 'react'
-import Scanner from './pages/Scanner'
-import Admin from './pages/Admin'
+import ResultsPage from './features/results/ResultsPage.jsx'
+import ScannerPage from './features/scanner/ScannerPage.jsx'
+import RunnersPage from './features/runners/RunnersPage.jsx'
+import RaceSetupPage from './features/races/RaceSetupPage.jsx'
+import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
+import AppMenu from './shared/AppMenu.jsx'
 
-export default function App(){
-  const [tab, setTab] = useState('scanner')
+const TAB_TITLES = {
+  runners: 'Corredores',
+  scanner: 'Scanner',
+  results: 'Ranking'
+}
+
+function AppContent() {
+  const { activeRace, loading, clearActiveRace } = useActiveRace()
+  const [tab, setTab] = useState('runners')
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
+
+  if (!activeRace) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>PWA QR Timing</h1>
+        </header>
+        <main><RaceSetupPage /></main>
+      </div>
+    )
+  }
+
   return (
     <div className="app">
-      <header>
-        <h1>PWA QR Timing</h1>
-        <nav>
-          <button onClick={() => setTab('scanner')}>Scanner</button>
-          <button onClick={() => setTab('admin')}>Admin</button>
-        </nav>
+      <header className="app-header">
+        <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
+        <h1>{TAB_TITLES[tab]}</h1>
       </header>
+
+      <AppMenu
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        currentTab={tab}
+        onNavigate={setTab}
+        raceName={activeRace.name}
+        onChangeRace={clearActiveRace}
+      />
+
       <main>
-        {tab === 'scanner' ? <Scanner /> : <Admin />}
+        {tab === 'runners' && <RunnersPage />}
+        {tab === 'scanner' && <ScannerPage />}
+        {tab === 'results' && <ResultsPage />}
       </main>
-      <footer>Offline-first • Export CSV • Deploy on Vercel/Netlify</footer>
     </div>
   )
 }
+
+export default function App(){
+  return (
+    <ActiveRaceProvider>
+      <AppContent />
+    </ActiveRaceProvider>
+  )
+}
+
+

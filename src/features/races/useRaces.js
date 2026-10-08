@@ -1,0 +1,43 @@
+// Responsabilidade única: orquestrar criação/listagem de corridas.
+import { useCallback, useEffect, useState } from 'react'
+import { addRace, getAllRaces } from './races.repository.js'
+import { generateRaceId } from './race-id.service.js'
+
+export function useRaces() {
+  const [races, setRaces] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const loadRaces = useCallback(async () => {
+    setLoading(true)
+    try {
+      setRaces(await getAllRaces())
+    } catch (e) {
+      setError('Falha ao carregar corridas cadastradas.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadRaces() }, [loadRaces])
+
+  const createRace = useCallback(async (name) => {
+    setError(null)
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      setError('Informe o nome da corrida.')
+      return null
+    }
+    try {
+      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString() }
+      await addRace(race)
+      await loadRaces()
+      return race
+    } catch (e) {
+      setError('Falha ao criar corrida.')
+      return null
+    }
+  }, [loadRaces])
+
+  return { races, loading, error, createRace }
+}
