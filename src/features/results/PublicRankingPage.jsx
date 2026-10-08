@@ -33,7 +33,28 @@ export default function PublicRankingPage() {
   }, [raceId])
 
   const placements = withElapsedTime(rawPlacements, race?.startTime)
+  const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
+  const arrivedCount = arrivedBarcodes.size
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
+  const runnersById = Object.fromEntries(runners.map(r => [r.id, r]))
+  const rankedArrivals = []
+  const seenArrivalIds = new Set()
+  placements.forEach((p) => {
+    if (!p.barcode || seenArrivalIds.has(p.barcode)) return
+    seenArrivalIds.add(p.barcode)
+    const displayTime = p.elapsedMs != null
+      ? formatDuration(p.elapsedMs)
+      : formatDateTimeBR(p.dateTime)
+    rankedArrivals.push({
+      position: rankedArrivals.length + 1,
+      runner: runnersById[p.barcode] ?? null,
+      barcode: p.barcode,
+      name: p.runnerName ?? runnerNameById[p.barcode] ?? '—',
+      displayTime
+    })
+  })
+  const showTop10 = runners.length > 50
+  const top10Arrivals = rankedArrivals.slice(0, 10)
 
   if (notFound) {
     return (
@@ -55,6 +76,8 @@ export default function PublicRankingPage() {
           )}
           {race?.startTime && (
             <p className="public-ranking-meta">
+              {arrivedCount} de {runners.length} chegaram
+              {' · '}
               {runners.length} corredor{runners.length === 1 ? '' : 'es'}
               {race.distanceKm ? ` · ${race.distanceKm} km` : ''}
             </p>
@@ -73,27 +96,63 @@ export default function PublicRankingPage() {
       {loading && <p>Carregando...</p>}
       {!loading && placements.length === 0 && <p>Nenhum resultado registrado ainda.</p>}
 
-      {placements.length > 0 && (
-        <table className="public-ranking-table">
-          <thead>
-            <tr>
-              <th>Pos.</th>
-              <th>Nome</th>
-              <th>Id</th>
-              <th>Tempo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {placements.map(p => (
-              <tr key={`${p.barcode}-${p.position}`}>
-                <td>{p.position}º</td>
-                <td>{p.runnerName ?? runnerNameById[p.barcode] ?? '—'}</td>
-                <td>{p.barcode}</td>
-                <td>{p.elapsedMs != null ? formatDuration(p.elapsedMs) : formatDateTimeBR(p.dateTime)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="public-ranking-side-lists" aria-label="Corredores e chegadas">
+        <section className="public-ranking-side-list subtle">
+          <h2>Corredores na prova</h2>
+          {runners.length === 0 ? (
+            <p>Nenhum corredor cadastrado.</p>
+          ) : (
+            <ul>
+              {runners.map(r => (
+                <li key={`tv-all-${r.id}`}>
+                  <strong>Nº {r.number ?? '—'}</strong> · {r.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="public-ranking-side-list arrived">
+          <h2>Ranking de chegada</h2>
+          {rankedArrivals.length === 0 ? (
+            <p>Ainda sem chegadas.</p>
+          ) : (
+            <div className="public-ranking-arrived-table" role="table" aria-label="Ranking de chegada">
+              <div className="public-ranking-arrived-head" role="row">
+                <span>Pos.</span>
+                <span>Número</span>
+                <span>Nome</span>
+                <span>Tempo</span>
+              </div>
+              {rankedArrivals.map((item) => (
+                <div key={`tv-arrived-${item.barcode}`} className="public-ranking-arrived-row" role="row">
+                  <span>{item.position}º</span>
+                  <span>{item.runner?.number ?? '—'}</span>
+                  <span>{item.name}</span>
+                  <span>{item.displayTime}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {showTop10 && (
+        <section className="public-top10-section" aria-label="Top 10 colocados">
+          <h2>Top 10 colocados</h2>
+          {top10Arrivals.length === 0 ? (
+            <p>Aguardando as primeiras chegadas...</p>
+          ) : (
+            <ol className="public-top10-list">
+              {top10Arrivals.map((item) => (
+                <li key={`top10-${item.barcode}`}>
+                  <span className="public-top10-name">{item.name}</span>
+                  <span className="public-top10-extra">Nº {item.runner?.number ?? '—'} · {item.displayTime}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
       )}
     </div>
   )

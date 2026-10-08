@@ -17,7 +17,22 @@ export default function ResultsPage() {
   const [showShare, setShowShare] = useState(false)
 
   const placements = withElapsedTime(rawPlacements, activeRace?.startTime)
+  const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
+  const arrivedCount = arrivedBarcodes.size
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
+  const runnersById = Object.fromEntries(runners.map(r => [r.id, r]))
+  const rankedArrivals = []
+  const seenArrivalIds = new Set()
+  placements.forEach((p) => {
+    if (!p.barcode || seenArrivalIds.has(p.barcode)) return
+    seenArrivalIds.add(p.barcode)
+    rankedArrivals.push({
+      position: rankedArrivals.length + 1,
+      runner: runnersById[p.barcode] ?? null,
+      barcode: p.barcode,
+      name: p.runnerName ?? runnerNameById[p.barcode] ?? '—'
+    })
+  })
   const getRunnerName = (barcode) => runnerNameById[barcode] ?? null
 
   const rankingText = activeRace ? buildRankingText(activeRace.name, placements, getRunnerName) : ''
@@ -41,6 +56,44 @@ export default function ResultsPage() {
                 : '○ Corrida ainda não iniciada'}
           </p>
         )}
+
+        <p className="results-progress-meta">
+          {arrivedCount} de {runners.length} chegaram
+          {' · '}
+          {runners.length} corredor{runners.length === 1 ? '' : 'es'}
+        </p>
+
+        <div className="ranking-side-lists" aria-label="Listas de corredores">
+          <section className="ranking-side-list subtle">
+            <h3>Corredores na prova</h3>
+            {runners.length === 0 ? (
+              <p>Nenhum corredor cadastrado.</p>
+            ) : (
+              <ul>
+                {runners.map(r => (
+                  <li key={`all-${r.id}`}>
+                    <strong>Nº {r.number ?? '—'}</strong> · {r.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="ranking-side-list arrived">
+            <h3>Ranking de chegada</h3>
+            {rankedArrivals.length === 0 ? (
+              <p>Ainda sem chegadas.</p>
+            ) : (
+              <ul>
+                {rankedArrivals.map(item => (
+                  <li key={`arrived-${item.barcode}`}>
+                    <strong>{item.position}º</strong> · Nº {item.runner?.number ?? '—'} · {item.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
 
         {showShare && activeRace && (
           <div className="share-panel">
