@@ -1,21 +1,37 @@
 // UI only: exibição do ranking de colocação dos corredores.
-import React from 'react'
+import React, { useState } from 'react'
 import { useResults } from './useResults.js'
 import { formatDateTimeBR } from './date.formatter.js'
 import { useRunners } from '../runners/useRunners.js'
 import { useActiveRace } from '../races/ActiveRaceContext.jsx'
+import { buildRankingLink } from '../races/share-link.service.js'
+import CopyableField from '../races/CopyableField.jsx'
 
 export default function ResultsPage() {
   const { activeRace } = useActiveRace()
   const { placements, loading, error } = useResults(activeRace?.id)
   const { runners } = useRunners(activeRace?.id)
+  const [showShare, setShowShare] = useState(false)
 
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
 
   return (
     <div className="results-page">
       <section className="placement-section">
-        <h2>Ranking</h2>
+        <div className="results-header-row">
+          <h2>Ranking</h2>
+          <button className="secondary-btn" onClick={() => setShowShare(prev => !prev)}>
+            {showShare ? 'Fechar' : 'Compartilhar ranking'}
+          </button>
+        </div>
+
+        {showShare && activeRace && (
+          <div className="share-panel">
+            <p>Compartilhe este link para acompanhar a classificação em tempo real (ex: numa TV/telão):</p>
+            <CopyableField label="Link do ranking" value={buildRankingLink(activeRace.id)} />
+          </div>
+        )}
+
         {loading && <p>Carregando...</p>}
         {error && <p className="error">{error}</p>}
         {placements.length === 0 ? (

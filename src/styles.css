@@ -234,6 +234,69 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   background: #1565c0;
 }
 
+/* Ranking: cabeçalho da seção com botão de compartilhar */
+.results-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.results-header-row h2 { margin: 0; }
+
+/* Ranking público (tela cheia, pensado para TV/telão) */
+.public-ranking-page {
+  min-height: 100vh;
+  background: #0d1b2a;
+  color: white;
+  padding: 24px;
+  font-size: 1.1rem;
+}
+
+.public-ranking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.public-ranking-header h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.live-badge {
+  color: #4caf50;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.public-ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.public-ranking-table th,
+.public-ranking-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 1.2rem;
+}
+
+.public-ranking-table th {
+  color: #90caf9;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.public-ranking-table tr:first-child td {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffd54f;
+}
+
 /* Scanner */
 .scanner-page {
   display: flex;
