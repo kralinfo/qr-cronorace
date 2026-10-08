@@ -37,8 +37,18 @@ function AppContent() {
     return (
       <div className="app">
         <header className="app-header">
+          <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
           <h1>PWA QR Timing</h1>
         </header>
+        <AppMenu
+          isOpen={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          currentTab={tab}
+          onNavigate={setTab}
+          raceName="PWA QR Timing"
+          onChangeRace={clearActiveRace}
+          hasActiveRace={false}
+        />
         <main><RaceSetupPage /></main>
       </div>
     )

@@ -8,16 +8,19 @@ import React from 'react'
  *   currentTab: string,
  *   onNavigate: (tab: string) => void,
  *   raceName: string,
- *   onChangeRace: () => void
+ *   onChangeRace: () => void,
+ *   hasActiveRace?: boolean
  * }} props
  */
-export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceName, onChangeRace }) {
-  const items = [
-    { id: 'home', label: 'Início', icon: '🏠' },
-    { id: 'runners', label: 'Corredores', icon: '🏃' },
-    { id: 'scanner', label: 'Scanner', icon: '📷' },
-    { id: 'results', label: 'Ranking', icon: '🏆' }
-  ]
+export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceName, onChangeRace, hasActiveRace = true }) {
+  const items = hasActiveRace
+    ? [
+      { id: 'home', label: 'Início', icon: '🏠' },
+      { id: 'runners', label: 'Corredores', icon: '🏃' },
+      { id: 'scanner', label: 'Scanner', icon: '📷' },
+      { id: 'results', label: 'Ranking', icon: '🏆' }
+    ]
+    : [{ id: 'home', label: 'Início', icon: '🏠' }]
 
   const handleNavigate = (tab) => {
     onNavigate(tab)
@@ -48,10 +51,12 @@ export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceN
               {item.label}
             </button>
           ))}
-          <button className="app-menu-item app-menu-change-race" onClick={handleChangeRace}>
-            <span className="app-menu-icon">🔄</span>
-            Trocar corrida
-          </button>
+          {hasActiveRace && (
+            <button className="app-menu-item app-menu-change-race" onClick={handleChangeRace}>
+              <span className="app-menu-icon">🔄</span>
+              Trocar corrida
+            </button>
+          )}
         </nav>
       </aside>
     </>
