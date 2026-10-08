@@ -1020,36 +1020,542 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 
 /* Runners */
-.qr-preview { margin-top: 16px; text-align: center; }
-.qr-preview img { max-width: 100%; height: auto; }
-.qr-preview a { display: inline-block; margin-top: 8px; }
+.runners-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-.runners-list-section ul { padding-left: 0; list-style: none; margin: 0; }
+.runners-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-.runner-qr-item {
-  border: 1px solid #ddd;
+.runners-controls-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 600px) {
+  .runners-controls-header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.runners-race-select-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.runners-race-select-wrap label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #455a64;
+}
+
+.runners-race-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #cfd8dc;
   border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
+  background-color: white;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.create-runner-toggle-btn {
+  background: #1e88e5;
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.runners-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.runners-search-bar .search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 1rem;
+  color: #78909c;
+  pointer-events: none;
+}
+
+.runners-search-input {
+  width: 100%;
+  padding: 12px 38px 12px 38px !important;
+  font-size: 1rem;
+  border: 1px solid #b0bec5;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: #78909c;
+  font-size: 1.1rem;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* Painel de cadastro */
+.create-runner-panel {
+  background: #ffffff;
+  border: 2px solid #90caf9;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(30, 136, 229, 0.12);
+}
+
+.create-runner-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.create-runner-panel-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #1565c0;
+}
+
+.create-runner-help-text {
+  font-size: 0.88rem;
+  color: #546e7a;
+  margin: 0 0 12px;
+}
+
+.create-runner-form select,
+.create-runner-form input {
+  display: block;
+  width: 100%;
+  margin: 6px 0 12px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
   background: white;
 }
 
-.runner-qr-item .runner-actions {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.runner-error-box {
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  color: #c62828;
+  font-size: 0.92rem;
+  font-weight: 500;
 }
 
-.runner-qr-item .runner-actions button {
-  flex: 1 1 auto;
-  min-width: 90px;
+.created-success-box {
+  background: #f1f8e9;
+  border: 1px solid #81c784;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.created-success-box .success-badge {
+  font-weight: 700;
+  color: #2e7d32;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.qr-preview-race-info {
   font-size: 0.9rem;
-  padding: 8px 10px;
+  color: #455a64;
+  margin: 2px 0 10px;
 }
 
-.runner-qr-preview { margin-top: 10px; text-align: center; }
-.runner-qr-preview img { max-width: 100%; height: auto; }
+.created-qr-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* Card de contexto da corrida */
+.runner-race-context-card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.runner-race-context-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.runner-race-context-title-row h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.runner-race-context-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.88rem;
+  color: #546e7a;
+}
+
+.runners-count-badge {
+  background: #eceff1;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #37474f;
+}
+
+.runner-make-active-btn {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+}
+
+/* Lista de corredores */
+.runners-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.runners-list-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #37474f;
+}
+
+.clear-search-pill {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+.runners-list-section ul {
+  padding-left: 0;
+  list-style: none;
+  margin: 0;
+}
+
+.runner-qr-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: white;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.runner-qr-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  border-color: #b0bec5;
+}
+
+.runner-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.runner-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.runner-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.runner-name {
+  font-size: 1.05rem;
+  color: #212121;
+}
+
+.runner-number-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.runner-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: 0.82rem;
+}
+
+.runner-id-tag {
+  color: #78909c;
+  font-family: monospace;
+}
+
+.runner-race-badge {
+  background: #f5f5f5;
+  color: #455a64;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.runner-race-badge.highlight {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffe0b2;
+}
+
+.runner-actions-wrap {
+  flex-shrink: 0;
+}
+
+.runner-qr-item .actions-menu-trigger {
+  border: 1px solid #cfd8dc;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: #37474f;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.runner-qr-item .actions-menu-trigger:hover,
+.runner-qr-item .actions-menu-trigger:active {
+  background: #eceff1;
+}
+
+.runner-qr-preview {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #cfd8dc;
+  text-align: center;
+}
+
+.runner-qr-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.runner-qr-preview-close {
+  background: transparent;
+  border: none;
+  color: #78909c;
+  font-size: 1.1rem;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.runner-qr-preview img {
+  border: 3px solid #f5f5f5;
+  border-radius: 8px;
+}
+
+.runner-qr-preview-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.runner-qr-preview-actions button {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+.print-btn {
+  background: #2e7d32;
+  color: white;
+  font-weight: 600;
+}
+
+.print-btn:hover {
+  background: #1b5e20;
+}
+
+/* Lazy loading por scroll */
+.runners-lazy-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.runners-lazy-text {
+  font-size: 0.88rem;
+  color: #607d8b;
+}
+
+.load-more-btn {
+  font-size: 0.88rem;
+  padding: 8px 16px;
+}
+
+.runners-all-loaded-text {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #78909c;
+  padding: 12px 0;
+  margin: 0;
+}
+
+/* Empty State */
+.empty-state-box {
+  background: white;
+  border: 1px dashed #b0bec5;
+  border-radius: 10px;
+  padding: 24px 16px;
+  text-align: center;
+  color: #546e7a;
+}
+
+.empty-state-box p {
+  margin: 0 0 12px;
+}
+
+.empty-state-sub {
+  font-size: 0.85rem;
+  color: #78909c;
+}
+
+/* Modal de Histórico do Atleta */
+.runner-history-modal {
+  background: white;
+  border-radius: 14px;
+  width: 92vw;
+  max-width: 540px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.runner-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px;
+  background: #1e88e5;
+  color: white;
+}
+
+.runner-history-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.runner-history-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  color: #e3f2fd;
+}
+
+.runner-history-header .menu-close-btn {
+  color: white;
+  font-size: 1.3rem;
+}
+
+.runner-history-alert {
+  background: #e3f2fd;
+  border-bottom: 1px solid #bbdefb;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: #0d47a1;
+}
+
+.runner-history-alert p {
+  margin: 0;
+}
+
+.runner-history-list {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.runner-history-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.runner-history-card {
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.runner-history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.runner-history-race-title {
+  display: block;
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.runner-history-race-date {
+  font-size: 0.82rem;
+  color: #607d8b;
+  margin-left: 4px;
+}
+
+.runner-history-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  background: #f5f5f5;
+}
 
 /* Races */
 .existing-races-section ul { list-style: none; padding-left: 0; margin: 0; }

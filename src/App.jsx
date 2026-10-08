@@ -39,7 +39,7 @@ function AppContent() {
       <div className="app">
         <header className="app-header">
           <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
-          <h1>PWA QR Timing</h1>
+          <h1>{TAB_TITLES[tab] || 'PWA QR Timing'}</h1>
         </header>
         <AppMenu
           isOpen={menuOpen}
@@ -50,7 +50,11 @@ function AppContent() {
           onChangeRace={clearActiveRace}
           hasActiveRace={false}
         />
-        <main><RaceSetupPage /></main>
+        <main>
+          {tab === 'runners' && <RunnersPage />}
+          {tab === 'races' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
+          {tab === 'home' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
+        </main>
       </div>
     )
   }

@@ -21,7 +21,11 @@ export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceN
       { id: 'scanner', label: 'Scanner', icon: '📷' },
       { id: 'results', label: 'Ranking', icon: '🏆' }
     ]
-    : [{ id: 'home', label: 'Início', icon: '🏠' }]
+    : [
+      { id: 'home', label: 'Início', icon: '🏠' },
+      { id: 'races', label: 'Corridas', icon: '🏁' },
+      { id: 'runners', label: 'Corredores', icon: '🏃' }
+    ]
 
   const handleNavigate = (tab) => {
     onNavigate(tab)
