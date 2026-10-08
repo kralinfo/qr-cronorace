@@ -2,11 +2,13 @@
 import React, { useState } from 'react'
 import { useRaces } from './useRaces.js'
 import { useActiveRace } from './ActiveRaceContext.jsx'
+import { buildRegistrationLink } from './share-link.service.js'
 
 export default function RaceSetupPage() {
   const { races, loading, error, createRace } = useRaces()
   const { selectRace } = useActiveRace()
   const [name, setName] = useState('')
+  const [sharingRaceId, setSharingRaceId] = useState(null)
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -15,6 +17,10 @@ export default function RaceSetupPage() {
       setName('')
       selectRace(race)
     }
+  }
+
+  const toggleShare = (raceId) => {
+    setSharingRaceId(prev => prev === raceId ? null : raceId)
   }
 
   return (
@@ -41,8 +47,24 @@ export default function RaceSetupPage() {
           <ul>
             {races.map(race => (
               <li key={race.id}>
-                {race.name}
-                <button onClick={() => selectRace(race)}>Entrar</button>
+                <div className="race-row">
+                  <span>{race.name}</span>
+                  <div className="race-row-actions">
+                    <button onClick={() => selectRace(race)}>Entrar</button>
+                    <button className="secondary-btn" onClick={() => toggleShare(race.id)}>
+                      {sharingRaceId === race.id ? 'Fechar' : 'Link de cadastro'}
+                    </button>
+                  </div>
+                </div>
+                {sharingRaceId === race.id && (
+                  <div className="share-panel">
+                    <p>Envie o link e o código abaixo para a pessoa que vai ajudar a cadastrar corredores:</p>
+                    <label>Link</label>
+                    <input readOnly value={buildRegistrationLink()} onFocus={e => e.target.select()} />
+                    <label>Código da corrida</label>
+                    <input readOnly value={race.id} onFocus={e => e.target.select()} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -51,3 +73,4 @@ export default function RaceSetupPage() {
     </div>
   )
 }
+

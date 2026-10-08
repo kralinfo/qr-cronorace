@@ -17,9 +17,11 @@ body {
 
 /* Header */
 .app-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 40;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -134,6 +136,7 @@ body {
 main {
   flex: 1;
   padding: 16px;
+  padding-top: 68px;
   padding-bottom: 32px;
 }
 
@@ -175,6 +178,40 @@ form button[type="submit"] {
 /* Sections */
 section { margin-bottom: 24px; }
 section h2 { font-size: 1.1rem; margin-bottom: 8px; }
+
+/* Race setup: share link */
+.race-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.race-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.secondary-btn {
+  background: #eceff1;
+  color: #1a1a1a;
+}
+
+.share-panel {
+  margin: 4px 0 12px;
+  padding: 12px;
+  background: #f0f6ff;
+  border: 1px solid #cfe1fb;
+  border-radius: 8px;
+}
+
+.share-panel label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
 
 /* Scanner */
 .scanner-page {

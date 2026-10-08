@@ -2,9 +2,15 @@ import React, { useState } from 'react'
 import ResultsPage from './features/results/ResultsPage.jsx'
 import ScannerPage from './features/scanner/ScannerPage.jsx'
 import RunnersPage from './features/runners/RunnersPage.jsx'
+import PublicRunnerRegister from './features/runners/PublicRunnerRegister.jsx'
 import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import AppMenu from './shared/AppMenu.jsx'
+
+/** @returns {boolean} true quando a URL atual pede a tela pública de cadastro (link compartilhado) */
+function isPublicRegisterRequest() {
+  return new URLSearchParams(window.location.search).get('cadastro') === '1'
+}
 
 const TAB_TITLES = {
   runners: 'Corredores',
@@ -56,6 +62,9 @@ function AppContent() {
 }
 
 export default function App(){
+  if (isPublicRegisterRequest()) {
+    return <PublicRunnerRegister />
+  }
   return (
     <ActiveRaceProvider>
       <AppContent />
