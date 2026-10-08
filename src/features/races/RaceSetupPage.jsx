@@ -12,16 +12,18 @@ export default function RaceSetupPage() {
   const { selectRace } = useActiveRace()
   const [name, setName] = useState('')
   const [eventDate, setEventDate] = useState('')
+  const [distanceKm, setDistanceKm] = useState('')
   const [editingRaceId, setEditingRaceId] = useState(null)
   const [deletingRace, setDeletingRace] = useState(null)
   const [showExistingRaces, setShowExistingRaces] = useState(false)
 
   const handleCreate = async (e) => {
     e.preventDefault()
-    const race = await createRace(name, eventDate)
+    const race = await createRace(name, eventDate, distanceKm)
     if (race) {
       setName('')
       setEventDate('')
+      setDistanceKm('')
       selectRace(race)
     }
   }
@@ -54,6 +56,15 @@ export default function RaceSetupPage() {
             value={eventDate}
             onChange={e => setEventDate(e.target.value)}
             required
+          />
+          <label>Distância (km)</label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            placeholder="ex: 10"
+            value={distanceKm}
+            onChange={e => setDistanceKm(e.target.value)}
           />
           <button type="submit">Criar e entrar na corrida</button>
         </form>

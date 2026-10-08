@@ -53,9 +53,21 @@ export default function PublicRankingPage() {
               Largada às {new Date(race.startTime).toLocaleString('pt-BR')}
             </p>
           )}
+          {race?.startTime && (
+            <p className="public-ranking-meta">
+              {runners.length} corredor{runners.length === 1 ? '' : 'es'}
+              {race.distanceKm ? ` · ${race.distanceKm} km` : ''}
+            </p>
+          )}
         </div>
-        <RaceChronometer startTime={race?.startTime} className="public-ranking-chronometer" />
-        <span className="live-badge">● Ao vivo</span>
+        <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
+        {race?.endTime ? (
+          <span className="live-badge finished">■ Encerrada</span>
+        ) : race?.startTime ? (
+          <span className="live-badge">● Ao vivo</span>
+        ) : (
+          <span className="live-badge pending">○ Aguardando largada</span>
+        )}
       </header>
 
       {loading && <p>Carregando...</p>}

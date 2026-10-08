@@ -1,6 +1,6 @@
 // Responsabilidade única: orquestrar criação/listagem/edição/exclusão de corridas.
 import { useCallback, useEffect, useState } from 'react'
-import { addRace, deleteRace, getAllRaces, updateRaceDetails, updateRaceStartTime } from './races.repository.js'
+import { addRace, deleteRace, getAllRaces, updateRaceDetails, updateRaceStartTime, updateRaceEndTime } from './races.repository.js'
 import { generateRaceId } from './race-id.service.js'
 
 export function useRaces() {
@@ -21,7 +21,7 @@ export function useRaces() {
 
   useEffect(() => { loadRaces() }, [loadRaces])
 
-  const createRace = useCallback(async (name, eventDate) => {
+  const createRace = useCallback(async (name, eventDate, distanceKm) => {
     setError(null)
     const trimmedName = name.trim()
     if (!trimmedName) {
@@ -33,7 +33,8 @@ export function useRaces() {
       return null
     }
     try {
-      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString(), eventDate, startTime: null }
+      const parsedDistance = distanceKm ? Number(distanceKm) : null
+      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString(), eventDate, startTime: null, distanceKm: Number.isFinite(parsedDistance) ? parsedDistance : null }
       await addRace(race)
       await loadRaces()
       return race
@@ -53,7 +54,17 @@ export function useRaces() {
     }
   }, [loadRaces])
 
-  const editRace = useCallback(async (raceId, { name, eventDate }) => {
+  const finishRace = useCallback(async (raceId, endTime) => {
+    setError(null)
+    try {
+      await updateRaceEndTime(raceId, endTime)
+      await loadRaces()
+    } catch (e) {
+      setError('Falha ao encerrar a corrida.')
+    }
+  }, [loadRaces])
+
+  const editRace = useCallback(async (raceId, { name, eventDate, distanceKm }) => {
     setError(null)
     const trimmedName = name.trim()
     if (!trimmedName) {
@@ -65,7 +76,8 @@ export function useRaces() {
       return false
     }
     try {
-      await updateRaceDetails(raceId, { name: trimmedName, eventDate })
+      const parsedDistance = distanceKm ? Number(distanceKm) : null
+      await updateRaceDetails(raceId, { name: trimmedName, eventDate, distanceKm: Number.isFinite(parsedDistance) ? parsedDistance : null })
       await loadRaces()
       return true
     } catch (e) {
@@ -84,6 +96,6 @@ export function useRaces() {
     }
   }, [loadRaces])
 
-  return { races, loading, error, createRace, setStartTime, editRace, removeRace }
+  return { races, loading, error, createRace, setStartTime, finishRace, editRace, removeRace }
 }
 

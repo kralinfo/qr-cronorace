@@ -3,9 +3,9 @@ import React from 'react'
 import { useElapsedTimer } from './useElapsedTimer.js'
 import { formatDuration } from '../results/duration.formatter.js'
 
-/** @param {{ startTime: string|null|undefined, className?: string }} props */
-export default function RaceChronometer({ startTime, className }) {
-  const elapsedMs = useElapsedTimer(startTime)
+/** @param {{ startTime: string|null|undefined, endTime?: string|null, className?: string }} props */
+export default function RaceChronometer({ startTime, endTime, className }) {
+  const elapsedMs = useElapsedTimer(startTime, endTime)
 
   if (elapsedMs == null) return null
 

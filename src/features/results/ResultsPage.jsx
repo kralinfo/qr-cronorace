@@ -32,6 +32,16 @@ export default function ResultsPage() {
           </button>
         </div>
 
+        {activeRace && (
+          <p className="results-race-status">
+            {activeRace.endTime
+              ? '■ Corrida encerrada'
+              : activeRace.startTime
+                ? '● Corrida em andamento'
+                : '○ Corrida ainda não iniciada'}
+          </p>
+        )}
+
         {showShare && activeRace && (
           <div className="share-panel">
             <p>Compartilhe este link para acompanhar a classificação em tempo real (ex: numa TV/telão):</p>

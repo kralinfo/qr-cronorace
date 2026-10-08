@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { useRaces } from './useRaces.js'
+import { useRunners } from '../runners/useRunners.js'
 import { formatDateOnlyBR } from './date-only.formatter.js'
 import { buildRegistrationLink, buildRankingLink } from './share-link.service.js'
 import RaceChronometer from './RaceChronometer.jsx'
@@ -14,9 +15,11 @@ import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 
 export default function RaceHomePage() {
   const { activeRace, clearActiveRace } = useActiveRace()
-  const { setStartTime, editRace, removeRace } = useRaces()
+  const { setStartTime, finishRace, editRace, removeRace } = useRaces()
+  const { runners } = useRunners(activeRace?.id)
   const [panel, setPanel] = useState(/** @type {'start'|'edit'|'register-link'|'ranking-link'|null} */(null))
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [confirmingFinish, setConfirmingFinish] = useState(false)
 
   if (!activeRace) return null
 
@@ -26,6 +29,11 @@ export default function RaceHomePage() {
     await removeRace(activeRace.id)
     setConfirmingDelete(false)
     clearActiveRace()
+  }
+
+  const handleConfirmFinish = async () => {
+    await finishRace(activeRace.id, new Date().toISOString())
+    setConfirmingFinish(false)
   }
 
   return (
@@ -38,6 +46,9 @@ export default function RaceHomePage() {
           </div>
           <ActionsMenu items={[
             { label: 'Definir largada', onClick: () => setPanel('start') },
+            ...(activeRace.startTime && !activeRace.endTime
+              ? [{ label: 'Encerrar corrida', onClick: () => setConfirmingFinish(true) }]
+              : []),
             { label: 'Editar corrida', onClick: () => setPanel('edit') },
             { label: 'Link de cadastro', onClick: () => setPanel('register-link') },
             { label: 'Link do ranking (TV)', onClick: () => setPanel('ranking-link') },
@@ -46,10 +57,23 @@ export default function RaceHomePage() {
           ]} />
         </div>
 
-        {activeRace.startTime ? (
+        {activeRace.endTime ? (
+          <div className="race-home-status finished">
+            <span className="race-home-label">Corrida encerrada às {new Date(activeRace.endTime).toLocaleString('pt-BR')}</span>
+            <RaceChronometer startTime={activeRace.startTime} endTime={activeRace.endTime} className="race-home-chronometer" />
+            <p className="race-home-meta">
+              {runners.length} corredor{runners.length === 1 ? '' : 'es'}
+              {activeRace.distanceKm ? ` · ${activeRace.distanceKm} km` : ''}
+            </p>
+          </div>
+        ) : activeRace.startTime ? (
           <div className="race-home-status running">
             <span className="race-home-label">Largada às {new Date(activeRace.startTime).toLocaleString('pt-BR')}</span>
             <RaceChronometer startTime={activeRace.startTime} className="race-home-chronometer" />
+            <p className="race-home-meta">
+              {runners.length} corredor{runners.length === 1 ? '' : 'es'}
+              {activeRace.distanceKm ? ` · ${activeRace.distanceKm} km` : ''}
+            </p>
           </div>
         ) : (
           <div className="race-home-status pending">
@@ -95,6 +119,15 @@ export default function RaceHomePage() {
           confirmLabel="Excluir corrida"
           onConfirm={handleConfirmDelete}
           onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
+
+      {confirmingFinish && (
+        <ConfirmDialog
+          message={`Tem certeza que deseja encerrar a corrida "${activeRace.name}"? O cronômetro vai parar de contar.`}
+          confirmLabel="Encerrar corrida"
+          onConfirm={handleConfirmFinish}
+          onCancel={() => setConfirmingFinish(false)}
         />
       )}
     </div>

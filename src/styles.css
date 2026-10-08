@@ -474,6 +474,14 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   font-size: 1rem;
 }
 
+.live-badge.finished {
+  color: #ef5350;
+}
+
+.live-badge.pending {
+  color: #b0bec5;
+}
+
 .public-ranking-table {
   width: 100%;
   border-collapse: collapse;
@@ -541,11 +549,33 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   background: #fff3e0;
 }
 
+.race-home-status.finished {
+  background: #ffebee;
+}
+
 .race-home-label {
   display: block;
   font-size: 0.9rem;
   color: #455a64;
   margin-bottom: 8px;
+}
+
+.race-home-meta {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: #607d8b;
+}
+
+.public-ranking-meta {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #b0bec5;
+}
+
+.results-race-status {
+  margin: -8px 0 16px;
+  font-size: 0.9rem;
+  color: #607d8b;
 }
 
 .race-home-chronometer {
