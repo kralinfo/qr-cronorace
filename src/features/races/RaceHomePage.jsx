@@ -59,7 +59,11 @@ export default function RaceHomePage() {
 
         {activeRace.endTime ? (
           <div className="race-home-status finished">
-            <span className="race-home-label">Corrida encerrada às {new Date(activeRace.endTime).toLocaleString('pt-BR')}</span>
+            <span className="race-home-label">
+              Largada às {new Date(activeRace.startTime).toLocaleString('pt-BR')}
+              <br />
+              Encerrada às {new Date(activeRace.endTime).toLocaleString('pt-BR')}
+            </span>
             <RaceChronometer startTime={activeRace.startTime} endTime={activeRace.endTime} className="race-home-chronometer" />
             <p className="race-home-meta">
               {runners.length} corredor{runners.length === 1 ? '' : 'es'}

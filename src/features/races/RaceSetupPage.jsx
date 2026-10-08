@@ -87,6 +87,10 @@ export default function RaceSetupPage() {
                       <span>
                         {race.name}
                         {race.eventDate && <span className="race-event-date"> — {formatDateOnlyBR(race.eventDate)}</span>}
+                        {race.distanceKm ? <span className="race-event-date"> · {race.distanceKm} km</span> : null}
+                        <span className={`race-status-badge ${race.endTime ? 'finished' : race.startTime ? 'running' : 'pending'}`}>
+                          {race.endTime ? 'Encerrada' : race.startTime ? 'Em andamento' : 'Não iniciada'}
+                        </span>
                       </span>
                       <div className="race-row-actions">
                         <button onClick={() => selectRace(race)}>Entrar</button>
