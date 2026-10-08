@@ -502,9 +502,18 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 
 .public-ranking-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 20px;
+  gap: 16px;
+}
+
+.public-ranking-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
 .public-ranking-header h1 {
@@ -777,6 +786,10 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.public-ranking-arrived-scroll {
+  overflow-x: auto;
 }
 
 .public-ranking-arrived-head,
@@ -1054,8 +1067,91 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 
 @media (max-width: 760px) {
-  .ranking-side-lists,
+  .ranking-side-lists {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
   .public-ranking-side-lists {
     grid-template-columns: 1fr;
+  }
+
+  .public-ranking-side-list.subtle {
+    display: none;
+  }
+
+  .public-ranking-page {
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  .public-ranking-header {
+    gap: 10px;
+  }
+
+  .public-ranking-header h1 {
+    font-size: 1.05rem;
+    line-height: 1.15;
+  }
+
+  .public-ranking-start-time,
+  .public-ranking-meta {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+
+  .public-ranking-chronometer {
+    font-size: 0.88rem;
+  }
+
+  .live-badge {
+    font-size: 0.72rem;
+  }
+
+  .public-ranking-side-list {
+    padding: 10px;
+  }
+
+  .public-ranking-side-list.arrived h2 {
+    font-size: 0.98rem;
+  }
+
+  .public-ranking-arrived-head,
+  .public-ranking-arrived-row {
+    grid-template-columns: 48px 64px minmax(110px, 1fr) 72px;
+    gap: 8px;
+    font-size: 0.86rem;
+  }
+
+  .public-ranking-arrived-row {
+    padding-top: 5px;
+  }
+
+  .public-top10-list {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .public-top10-name {
+    display: inline-block;
+    font-size: 0.95rem;
+  }
+
+  .public-top10-extra {
+    display: block;
+    margin-left: 0;
+    margin-top: 2px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .public-ranking-side-lists {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  .public-ranking-side-list.subtle {
+    display: block;
   }
 }

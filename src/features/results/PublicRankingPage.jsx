@@ -83,14 +83,16 @@ export default function PublicRankingPage() {
             </p>
           )}
         </div>
-        <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
-        {race?.endTime ? (
-          <span className="live-badge finished">■ Encerrada</span>
-        ) : race?.startTime ? (
-          <span className="live-badge">● Ao vivo</span>
-        ) : (
-          <span className="live-badge pending">○ Aguardando largada</span>
-        )}
+        <div className="public-ranking-header-right">
+          <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
+          {race?.endTime ? (
+            <span className="live-badge finished">■ Encerrada</span>
+          ) : race?.startTime ? (
+            <span className="live-badge">● Ao vivo</span>
+          ) : (
+            <span className="live-badge pending">○ Aguardando largada</span>
+          )}
+        </div>
       </header>
 
       {loading && <p>Carregando...</p>}
@@ -117,21 +119,23 @@ export default function PublicRankingPage() {
           {rankedArrivals.length === 0 ? (
             <p>Ainda sem chegadas.</p>
           ) : (
-            <div className="public-ranking-arrived-table" role="table" aria-label="Ranking de chegada">
-              <div className="public-ranking-arrived-head" role="row">
-                <span>Pos.</span>
-                <span>Número</span>
-                <span>Nome</span>
-                <span>Tempo</span>
-              </div>
-              {rankedArrivals.map((item) => (
-                <div key={`tv-arrived-${item.barcode}`} className="public-ranking-arrived-row" role="row">
-                  <span>{item.position}º</span>
-                  <span>{item.runner?.number ?? '—'}</span>
-                  <span>{item.name}</span>
-                  <span>{item.displayTime}</span>
+            <div className="public-ranking-arrived-scroll">
+              <div className="public-ranking-arrived-table" role="table" aria-label="Ranking de chegada">
+                <div className="public-ranking-arrived-head" role="row">
+                  <span>Pos.</span>
+                  <span>Número</span>
+                  <span>Nome</span>
+                  <span>Tempo</span>
                 </div>
-              ))}
+                {rankedArrivals.map((item) => (
+                  <div key={`tv-arrived-${item.barcode}`} className="public-ranking-arrived-row" role="row">
+                    <span>{item.position}º</span>
+                    <span>{item.runner?.number ?? '—'}</span>
+                    <span>{item.name}</span>
+                    <span>{item.displayTime}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
