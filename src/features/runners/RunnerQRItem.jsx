@@ -12,6 +12,8 @@ import ActionsMenu from '../../shared/ActionsMenu.jsx'
  *   runner: import('./runners.types.js').Runner,
  *   raceName?: string,
  *   onShowHistory?: (runner: import('./runners.types.js').Runner) => void,
+ *   onEdit?: (runner: import('./runners.types.js').Runner) => void,
+ *   onDelete?: (runner: import('./runners.types.js').Runner) => void,
  *   highlightRaceBadge?: boolean,
  *   onSelectRace?: (raceId: string) => void
  * }} props
@@ -20,6 +22,8 @@ export default function RunnerQRItem({
   runner,
   raceName,
   onShowHistory,
+  onEdit,
+  onDelete,
   highlightRaceBadge = false,
   onSelectRace
 }) {
@@ -62,6 +66,10 @@ export default function RunnerQRItem({
   }
 
   const menuItems = [
+    {
+      label: showPreview ? 'Ocultar QR Code' : 'Ver QR Code',
+      onClick: handleToggleView
+    },
     ...(btSupported
       ? [{
         label: printingBt ? 'Enviando p/ Térmica...' : '🖨️ Imprimir Térmica (Bluetooth)',
@@ -73,18 +81,20 @@ export default function RunnerQRItem({
       onClick: handlePrintStandard
     },
     {
-      label: showPreview ? 'Ocultar QR Code' : 'Ver QR Code',
-      onClick: handleToggleView
-    },
-    {
       label: 'Baixar PNG',
       onClick: handleDownload
     },
+    ...(onEdit
+      ? [{ label: '✏️ Editar corredor', onClick: () => onEdit(runner) }]
+      : []),
     ...(onShowHistory
       ? [{ label: 'Ver histórico', onClick: () => onShowHistory(runner) }]
       : []),
     ...(onSelectRace
       ? [{ label: 'Abrir nesta corrida', onClick: () => onSelectRace(runner.raceId) }]
+      : []),
+    ...(onDelete
+      ? [{ label: '🗑️ Excluir corredor', onClick: () => onDelete(runner), danger: true }]
       : [])
   ]
 
@@ -94,7 +104,15 @@ export default function RunnerQRItem({
         <div className="runner-info">
           <div className="runner-name-row">
             <strong className="runner-name">{runner.name}</strong>
-            {runner.number ? <span className="runner-number-badge">Nº {runner.number}</span> : null}
+            <button
+              type="button"
+              className={`runner-number-badge clickable ${!runner.number ? 'empty' : ''}`}
+              onClick={handleToggleView}
+              title="Clique para ver o QR Code deste corredor"
+              aria-label={`Ver QR Code do corredor ${runner.name}, número ${runner.number || 'sem número'}`}
+            >
+              Nº {runner.number || '—'}
+            </button>
           </div>
           <div className="runner-meta-row">
             <span className="runner-id-tag">ID: {runner.id}</span>

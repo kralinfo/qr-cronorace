@@ -4,7 +4,9 @@ import { useRaces } from '../races/useRaces.js'
 import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 import RunnerQRItem from './RunnerQRItem.jsx'
 import RunnerHistoryModal from './RunnerHistoryModal.jsx'
+import EditRunnerModal from './EditRunnerModal.jsx'
 import BluetoothPrinterModal from './BluetoothPrinterModal.jsx'
+import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import { buildQRFilename } from './qr-filename.service.js'
 import { printRunnerQRCode } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
@@ -59,6 +61,8 @@ export default function RunnersPage() {
     error: runnerError,
     lastQrCode,
     createRunner,
+    editRunner,
+    removeRunner,
     clearError,
     clearLastQrCode
   } = useRunners(selectedRaceId)
@@ -72,6 +76,10 @@ export default function RunnersPage() {
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Modais de edição e exclusão de corredor
+  const [editingRunner, setEditingRunner] = useState(null)
+  const [deletingRunner, setDeletingRunner] = useState(null)
 
   // Modal de histórico do atleta
   const [historyRunnerName, setHistoryRunnerName] = useState(null)
@@ -440,13 +448,13 @@ export default function RunnersPage() {
       {/* Lista de Corredores com Lazy Loading */}
       <section className="runners-list-section">
         <div className="runners-list-header">
-          <h3>
+          <span className="runners-count-subtle">
             {normalizedSearch
               ? `Resultados da busca (${filteredRunners.length})`
               : selectedRace
                 ? `Corredores desta corrida (${runners.length})`
                 : `Todos os corredores (${runners.length})`}
-          </h3>
+          </span>
           {normalizedSearch && (
             <button type="button" className="secondary-btn clear-search-pill" onClick={() => setSearch('')}>
               Limpar busca
@@ -493,6 +501,8 @@ export default function RunnersPage() {
                     raceName={raceName}
                     highlightRaceBadge={selectedRaceId === 'ALL'}
                     onShowHistory={() => handleOpenHistory(runner.name)}
+                    onEdit={setEditingRunner}
+                    onDelete={setDeletingRunner}
                     onSelectRace={selectedRaceId === 'ALL' ? (rId) => setSelectedRaceId(rId) : undefined}
                   />
                 )
@@ -533,6 +543,32 @@ export default function RunnersPage() {
             setSelectedRaceId(raceId)
             setHistoryRunnerName(null)
           }}
+        />
+      )}
+
+      {/* Modal de Edição do Corredor */}
+      {editingRunner && (
+        <EditRunnerModal
+          runner={editingRunner}
+          races={races}
+          onSave={async (id, updates) => {
+            const updated = await editRunner(id, updates)
+            return Boolean(updated)
+          }}
+          onClose={() => setEditingRunner(null)}
+        />
+      )}
+
+      {/* Confirmação de Exclusão de Corredor */}
+      {deletingRunner && (
+        <ConfirmDialog
+          message={`Deseja realmente excluir o corredor "${deletingRunner.name}" (Nº ${deletingRunner.number || '—'})? Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir Corredor"
+          onConfirm={async () => {
+            await removeRunner(deletingRunner.id)
+            setDeletingRunner(null)
+          }}
+          onCancel={() => setDeletingRunner(null)}
         />
       )}
 

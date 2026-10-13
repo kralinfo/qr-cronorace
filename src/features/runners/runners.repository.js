@@ -1,5 +1,5 @@
 // Responsabilidade única: persistência dos corredores cadastrados (Cloud Firestore).
-import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
 
 /**
@@ -22,6 +22,54 @@ export async function addRunner(runner) {
 
   await setDoc(doc(db, COLLECTIONS.runners, runner.id), runner)
   return runner
+}
+
+/**
+ * Atualiza os dados de um corredor existente (ex: número que faltava ou nome).
+ * @param {string} id
+ * @param {{ name?: string, number?: string, raceId?: string }} updates
+ */
+export async function updateRunner(id, updates) {
+  const current = await getRunnerById(id)
+  if (!current) {
+    throw new Error('RUNNER_NOT_FOUND')
+  }
+
+  const effectiveRaceId = updates.raceId ?? current.raceId
+
+  if (updates.number) {
+    const existingWithNumber = await findRunnerInRaceByNumber(effectiveRaceId, updates.number)
+    if (existingWithNumber && existingWithNumber.id !== id) {
+      const error = new Error('RUNNER_NUMBER_ALREADY_EXISTS')
+      error.existingRunner = existingWithNumber
+      throw error
+    }
+  }
+
+  if (updates.name) {
+    const existingWithName = await findRunnerInRaceByName(effectiveRaceId, updates.name)
+    if (existingWithName && existingWithName.id !== id) {
+      const error = new Error('RUNNER_NAME_ALREADY_EXISTS')
+      error.existingRunner = existingWithName
+      throw error
+    }
+  }
+
+  const payload = {}
+  if (updates.name !== undefined) payload.name = updates.name
+  if (updates.number !== undefined) payload.number = updates.number
+  if (updates.raceId !== undefined) payload.raceId = updates.raceId
+
+  await updateDoc(doc(db, COLLECTIONS.runners, id), payload)
+  return { ...current, ...payload }
+}
+
+/**
+ * Exclui um corredor cadastrado.
+ * @param {string} id
+ */
+export async function deleteRunner(id) {
+  await deleteDoc(doc(db, COLLECTIONS.runners, id))
 }
 
 /**

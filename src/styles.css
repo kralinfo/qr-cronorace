@@ -1289,8 +1289,16 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 
 .runners-list-header h3 {
   margin: 0;
-  font-size: 1.05rem;
-  color: #37474f;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.runners-count-subtle {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #64748b;
+  margin: 0;
 }
 
 .clear-search-pill {
@@ -1342,14 +1350,39 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   color: #212121;
 }
 
+button.runner-number-badge,
 .runner-number-badge {
   background: #e3f2fd;
   color: #1565c0;
   font-weight: 700;
   font-size: 0.88rem;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.3px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+button.runner-number-badge.clickable {
+  cursor: pointer;
+}
+
+button.runner-number-badge.clickable:hover {
+  background: #bbdefb;
+  border-color: #90caf9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(21, 101, 192, 0.15);
+}
+
+button.runner-number-badge.empty {
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .runner-meta-row {
@@ -1957,3 +1990,57 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   color: #78909c;
   margin-top: 2px;
 }
+
+/* Modal de Edição de Corredor */
+.edit-runner-modal {
+  background: white;
+  border-radius: 12px;
+  width: 92%;
+  max-width: 480px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.2s ease-out;
+}
+
+.edit-runner-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-runner-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.edit-runner-field label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #37474f;
+}
+
+.edit-runner-field .field-hint {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #78909c;
+}
+
+.edit-runner-field input,
+.edit-runner-field select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.edit-runner-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
