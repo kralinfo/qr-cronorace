@@ -21,7 +21,7 @@ export default function EditRaceForm({ race, onSave, onCancel }) {
       <label>Nome da corrida</label>
       <input value={name} onChange={e => setName(e.target.value)} required />
       <label>Data da corrida</label>
-      <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} required />
+      <input type="date" className="race-date-field" value={eventDate} onChange={e => setEventDate(e.target.value)} required />
       <label>Distância (km)</label>
       <input type="number" step="0.1" min="0" value={distanceKm} onChange={e => setDistanceKm(e.target.value)} />
       <div className="edit-race-actions">

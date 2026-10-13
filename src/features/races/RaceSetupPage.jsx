@@ -71,16 +71,18 @@ export default function RaceSetupPage({ onRaceSelected }) {
         {showCreateForm && (
           <div className="share-panel create-race-panel">
             <h2>Cadastrar corrida</h2>
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleCreate} className="create-race-form">
               <input
                 placeholder="Nome da corrida (ex: Corrida 10km)"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
               />
-              <label>Data da corrida</label>
+              <label htmlFor="create-race-date">Data da corrida</label>
               <input
+                id="create-race-date"
                 type="date"
+                className="race-date-field"
                 value={eventDate}
                 onChange={e => setEventDate(e.target.value)}
                 required

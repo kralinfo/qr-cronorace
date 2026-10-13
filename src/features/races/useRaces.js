@@ -1,6 +1,14 @@
 // Responsabilidade única: orquestrar criação/listagem/edição/exclusão de corridas.
 import { useCallback, useEffect, useState } from 'react'
-import { addRace, deleteRace, getAllRaces, updateRaceDetails, updateRaceStartTime, updateRaceEndTime } from './races.repository.js'
+import {
+  addRace,
+  deleteRace,
+  getAllRaces,
+  reopenRace as repoReopenRace,
+  updateRaceDetails,
+  updateRaceEndTime,
+  updateRaceStartTime
+} from './races.repository.js'
 import { generateRaceId } from './race-id.service.js'
 
 export function useRaces() {
@@ -64,6 +72,18 @@ export function useRaces() {
     }
   }, [loadRaces])
 
+  const reopenRace = useCallback(async (raceId, mode = 'resume') => {
+    setError(null)
+    try {
+      await repoReopenRace(raceId, mode)
+      await loadRaces()
+      return true
+    } catch (e) {
+      setError('Falha ao reabrir a corrida.')
+      return false
+    }
+  }, [loadRaces])
+
   const editRace = useCallback(async (raceId, { name, eventDate, distanceKm }) => {
     setError(null)
     const trimmedName = name.trim()
@@ -96,6 +116,6 @@ export function useRaces() {
     }
   }, [loadRaces])
 
-  return { races, loading, error, createRace, setStartTime, finishRace, editRace, removeRace }
+  return { races, loading, error, createRace, setStartTime, finishRace, reopenRace, editRace, removeRace }
 }
 

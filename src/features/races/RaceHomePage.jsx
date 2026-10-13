@@ -13,16 +13,18 @@ import EditRaceForm from './EditRaceForm.jsx'
 import CopyableField from './CopyableField.jsx'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
+import ReopenRaceModal from './ReopenRaceModal.jsx'
 
-/** @param {{ onOpenScanner?: () => void }} props */
-export default function RaceHomePage({ onOpenScanner }) {
+/** @param {{ onNavigate?: (tab: string) => void, onOpenScanner?: () => void }} props */
+export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const { activeRace, clearActiveRace } = useActiveRace()
-  const { setStartTime, finishRace, editRace, removeRace } = useRaces()
+  const { setStartTime, finishRace, reopenRace, editRace, removeRace } = useRaces()
   const { runners } = useRunners(activeRace?.id)
   const { placements } = useResults(activeRace?.id)
   const [panel, setPanel] = useState(/** @type {'start'|'edit'|'register-link'|'ranking-link'|null} */(null))
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [confirmingFinish, setConfirmingFinish] = useState(false)
+  const [reopenModalOpen, setReopenModalOpen] = useState(false)
 
   if (!activeRace) return null
 
@@ -54,6 +56,9 @@ export default function RaceHomePage({ onOpenScanner }) {
             {activeRace.eventDate && <p className="race-home-date">{formatDateOnlyBR(activeRace.eventDate)}</p>}
           </div>
           <ActionsMenu items={[
+            ...(activeRace.endTime
+              ? [{ label: '🔄 Reabrir corrida', onClick: () => setReopenModalOpen(true) }]
+              : []),
             ...(activeRace.startTime
               ? [{ label: 'Editar largada', onClick: () => setPanel('start') }]
               : []),
@@ -77,6 +82,13 @@ export default function RaceHomePage({ onOpenScanner }) {
               {runners.length} corredor{runners.length === 1 ? '' : 'es'}
               {activeRace.distanceKm ? ` · ${activeRace.distanceKm} km` : ''}
             </p>
+            <button
+              type="button"
+              className="primary-btn reopen-race-btn"
+              onClick={() => setReopenModalOpen(true)}
+            >
+              🔄 Reabrir corrida
+            </button>
           </div>
         ) : activeRace.startTime ? (
           <>
@@ -104,6 +116,90 @@ export default function RaceHomePage({ onOpenScanner }) {
           </div>
         )}
       </div>
+
+      {/* Opções rápidas do menu organizadas e distribuídas na tela */}
+      <section className="race-dashboard-section" aria-label="Acesso rápido às opções">
+        <h3 className="race-dashboard-title">Acesso Rápido</h3>
+        <div className="race-dashboard-grid">
+          <button
+            type="button"
+            className="dashboard-card"
+            onClick={() => onNavigate?.('runners')}
+          >
+            <div className="dashboard-card-icon">🏃</div>
+            <div className="dashboard-card-info">
+              <strong>Corredores</strong>
+              <span>{runners.length} cadastrado{runners.length === 1 ? '' : 's'}</span>
+            </div>
+            <span className="dashboard-card-arrow">→</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-card primary-accent"
+            onClick={() => onOpenScanner?.() || onNavigate?.('scanner')}
+          >
+            <div className="dashboard-card-icon">📷</div>
+            <div className="dashboard-card-info">
+              <strong>Marcar Chegada</strong>
+              <span>Leitor de QR Code / Manual</span>
+            </div>
+            <span className="dashboard-card-arrow">→</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-card"
+            onClick={() => onNavigate?.('results')}
+          >
+            <div className="dashboard-card-icon">🏆</div>
+            <div className="dashboard-card-info">
+              <strong>Ranking / Resultados</strong>
+              <span>{arrivedCount} de {runners.length} na chegada</span>
+            </div>
+            <span className="dashboard-card-arrow">→</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-card"
+            onClick={() => setPanel('ranking-link')}
+          >
+            <div className="dashboard-card-icon">📺</div>
+            <div className="dashboard-card-info">
+              <strong>Telão TV (Ao Vivo)</strong>
+              <span>Link público de transmissão</span>
+            </div>
+            <span className="dashboard-card-arrow">→</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-card"
+            onClick={() => setPanel('register-link')}
+          >
+            <div className="dashboard-card-icon">📝</div>
+            <div className="dashboard-card-info">
+              <strong>Link de Inscrição</strong>
+              <span>Cadastro público de atletas</span>
+            </div>
+            <span className="dashboard-card-arrow">→</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-card"
+            onClick={() => onNavigate?.('races')}
+          >
+            <div className="dashboard-card-icon">🏁</div>
+            <div className="dashboard-card-info">
+              <strong>Trocar Corrida</strong>
+              <span>Ver todas as provas</span>
+            </div>
+            <span className="dashboard-card-arrow">→</span>
+          </button>
+        </div>
+      </section>
 
       {panel === 'start' && (
         <div className="share-panel">
@@ -150,6 +246,16 @@ export default function RaceHomePage({ onOpenScanner }) {
           confirmLabel="Encerrar corrida"
           onConfirm={handleConfirmFinish}
           onCancel={() => setConfirmingFinish(false)}
+        />
+      )}
+
+      {reopenModalOpen && (
+        <ReopenRaceModal
+          race={activeRace}
+          onReopen={async (mode) => {
+            await reopenRace(activeRace.id, mode)
+          }}
+          onClose={() => setReopenModalOpen(false)}
         />
       )}
     </div>

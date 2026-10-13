@@ -76,7 +76,7 @@ function AppContent() {
       />
 
       <main>
-        {tab === 'home' && <RaceHomePage onOpenScanner={() => setTab('scanner')} />}
+        {tab === 'home' && <RaceHomePage onNavigate={setTab} onOpenScanner={() => setTab('scanner')} />}
         {tab === 'races' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={() => setTab('home')} />}

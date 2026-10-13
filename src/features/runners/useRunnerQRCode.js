@@ -13,7 +13,8 @@ export function useRunnerQRCode(runner) {
     setLoading(true)
     try {
       const rawQrDataUrl = await generateRunnerQRCode(runner)
-      const labeledQrDataUrl = await composeQRWithLabel(rawQrDataUrl, runner.name)
+      const subLabel = runner.number ? `Nº ${runner.number}` : null
+      const labeledQrDataUrl = await composeQRWithLabel(rawQrDataUrl, runner.name, subLabel)
       setQrDataUrl(labeledQrDataUrl)
       return labeledQrDataUrl
     } finally {

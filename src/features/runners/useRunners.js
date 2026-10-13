@@ -112,7 +112,8 @@ export function useRunners(raceId) {
 
       await addRunner(runner)
       const rawQrDataUrl = await generateRunnerQRCode(runner)
-      const qrDataUrl = await composeQRWithLabel(rawQrDataUrl, runner.name)
+      const subLabel = runner.number ? `Nº ${runner.number}` : null
+      const qrDataUrl = await composeQRWithLabel(rawQrDataUrl, runner.name, subLabel)
       const result = { runner, qrDataUrl }
       setLastQrCode(result)
       return result

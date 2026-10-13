@@ -24,6 +24,37 @@ export async function updateRaceEndTime(raceId, endTime) {
   await updateDoc(doc(db, COLLECTIONS.races, raceId), { endTime })
 }
 
+/**
+ * Reabre uma corrida que foi encerrada.
+ * @param {string} raceId
+ * @param {'resume'|'compensate'|'reset'} mode
+ *   - 'resume': continua como se nunca tivesse sido parada (mantém startTime original)
+ *   - 'compensate': desconta o intervalo em que esteve parada (ajusta startTime)
+ *   - 'reset': zera o tempo e relarga neste instante
+ */
+export async function reopenRace(raceId, mode = 'resume') {
+  const snap = await getDoc(doc(db, COLLECTIONS.races, raceId))
+  if (!snap.exists()) throw new Error('RACE_NOT_FOUND')
+  const current = snap.data()
+
+  const now = Date.now()
+  let newStartTime = current.startTime
+
+  if (mode === 'reset') {
+    newStartTime = new Date(now).toISOString()
+  } else if (mode === 'compensate' && current.endTime && current.startTime) {
+    const endMs = Date.parse(current.endTime)
+    const pausedMs = Math.max(0, now - endMs)
+    const originalStartMs = Date.parse(current.startTime)
+    newStartTime = new Date(originalStartMs + pausedMs).toISOString()
+  }
+
+  await updateDoc(doc(db, COLLECTIONS.races, raceId), {
+    startTime: newStartTime,
+    endTime: null
+  })
+}
+
 
 /**
  * @param {string} raceId

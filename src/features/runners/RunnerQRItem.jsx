@@ -98,21 +98,29 @@ export default function RunnerQRItem({
       : [])
   ]
 
+  const handleCardClick = (e) => {
+    if (e.target.closest('.runner-actions-wrap') || e.target.closest('.runner-qr-preview')) {
+      return
+    }
+    handleToggleView()
+  }
+
   return (
-    <li className="runner-qr-item">
+    <li
+      className={`runner-qr-item ${showPreview ? 'preview-open' : ''}`}
+      onClick={handleCardClick}
+      title="Clique para ver o QR Code deste corredor"
+    >
       <div className="runner-item-header">
         <div className="runner-info">
           <div className="runner-name-row">
             <strong className="runner-name">{runner.name}</strong>
-            <button
-              type="button"
-              className={`runner-number-badge clickable ${!runner.number ? 'empty' : ''}`}
-              onClick={handleToggleView}
-              title="Clique para ver o QR Code deste corredor"
-              aria-label={`Ver QR Code do corredor ${runner.name}, número ${runner.number || 'sem número'}`}
+            <span
+              className={`runner-number-badge ${!runner.number ? 'empty' : ''}`}
+              aria-label={`Número ${runner.number || 'sem número'}`}
             >
               Nº {runner.number || '—'}
-            </button>
+            </span>
           </div>
           <div className="runner-meta-row">
             <span className="runner-id-tag">ID: {runner.id}</span>
@@ -124,7 +132,7 @@ export default function RunnerQRItem({
           </div>
         </div>
 
-        <div className="runner-actions-wrap">
+        <div className="runner-actions-wrap" onClick={e => e.stopPropagation()}>
           <ActionsMenu items={menuItems} />
         </div>
       </div>
@@ -142,7 +150,11 @@ export default function RunnerQRItem({
               ✕
             </button>
           </div>
-          <img src={qrDataUrl} alt={`QR de ${runner.name}`} style={{ width: 140, height: 140 }} />
+          <img src={qrDataUrl} alt={`QR de ${runner.name}`} style={{ width: 160, height: 'auto', maxHeight: 210 }} />
+          <div className="runner-qr-preview-caption">
+            <span className="runner-qr-preview-name">{runner.name}</span>
+            <span className="runner-qr-preview-number">Nº {runner.number || '—'}</span>
+          </div>
           <div className="runner-qr-preview-actions">
             {btSupported && (
               <button
