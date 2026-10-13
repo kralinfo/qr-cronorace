@@ -178,6 +178,13 @@ export default function RunnersPage() {
   }
 
   const handlePrintCreatedBt = async (qrDataUrl, runner, raceName) => {
+    if (!isBluetoothSupported()) {
+      alert(
+        '⚠️ A conexão direta via Bluetooth exige conexão segura HTTPS ou navegador compatível (ex: Chrome no Android).\n\n' +
+        'Como você está acessando sem suporte ao Web Bluetooth direto, utilize o botão "📄 Cupom Sistema". Ela abre o diálogo de impressão do celular e imprime diretamente na sua mini impressora térmica instalada.'
+      )
+      return
+    }
     setPrintingBt(true)
     try {
       await printRunnerToBluetooth(qrDataUrl, runner, raceName)
@@ -274,16 +281,14 @@ export default function RunnersPage() {
           </div>
 
           <div className="runners-controls-actions">
-            {btSupported && (
-              <button
-                type="button"
-                className={`printer-status-toggle-btn ${printerStatus.connected ? 'connected' : ''}`}
-                onClick={() => setPrinterModalOpen(true)}
-                title="Configurar impressora térmica Bluetooth"
-              >
-                {printerStatus.connected ? `🟢 ${printerStatus.deviceName}` : '🖨️ Conectar Térmica'}
-              </button>
-            )}
+            <button
+              type="button"
+              className={`printer-status-toggle-btn ${printerStatus.connected ? 'connected' : ''}`}
+              onClick={() => setPrinterModalOpen(true)}
+              title="Configurar impressora térmica Bluetooth"
+            >
+              {printerStatus.connected ? `🟢 ${printerStatus.deviceName}` : '🖨️ Conectar Térmica'}
+            </button>
 
             <button
               type="button"
@@ -293,7 +298,7 @@ export default function RunnersPage() {
                 clearError()
               }}
             >
-              {showCreateForm ? '✕ Fechar cadastro' : '+ Cadastrar corredor'}
+              {showCreateForm ? 'Fechar cadastro' : '+ Cadastrar corredor'}
             </button>
           </div>
         </div>
@@ -338,7 +343,7 @@ export default function RunnersPage() {
                 clearError()
               }}
             >
-              Fechar ✕
+              Fechar
             </button>
           </div>
 
@@ -426,20 +431,18 @@ export default function RunnersPage() {
                 style={{ width: 180, height: 180 }}
               />
               <div className="created-qr-actions">
-                {btSupported && (
-                  <button
-                    type="button"
-                    className="print-btn"
-                    onClick={() => handlePrintCreatedBt(
-                      lastQrCode.qrDataUrl,
-                      lastQrCode.runner,
-                      racesMap[lastQrCode.runner.raceId]?.name
-                    )}
-                    disabled={printingBt}
-                  >
-                    {printingBt ? 'Enviando...' : '🖨️ Imprimir Térmica'}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="print-btn"
+                  onClick={() => handlePrintCreatedBt(
+                    lastQrCode.qrDataUrl,
+                    lastQrCode.runner,
+                    racesMap[lastQrCode.runner.raceId]?.name
+                  )}
+                  disabled={printingBt}
+                >
+                  {printingBt ? 'Enviando...' : '🖨️ Imprimir Térmica'}
+                </button>
                 <button
                   type="button"
                   className="secondary-btn"

@@ -98,7 +98,7 @@ export async function deleteRunner(id) {
  */
 export async function getRunnersByRace(raceId) {
   const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
-  return snap.docs.map(d => d.data())
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /**
@@ -107,13 +107,13 @@ export async function getRunnersByRace(raceId) {
  */
 export async function getAllRunners() {
   const snap = await getDocs(collection(db, COLLECTIONS.runners))
-  return snap.docs.map(d => d.data())
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /** @param {string} id @returns {Promise<import('./runners.types.js').Runner | undefined>} */
 export async function getRunnerById(id) {
   const snap = await getDoc(doc(db, COLLECTIONS.runners, id))
-  return snap.exists() ? snap.data() : undefined
+  return snap.exists() ? { id: snap.id, ...snap.data() } : undefined
 }
 
 /**
@@ -126,7 +126,7 @@ export async function getRunnerById(id) {
 export function subscribeToRunnersByRace(raceId, onChange) {
   const q = query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId))
   return onSnapshot(q, (snap) => {
-    onChange(snap.docs.map(d => d.data()))
+    onChange(snap.docs.map(d => ({ id: d.id, ...d.data() })))
   })
 }
 
@@ -138,7 +138,7 @@ export function subscribeToRunnersByRace(raceId, onChange) {
 export function subscribeToAllRunners(onChange) {
   const q = collection(db, COLLECTIONS.runners)
   return onSnapshot(q, (snap) => {
-    onChange(snap.docs.map(d => d.data()))
+    onChange(snap.docs.map(d => ({ id: d.id, ...d.data() })))
   })
 }
 
@@ -153,7 +153,7 @@ export async function findRunnerInRaceByNumber(raceId, runnerNumber) {
 
   const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
   const foundDoc = snap.docs.find(d => normalizeComparable(d.data().number) === normalizedNumber)
-  return foundDoc ? foundDoc.data() : undefined
+  return foundDoc ? { id: foundDoc.id, ...foundDoc.data() } : undefined
 }
 
 /**
@@ -167,7 +167,7 @@ export async function findRunnerInRaceByName(raceId, runnerName) {
 
   const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
   const foundDoc = snap.docs.find(d => normalizeComparable(d.data().name) === normalizedName)
-  return foundDoc ? foundDoc.data() : undefined
+  return foundDoc ? { id: foundDoc.id, ...foundDoc.data() } : undefined
 }
 
 /**
@@ -181,7 +181,7 @@ export async function findRunnerInRaceByCpf(raceId, runnerCpf) {
 
   const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
   const foundDoc = snap.docs.find(d => normalizeCpf(d.data().cpf) === normalizedTargetCpf)
-  return foundDoc ? foundDoc.data() : undefined
+  return foundDoc ? { id: foundDoc.id, ...foundDoc.data() } : undefined
 }
 
 /**

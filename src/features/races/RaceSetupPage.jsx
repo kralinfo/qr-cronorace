@@ -108,7 +108,16 @@ export default function RaceSetupPage({ onRaceSelected }) {
           <ul>
             {visibleRaces.map(race => (
               <li key={race.id}>
-                <div className="race-row">
+                <div
+                  className="race-row clickable"
+                  onClick={(e) => {
+                    if (e.target.closest('.race-row-actions') || e.target.closest('.share-panel')) {
+                      return
+                    }
+                    handleSelectRace(race)
+                  }}
+                  title={`Clique para entrar na corrida "${race.name}"`}
+                >
                   <div className="race-row-info">
                     <strong className="race-row-name">{race.name}</strong>
                     <div className="race-row-meta">
@@ -121,7 +130,7 @@ export default function RaceSetupPage({ onRaceSelected }) {
                       {race.id === activeRace?.id ? <span className="race-current-badge">Visualizando</span> : null}
                     </div>
                   </div>
-                  <div className="race-row-actions">
+                  <div className="race-row-actions" onClick={e => e.stopPropagation()}>
                     <ActionsMenu items={[
                       { label: 'Entrar', onClick: () => handleSelectRace(race) },
                       { label: 'Editar', onClick: () => toggleEdit(race.id) },

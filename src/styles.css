@@ -368,18 +368,34 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.race-row.clickable {
+  cursor: pointer;
+}
+
+.race-row.clickable:hover {
+  background: #f8fafc;
 }
 
 .race-row-info {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
 }
 
 .race-row-name {
   display: block;
   font-size: 1rem;
   line-height: 1.25;
+  transition: color 0.15s ease;
+}
+
+.race-row.clickable:hover .race-row-name {
+  color: #1565c0;
 }
 
 .race-row-meta {
@@ -1450,6 +1466,13 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   font-size: 0.8rem;
   font-weight: 600;
   border: 1px solid #e2e8f0;
+}
+
+.runner-cpf-tag.empty {
+  color: #94a3b8;
+  font-weight: 500;
+  font-style: italic;
+  border-style: dashed;
 }
 
 .runner-race-badge {

@@ -47,6 +47,13 @@ export default function RunnerQRItem({
   }
 
   const handlePrintBluetooth = async () => {
+    if (!isBluetoothSupported()) {
+      alert(
+        '⚠️ A conexão direta via Bluetooth exige conexão segura HTTPS ou navegador compatível (ex: Chrome no Android).\n\n' +
+        'Como você está acessando sem suporte ao Web Bluetooth direto, utilize o botão "📄 Cupom Sistema" ou "📄 Imprimir Cupom (Sistema)". Ela abre o diálogo de impressão do celular e imprime diretamente na sua mini impressora térmica instalada.'
+      )
+      return
+    }
     setPrintingBt(true)
     try {
       const dataUrl = await ensureQRCode()
@@ -70,12 +77,10 @@ export default function RunnerQRItem({
       label: showPreview ? 'Ocultar QR Code' : 'Ver QR Code',
       onClick: handleToggleView
     },
-    ...(btSupported
-      ? [{
-        label: printingBt ? 'Enviando p/ Térmica...' : '🖨️ Imprimir Térmica (Bluetooth)',
-        onClick: handlePrintBluetooth
-      }]
-      : []),
+    {
+      label: printingBt ? 'Enviando p/ Térmica...' : '🖨️ Imprimir Térmica (Bluetooth)',
+      onClick: handlePrintBluetooth
+    },
     {
       label: '📄 Imprimir Cupom (58mm / Sistema)',
       onClick: handlePrintStandard
@@ -123,8 +128,11 @@ export default function RunnerQRItem({
             </span>
           </div>
           <div className="runner-meta-row">
-            <span className="runner-id-tag">ID: {runner.id}</span>
-            {runner.cpf && <span className="runner-cpf-tag">CPF: {runner.cpf}</span>}
+            {runner.cpf ? (
+              <span className="runner-cpf-tag">CPF: {runner.cpf}</span>
+            ) : (
+              <span className="runner-cpf-tag empty">Sem CPF</span>
+            )}
             {raceName && (
               <span className={`runner-race-badge ${highlightRaceBadge ? 'highlight' : ''}`}>
                 🏁 {raceName}
@@ -157,16 +165,14 @@ export default function RunnerQRItem({
             <span className="runner-qr-preview-number">Nº {runner.number || '—'}</span>
           </div>
           <div className="runner-qr-preview-actions">
-            {btSupported && (
-              <button
-                type="button"
-                className="print-btn"
-                onClick={handlePrintBluetooth}
-                disabled={loading || printingBt}
-              >
-                {printingBt ? 'Enviando...' : '🖨️ Térmica Bluetooth'}
-              </button>
-            )}
+            <button
+              type="button"
+              className="print-btn"
+              onClick={handlePrintBluetooth}
+              disabled={loading || printingBt}
+            >
+              {printingBt ? 'Enviando...' : '🖨️ Térmica Bluetooth'}
+            </button>
             <button type="button" onClick={handlePrintStandard} disabled={loading}>
               📄 Cupom Sistema
             </button>

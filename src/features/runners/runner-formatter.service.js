@@ -59,7 +59,8 @@ export function maskCpf(rawCpf) {
 }
 
 /**
- * Valida o CPF conforme as regras oficiais brasileiras.
+ * Valida o preenchimento do CPF do corredor.
+ * Garante que foram informados os 11 dígitos necessários para formatação e controle de duplicidade.
  * @param {string|null|undefined} rawCpf
  * @returns {{ valid: boolean, message?: string }}
  */
@@ -69,32 +70,8 @@ export function validateCpf(rawCpf) {
     return { valid: false, message: 'Informe o CPF do corredor.' }
   }
   if (digits.length !== 11) {
-    return { valid: false, message: 'O CPF deve conter exatamente 11 dígitos.' }
+    return { valid: false, message: 'O CPF deve conter exatamente 11 números.' }
   }
-  if (/^(\d)\1{10}$/.test(digits)) {
-    return { valid: false, message: 'CPF inválido (todos os dígitos são iguais).' }
-  }
-
-  let sum = 0
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(digits.charAt(i), 10) * (10 - i)
-  }
-  let remainder = (sum * 10) % 11
-  if (remainder === 10 || remainder === 11) remainder = 0
-  if (remainder !== parseInt(digits.charAt(9), 10)) {
-    return { valid: false, message: 'CPF inválido. Verifique os números digitados.' }
-  }
-
-  sum = 0
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(digits.charAt(i), 10) * (11 - i)
-  }
-  remainder = (sum * 10) % 11
-  if (remainder === 10 || remainder === 11) remainder = 0
-  if (remainder !== parseInt(digits.charAt(10), 10)) {
-    return { valid: false, message: 'CPF inválido. Verifique os números digitados.' }
-  }
-
   return { valid: true }
 }
 

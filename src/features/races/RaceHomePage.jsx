@@ -197,7 +197,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
       {panel === 'start' && (
         <div className="share-panel">
-          <button className="close-panel-btn" onClick={closePanel}>Fechar ✕</button>
+          <button className="close-panel-btn" onClick={closePanel}>Fechar</button>
           <StartTimeField race={activeRace} onSave={setStartTime} />
         </div>
       )}
@@ -210,7 +210,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
       {panel === 'register-link' && (
         <div className="share-panel">
-          <button className="close-panel-btn" onClick={closePanel}>Fechar ✕</button>
+          <button className="close-panel-btn" onClick={closePanel}>Fechar</button>
           <h3 style={{ margin: '0 0 12px', fontSize: '1.1rem' }}>Compartilhar Inscrição de Corredores</h3>
 
           <div style={{ marginBottom: '16px' }}>
@@ -234,7 +234,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
       {panel === 'ranking-link' && (
         <div className="share-panel">
-          <button className="close-panel-btn" onClick={closePanel}>Fechar ✕</button>
+          <button className="close-panel-btn" onClick={closePanel}>Fechar</button>
           <p>Compartilhe este link para acompanhar a classificação em tempo real (ex: numa TV/telão):</p>
           <CopyableField label="Link do ranking" value={buildRankingLink(activeRace.id)} />
         </div>

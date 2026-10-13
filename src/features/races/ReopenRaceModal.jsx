@@ -48,7 +48,7 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
             <p className="reopen-detected-title">⏱️ Parada detectada:</p>
             <ul>
               <li><strong>Largada original:</strong> {race.startTime ? formatDateTimeBR(race.startTime) : '—'}</li>
-              <li><strong>Encerramento acidental:</strong> {race.endTime ? formatDateTimeBR(race.endTime) : '—'}</li>
+              <li><strong>Hora do encerramento:</strong> {race.endTime ? formatDateTimeBR(race.endTime) : '—'}</li>
               <li><strong>Tempo que a corrida esteve parada:</strong> {pausedText}</li>
             </ul>
           </div>

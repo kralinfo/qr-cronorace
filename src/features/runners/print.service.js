@@ -91,7 +91,7 @@ export function printRunnerQRCode(qrDataUrl, runner, raceName) {
         <div class="receipt-name">${escapeHtml(runner.name)}</div>
         ${numberHtml}
         <img class="receipt-qr" src="${qrDataUrl}" alt="QR" />
-        <div class="receipt-id">ID: ${escapeHtml(runner.id)}</div>
+        <div class="receipt-id">${runner.cpf ? `CPF: ${escapeHtml(runner.cpf)}` : `ID: ${escapeHtml(runner.id)}`}</div>
         <div class="receipt-footer">PWA QR Timing</div>
       </body>
     </html>

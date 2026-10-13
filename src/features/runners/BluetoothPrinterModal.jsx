@@ -83,11 +83,16 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
         <div className="printer-modal-body">
           {!supported ? (
             <div className="printer-unsupported-box">
-              <p>⚠️ <strong>Web Bluetooth não suportado neste navegador.</strong></p>
-              <p>Para conectar diretamente via Bluetooth BLE, use o <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong> no Android ou Computador.</p>
-              <p className="printer-tip">
-                <em>Dica:</em> Você ainda pode imprimir normalmente através da opção <strong>"Imprimir Cupom 58mm"</strong> no diálogo de impressão do sistema.
+              <p>⚠️ <strong>Conexão direta Web Bluetooth indisponível neste navegador ou endereço.</strong></p>
+              <p>
+                Os navegadores exigem <strong>conexão segura HTTPS</strong> (ex: <code>https://...</code>) e o navegador <strong>Google Chrome</strong> no Android para liberar a busca direta por dispositivos Bluetooth BLE.
               </p>
+              <div style={{ marginTop: '10px', padding: '10px', background: '#e3f2fd', borderRadius: '8px', color: '#0d47a1', fontSize: '0.9rem' }}>
+                <strong>💡 Como imprimir pelo celular agora:</strong>
+                <p style={{ margin: '6px 0 0' }}>
+                  Utilize o botão <strong>"📄 Imprimir Cupom Sistema"</strong>. Ele abre o diálogo de impressão nativo do celular/Android e envia o cupom diretamente para a sua mini impressora térmica pareada.
+                </p>
+              </div>
             </div>
           ) : (
             <>

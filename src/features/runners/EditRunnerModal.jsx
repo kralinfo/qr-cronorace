@@ -81,7 +81,9 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
         <div className="runner-history-header">
           <div>
             <h2>Editar Corredor</h2>
-            <p className="runner-history-subtitle">ID: <strong>{runner.id}</strong></p>
+            {runner.cpf ? (
+              <p className="runner-history-subtitle">CPF: <strong>{runner.cpf}</strong></p>
+            ) : null}
           </div>
           <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar">✕</button>
         </div>

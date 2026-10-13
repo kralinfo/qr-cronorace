@@ -166,7 +166,7 @@ export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName) {
   commands.push(qrBitmapBytes)
 
   // 8. Identificador e rodapé
-  commands.push(textToBytes(`\nID: ${runner.id}\n`))
+  commands.push(textToBytes(`\n${runner.cpf ? `CPF: ${runner.cpf}` : `ID: ${runner.id}`}\n`))
   commands.push(textToBytes('--------------------------------\n'))
   commands.push(textToBytes('PWA QR Timing\n'))
 
