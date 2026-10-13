@@ -1,4 +1,5 @@
 // Responsabilidade única: gerar comandos ESC/POS e converter imagens (QR code) em bitmaps monocromáticos para impressoras térmicas (58mm/80mm).
+import { generateRunnerQRCode } from './qrcode.service.js'
 
 /**
  * Normaliza textos removendo acentos para evitar caracteres corrompidos em impressoras térmicas ESC/POS.
@@ -149,8 +150,9 @@ export async function buildRunnerEscPosReceipt(qrDataUrl, runner) {
   // 4. Espaçamento sutil antes do QR
   commands.push(textToBytes('\n'))
 
-  // 5. QR Code como Bitmap ESC/POS (largura de 256px - ideal para papel de 58mm/80mm)
-  const qrBitmapBytes = await convertImageToEscPosBitmap(qrDataUrl, 256)
+  // 5. QR Code puro como Bitmap ESC/POS (largura de 256px - ideal para papel de 58mm/80mm)
+  const pureQrDataUrl = runner ? await generateRunnerQRCode(runner) : qrDataUrl
+  const qrBitmapBytes = await convertImageToEscPosBitmap(pureQrDataUrl, 256)
   commands.push(qrBitmapBytes)
 
   // 6. Nome do atleta abaixo do QR code - Negrito com altura dupla (ESC ! 0x10)

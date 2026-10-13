@@ -10,7 +10,6 @@ import {
 } from './runners.repository.js'
 import { generateRunnerId } from './runner-id.service.js'
 import { generateRunnerQRCode } from './qrcode.service.js'
-import { composeQRWithLabel } from './qr-label.service.js'
 import {
   capitalizeName,
   formatRunnerNumber,
@@ -132,9 +131,7 @@ export function useRunners(raceId) {
       }
 
       await addRunner(runner)
-      const rawQrDataUrl = await generateRunnerQRCode(runner)
-      const subLabel = runner.number ? `Nº ${runner.number}` : null
-      const qrDataUrl = await composeQRWithLabel(rawQrDataUrl, runner.name, subLabel)
+      const qrDataUrl = await generateRunnerQRCode(runner)
       const result = { runner, qrDataUrl }
       setLastQrCode(result)
       return result
