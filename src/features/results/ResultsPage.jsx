@@ -56,13 +56,12 @@ export default function ResultsPage() {
         </div>
 
         {activeRace && (
-          <p className="results-race-status">
-            {activeRace.endTime
-              ? '■ Corrida encerrada'
-              : activeRace.startTime
-                ? '● Corrida em andamento'
-                : '○ Corrida ainda não iniciada'}
-          </p>
+          <div className="results-race-status-wrap">
+            <span className={`race-status-pill ${activeRace.endTime ? 'finished' : activeRace.startTime ? 'running' : 'pending'}`}>
+              {activeRace.startTime && !activeRace.endTime && <span className="status-dot green" />}
+              {activeRace.endTime ? 'Corrida encerrada' : activeRace.startTime ? 'Corrida em andamento' : 'Corrida ainda não iniciada'}
+            </span>
+          </div>
         )}
 
         <p className="results-progress-meta">

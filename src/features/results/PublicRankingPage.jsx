@@ -88,11 +88,11 @@ export default function PublicRankingPage() {
         <div className="public-ranking-header-right">
           <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
           {race?.endTime ? (
-            <span className="live-badge finished">■ Encerrada</span>
+            <span className="live-badge finished">Encerrada</span>
           ) : race?.startTime ? (
-            <span className="live-badge">● Ao vivo</span>
+            <span className="live-badge"><span className="status-dot green" /> Ao vivo</span>
           ) : (
-            <span className="live-badge pending">○ Aguardando largada</span>
+            <span className="live-badge pending">Aguardando largada</span>
           )}
         </div>
       </header>

@@ -67,13 +67,13 @@ export default function ScannerPage({ onBack }) {
 
       {!isStarted && (
         <div className="scanner-race-not-started-banner">
-          <span>⚠️ <strong>Corrida Não Iniciada</strong>. Dê a largada na tela inicial para liberar a marcação de chegadas.</span>
+          <span><strong>Corrida Não Iniciada</strong>. Dê a largada na tela inicial para liberar a marcação de chegadas.</span>
         </div>
       )}
 
       {isFinished && (
         <div className="scanner-race-finished-banner">
-          <span>⛔ <strong>Corrida Encerrada</strong> às {new Date(activeRace.endTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Leituras bloqueadas.</span>
+          <span><strong>Corrida Encerrada</strong> às {new Date(activeRace.endTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Leituras bloqueadas.</span>
         </div>
       )}
 
@@ -101,13 +101,13 @@ export default function ScannerPage({ onBack }) {
           disabled={!isStarted || isFinished}
           title={!isStarted ? 'Corrida ainda não iniciada' : isFinished ? 'Corrida encerrada' : undefined}
         >
-          ✍️ Registrar chegada manualmente
+          Registrar chegada manualmente
         </button>
       </div>
 
       {manualError && (
         <section className="scan-result not-found race-finished-result">
-          <h3>⛔ Ação Bloqueada</h3>
+          <h3>Ação Bloqueada</h3>
           <p>{manualError}</p>
         </section>
       )}
@@ -146,7 +146,7 @@ export default function ScannerPage({ onBack }) {
 
       {status === 'race-finished' && (
         <section className="scan-result not-found race-finished-result">
-          <h3>⛔ Leitura Bloqueada: Corrida Encerrada</h3>
+          <h3>Leitura Bloqueada: Corrida Encerrada</h3>
           <p>{message}</p>
           {rejectedScan && (
             <p className="scan-rejected-runner">

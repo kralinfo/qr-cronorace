@@ -40,9 +40,9 @@ export default function ManualArrivalForm({ runners, isStarted = true, isFinishe
     <form className="manual-arrival-form" onSubmit={handleSubmit}>
       <h3>Registrar chegada manualmente</h3>
       {!isStarted ? (
-        <p className="error">⚠️ Esta corrida ainda não foi iniciada. O registro manual de chegadas está bloqueado.</p>
+        <p className="error">Esta corrida ainda não foi iniciada. O registro manual de chegadas está bloqueado.</p>
       ) : isFinished ? (
-        <p className="error">⛔ Esta corrida já foi encerrada. O registro manual está bloqueado.</p>
+        <p className="error">Esta corrida já foi encerrada. O registro manual está bloqueado.</p>
       ) : (
         <p>Use esta opção quando não for possível ler o QR code do corredor.</p>
       )}

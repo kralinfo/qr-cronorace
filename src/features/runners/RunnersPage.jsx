@@ -18,6 +18,15 @@ import {
   printRunnerToBluetooth,
   subscribePrinterStatus
 } from './bluetooth-printer.service.js'
+import {
+  IconSearch,
+  IconClose,
+  IconPrinter,
+  IconReceipt,
+  IconDownload,
+  IconBluetooth,
+  IconCheck
+} from '../../shared/Icons.jsx'
 
 const PAGE_SIZE = 35
 
@@ -263,17 +272,17 @@ export default function RunnersPage() {
             >
               {activeRace && (
                 <option value={activeRace.id}>
-                  ⭐ {activeRace.name} (Corrida ativa no app)
+                  {activeRace.name} (Corrida ativa)
                 </option>
               )}
               {races
                 .filter(r => r.id !== activeRace?.id)
                 .map(r => (
                   <option key={r.id} value={r.id}>
-                    🏁 {r.name} {r.eventDate ? `(${formatDateOnlyBR(r.eventDate)})` : ''}
+                    {r.name} {r.eventDate ? `(${formatDateOnlyBR(r.eventDate)})` : ''}
                   </option>
                 ))}
-              <option value="ALL">🌐 Todas as corridas (Histórico geral)</option>
+              <option value="ALL">Todas as corridas (Histórico geral)</option>
             </select>
           </div>
 
@@ -284,7 +293,17 @@ export default function RunnersPage() {
               onClick={() => setPrinterModalOpen(true)}
               title="Configurar impressora térmica Bluetooth"
             >
-              {printerStatus.connected ? `🟢 ${printerStatus.deviceName}` : '🖨️ Conectar Térmica'}
+              {printerStatus.connected ? (
+                <>
+                  <span className="status-dot green" />
+                  <span>{printerStatus.deviceName}</span>
+                </>
+              ) : (
+                <>
+                  <IconBluetooth size={16} />
+                  <span>Conectar Térmica</span>
+                </>
+              )}
             </button>
 
             <button
@@ -302,7 +321,7 @@ export default function RunnersPage() {
 
         {/* Campo de pesquisa por Nome ou Número */}
         <div className="runners-search-bar">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><IconSearch size={18} /></span>
           <input
             type="text"
             className="runners-search-input"
@@ -321,7 +340,7 @@ export default function RunnersPage() {
               onClick={() => setSearch('')}
               aria-label="Limpar busca"
             >
-              ✕
+              <IconClose size={14} />
             </button>
           )}
         </div>
@@ -408,13 +427,15 @@ export default function RunnersPage() {
 
           {runnerError && (
             <div className="runner-error-box">
-              <p>⚠️ {runnerError}</p>
+              <p>{runnerError}</p>
             </div>
           )}
 
           {lastQrCode && (
             <div className="qr-preview created-success-box">
-              <div className="success-badge">✅ Corredor cadastrado com sucesso!</div>
+              <div className="success-badge">
+                <IconCheck size={16} /> Corredor cadastrado com sucesso!
+              </div>
               <p>
                 QR gerado para <strong>{lastQrCode.runner.name}</strong>
                 {lastQrCode.runner.number ? ` (Nº ${lastQrCode.runner.number})` : ''}
@@ -438,7 +459,7 @@ export default function RunnersPage() {
                   )}
                   disabled={printingBt}
                 >
-                  {printingBt ? 'Enviando...' : '🖨️ Imprimir Térmica'}
+                  <IconPrinter size={15} /> {printingBt ? 'Enviando...' : 'Imprimir Térmica'}
                 </button>
                 <button
                   type="button"
@@ -449,14 +470,14 @@ export default function RunnersPage() {
                     racesMap[lastQrCode.runner.raceId]?.name
                   )}
                 >
-                  📄 Cupom Sistema
+                  <IconReceipt size={15} /> Cupom Sistema
                 </button>
                 <a
                   className="secondary-btn"
                   href={lastQrCode.qrDataUrl}
                   download={buildQRFilename(lastQrCode.runner)}
                 >
-                  📥 Baixar PNG
+                  <IconDownload size={15} /> Baixar PNG
                 </a>
               </div>
             </div>
@@ -544,7 +565,7 @@ export default function RunnersPage() {
               </div>
             ) : filteredRunners.length > PAGE_SIZE ? (
               <p className="runners-all-loaded-text">
-                ✓ Todos os {filteredRunners.length} corredores foram carregados.
+                Todos os {filteredRunners.length} corredores foram carregados.
               </p>
             ) : null}
           </>

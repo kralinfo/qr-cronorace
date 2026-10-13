@@ -8,6 +8,7 @@ import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import AppMenu from './shared/AppMenu.jsx'
+import { IconMenu } from './shared/Icons.jsx'
 
 /** @returns {boolean} true quando a URL atual pede a tela pública de cadastro (link compartilhado) */
 function isPublicRegisterRequest() {
@@ -38,7 +39,7 @@ function AppContent() {
     return (
       <div className="app">
         <header className="app-header">
-          <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
+          <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><IconMenu size={20} /></button>
           <h1>{TAB_TITLES[tab] || 'PWA QR Timing'}</h1>
         </header>
         <AppMenu
@@ -62,7 +63,7 @@ function AppContent() {
   return (
     <div className="app">
       <header className="app-header">
-        <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">☰</button>
+        <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><IconMenu size={20} /></button>
         <h1>{TAB_TITLES[tab]}</h1>
       </header>
 

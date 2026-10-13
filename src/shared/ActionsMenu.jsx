@@ -1,5 +1,6 @@
-// UI only: menu de ações em dropdown (acionado pelo ícone "⋮"), para listas com múltiplas ações por item.
+// UI only: menu de ações em dropdown estilo Apple (iOS context menu)
 import React, { useEffect, useRef, useState } from 'react'
+import { IconEllipsis } from './Icons.jsx'
 
 /** @param {{ items: Array<{ label: string, onClick: () => void, danger?: boolean }> }} props */
 export default function ActionsMenu({ items }) {
@@ -26,11 +27,11 @@ export default function ActionsMenu({ items }) {
     <div className="actions-menu" ref={containerRef}>
       <button
         type="button"
-        className="actions-menu-trigger"
+        className={`actions-menu-trigger ${open ? 'active' : ''}`}
         onClick={() => setOpen(prev => !prev)}
         aria-label="Mais opções"
       >
-        ⋮
+        <IconEllipsis size={18} />
       </button>
       {open && (
         <div className="actions-menu-dropdown">

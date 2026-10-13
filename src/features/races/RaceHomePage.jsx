@@ -14,6 +14,17 @@ import CopyableField from './CopyableField.jsx'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import ReopenRaceModal from './ReopenRaceModal.jsx'
+import {
+  IconRunner,
+  IconScanner,
+  IconTrophy,
+  IconTV,
+  IconEditDoc,
+  IconFlag,
+  IconChevronRight,
+  IconRefresh,
+  IconPlay
+} from '../../shared/Icons.jsx'
 
 /** @param {{ onNavigate?: (tab: string) => void, onOpenScanner?: () => void }} props */
 export default function RaceHomePage({ onNavigate, onOpenScanner }) {
@@ -57,7 +68,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           </div>
           <ActionsMenu items={[
             ...(activeRace.endTime
-              ? [{ label: '🔄 Reabrir corrida', onClick: () => setReopenModalOpen(true) }]
+              ? [{ label: 'Reabrir corrida', onClick: () => setReopenModalOpen(true) }]
               : []),
             ...(activeRace.startTime
               ? [{ label: 'Editar largada', onClick: () => setPanel('start') }]
@@ -72,10 +83,9 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
         {activeRace.endTime ? (
           <div className="race-home-status finished">
+            <span className="race-status-pill finished">Encerrada</span>
             <span className="race-home-label">
-              Largada às {new Date(activeRace.startTime).toLocaleString('pt-BR')}
-              <br />
-              Encerrada às {new Date(activeRace.endTime).toLocaleString('pt-BR')}
+              Largada: {new Date(activeRace.startTime).toLocaleString('pt-BR')} · Fim: {new Date(activeRace.endTime).toLocaleString('pt-BR')}
             </span>
             <RaceChronometer startTime={activeRace.startTime} endTime={activeRace.endTime} className="race-home-chronometer" />
             <p className="race-home-meta">
@@ -87,12 +97,15 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
               className="primary-btn reopen-race-btn"
               onClick={() => setReopenModalOpen(true)}
             >
-              🔄 Reabrir corrida
+              <IconRefresh size={16} /> Reabrir corrida
             </button>
           </div>
         ) : activeRace.startTime ? (
           <>
             <div className="race-home-status running">
+              <span className="race-status-pill running">
+                <span className="status-dot green" /> Em andamento
+              </span>
               <span className="race-home-label">Largada às {new Date(activeRace.startTime).toLocaleString('pt-BR')}</span>
               <RaceChronometer startTime={activeRace.startTime} className="race-home-chronometer" />
               <p className="race-home-meta">
@@ -106,13 +119,16 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
               </button>
             </div>
             <button type="button" className="secondary-btn race-home-scanner-shortcut" onClick={() => onOpenScanner?.()}>
-              📷 Marcar chegada (Scanner)
+              <IconScanner size={18} /> Marcar chegada (Scanner)
             </button>
           </>
         ) : (
           <div className="race-home-status pending">
+            <span className="race-status-pill pending">Aguardando largada</span>
             <span className="race-home-label">Corrida ainda não iniciada</span>
-            <button className="start-now-btn" onClick={handleStartNow}>🏁 Iniciar corrida agora</button>
+            <button className="start-now-btn" onClick={handleStartNow}>
+              <IconPlay size={16} /> Iniciar corrida agora
+            </button>
           </div>
         )}
       </div>
@@ -126,11 +142,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             className="dashboard-card"
             onClick={() => onNavigate?.('runners')}
           >
-            <div className="dashboard-card-icon">🏃</div>
+            <div className="dashboard-card-icon icon-blue">
+              <IconRunner size={20} />
+            </div>
             <div className="dashboard-card-info">
               <strong>Corredores</strong>
+              <span>Lista e QR Codes</span>
             </div>
-            <span className="dashboard-card-arrow">→</span>
+            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
           </button>
 
           <button
@@ -143,12 +162,18 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             disabled={!activeRace.startTime}
             title={!activeRace.startTime ? 'A corrida precisa ser iniciada para marcar chegadas' : 'Marcar chegada de corredores'}
           >
-            <div className="dashboard-card-icon">📷</div>
+            <div className="dashboard-card-icon icon-green">
+              <IconScanner size={20} />
+            </div>
             <div className="dashboard-card-info">
               <strong>Marcar Chegada</strong>
-              {!activeRace.startTime && <span className="dashboard-card-hint">Não iniciada</span>}
+              {!activeRace.startTime ? (
+                <span className="dashboard-card-hint">Não iniciada</span>
+              ) : (
+                <span>Scanner de câmera</span>
+              )}
             </div>
-            <span className="dashboard-card-arrow">→</span>
+            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
           </button>
 
           <button
@@ -156,11 +181,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             className="dashboard-card"
             onClick={() => onNavigate?.('results')}
           >
-            <div className="dashboard-card-icon">🏆</div>
+            <div className="dashboard-card-icon icon-amber">
+              <IconTrophy size={20} />
+            </div>
             <div className="dashboard-card-info">
               <strong>Ranking / Resultados</strong>
+              <span>Classificação geral</span>
             </div>
-            <span className="dashboard-card-arrow">→</span>
+            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
           </button>
 
           <button
@@ -168,11 +196,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             className="dashboard-card"
             onClick={() => setPanel('ranking-link')}
           >
-            <div className="dashboard-card-icon">📺</div>
+            <div className="dashboard-card-icon icon-purple">
+              <IconTV size={20} />
+            </div>
             <div className="dashboard-card-info">
               <strong>Telão TV (Ao Vivo)</strong>
+              <span>Transmissão em tempo real</span>
             </div>
-            <span className="dashboard-card-arrow">→</span>
+            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
           </button>
 
           <button
@@ -180,11 +211,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             className="dashboard-card"
             onClick={() => setPanel('register-link')}
           >
-            <div className="dashboard-card-icon">📝</div>
+            <div className="dashboard-card-icon icon-teal">
+              <IconEditDoc size={20} />
+            </div>
             <div className="dashboard-card-info">
               <strong>Link de Inscrição</strong>
+              <span>Compartilhar com atletas</span>
             </div>
-            <span className="dashboard-card-arrow">→</span>
+            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
           </button>
 
           <button
@@ -192,11 +226,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             className="dashboard-card"
             onClick={() => onNavigate?.('races')}
           >
-            <div className="dashboard-card-icon">🏁</div>
+            <div className="dashboard-card-icon icon-slate">
+              <IconFlag size={20} />
+            </div>
             <div className="dashboard-card-info">
               <strong>Trocar Corrida</strong>
+              <span>Ver todas as provas</span>
             </div>
-            <span className="dashboard-card-arrow">→</span>
+            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
           </button>
         </div>
       </section>
@@ -220,16 +257,16 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           <h3 style={{ margin: '0 0 12px', fontSize: '1.1rem' }}>Compartilhar Inscrição de Corredores</h3>
 
           <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#1565c0' }}>⚡ Link direto (Sem exigir código)</h4>
-            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#546e7a' }}>
+            <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#0071e3', fontWeight: 600 }}>Link direto (Sem exigir código)</h4>
+            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#86868b' }}>
               O atleta clica no link e já entra direto na tela de cadastro desta corrida:
             </p>
             <CopyableField label="Link direto" value={buildRegistrationLink(activeRace.id, true)} />
           </div>
 
-          <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '12px' }}>
-            <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#37474f' }}>🔒 Compartilhar exigindo código</h4>
-            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#546e7a' }}>
+          <div style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)', paddingTop: '12px' }}>
+            <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#1d1d1f', fontWeight: 600 }}>Compartilhar exigindo código</h4>
+            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#86868b' }}>
               O atleta acessa a página e precisa digitar o código da prova para cadastrar:
             </p>
             <CopyableField label="Link" value={buildRegistrationLink(null, false)} />

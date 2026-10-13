@@ -6,6 +6,7 @@ import { downloadDataUrl } from './download.service.js'
 import { buildQRFilename } from './qr-filename.service.js'
 import { isBluetoothSupported, printRunnerToBluetooth } from './bluetooth-printer.service.js'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
+import { IconPrinter, IconReceipt, IconDownload, IconClose } from '../../shared/Icons.jsx'
 
 /**
  * @param {{
@@ -76,11 +77,11 @@ export default function RunnerQRItem({
       onClick: handleToggleView
     },
     {
-      label: printingBt ? 'Enviando p/ Térmica...' : '🖨️ Imprimir Térmica (Bluetooth)',
+      label: printingBt ? 'Enviando p/ Térmica...' : 'Imprimir Térmica (Bluetooth)',
       onClick: handlePrintBluetooth
     },
     {
-      label: '📄 Imprimir Cupom (58mm / Sistema)',
+      label: 'Imprimir Cupom (58mm / Sistema)',
       onClick: handlePrintStandard
     },
     {
@@ -88,7 +89,7 @@ export default function RunnerQRItem({
       onClick: handleDownload
     },
     ...(onEdit
-      ? [{ label: '✏️ Editar corredor', onClick: () => onEdit(runner) }]
+      ? [{ label: 'Editar corredor', onClick: () => onEdit(runner) }]
       : []),
     ...(onShowHistory
       ? [{ label: 'Ver histórico', onClick: () => onShowHistory(runner) }]
@@ -97,7 +98,7 @@ export default function RunnerQRItem({
       ? [{ label: 'Abrir nesta corrida', onClick: () => onSelectRace(runner.raceId) }]
       : []),
     ...(onDelete
-      ? [{ label: '🗑️ Excluir corredor', onClick: () => onDelete(runner), danger: true }]
+      ? [{ label: 'Excluir corredor', onClick: () => onDelete(runner), danger: true }]
       : [])
   ]
 
@@ -133,7 +134,7 @@ export default function RunnerQRItem({
             )}
             {raceName && (
               <span className={`runner-race-badge ${highlightRaceBadge ? 'highlight' : ''}`}>
-                🏁 {raceName}
+                {raceName}
               </span>
             )}
           </div>
@@ -154,7 +155,7 @@ export default function RunnerQRItem({
               onClick={() => setShowPreview(false)}
               aria-label="Fechar visualização"
             >
-              ✕
+              <IconClose size={14} />
             </button>
           </div>
           <img src={qrDataUrl} alt={`QR de ${runner.name}`} style={{ width: 160, height: 'auto', maxHeight: 210 }} />
@@ -169,13 +170,13 @@ export default function RunnerQRItem({
               onClick={handlePrintBluetooth}
               disabled={loading || printingBt}
             >
-              {printingBt ? 'Enviando...' : '🖨️ Térmica Bluetooth'}
+              <IconPrinter size={15} /> {printingBt ? 'Enviando...' : 'Térmica Bluetooth'}
             </button>
             <button type="button" onClick={handlePrintStandard} disabled={loading}>
-              📄 Cupom Sistema
+              <IconReceipt size={15} /> Cupom Sistema
             </button>
             <button type="button" onClick={handleDownload} disabled={loading}>
-              📥 Baixar PNG
+              <IconDownload size={15} /> Baixar PNG
             </button>
           </div>
         </div>
