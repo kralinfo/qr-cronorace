@@ -112,6 +112,41 @@ export default function RunnersPage() {
 
   const selectedRace = selectedRaceId !== 'ALL' ? racesMap[selectedRaceId] : null
 
+  const handleNumberKeyDown = (e) => {
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Home',
+        'End'
+      ].includes(e.key)
+    ) {
+      return
+    }
+    if (e.ctrlKey || e.metaKey) {
+      return
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumberPaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text')
+    const digitsOnly = pasted.replace(/\D/g, '')
+    if (digitsOnly) {
+      setNumber(prev => `${prev}${digitsOnly}`)
+    }
+  }
+
   // Submissão do formulário de cadastro
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -316,9 +351,15 @@ export default function RunnersPage() {
             <label htmlFor="runner-number-input">Número de peito do corredor:</label>
             <input
               id="runner-number-input"
-              placeholder="ex: 104"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
+              placeholder="ex: 104 (apenas números)"
               value={number}
-              onChange={e => setNumber(e.target.value)}
+              onKeyDown={handleNumberKeyDown}
+              onPaste={handleNumberPaste}
+              onChange={e => setNumber(e.target.value.replace(/\D/g, ''))}
               required
             />
 

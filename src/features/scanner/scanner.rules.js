@@ -21,12 +21,60 @@ export function buildArrivalResult(runnerData, raceId, readAt = new Date()) {
  * Verifica se o corredor lido pertence à corrida ativa.
  * Prioriza o raceId embutido no QR; caso ausente (QRs antigos), usa o raceId do cadastro.
  * @param {{ raceId: string|null }} runnerData - dados decodificados do QR.
- * @param {{ raceId: string }|undefined} runnerRecord - corredor encontrado no cadastro (se houver).
- * @param {string} activeRaceId
+ * @param {{ raceId: string }|undefined|null} runnerRecord - corredor encontrado no cadastro (se houver).
+ * @param {string|null|undefined} activeRaceId
  * @returns {boolean}
  */
 export function belongsToActiveRace(runnerData, runnerRecord, activeRaceId) {
   const runnerRaceId = runnerData.raceId ?? runnerRecord?.raceId ?? null
-  return runnerRaceId === activeRaceId
+  return Boolean(activeRaceId && runnerRaceId === activeRaceId)
 }
+
+/**
+ * Verifica se a corrida está encerrada.
+ * @param {{ endTime?: string|null }|undefined|null} race
+ * @returns {boolean}
+ */
+export function isRaceFinished(race) {
+  return Boolean(race?.endTime)
+}
+
+/**
+ * Valida se é permitido registrar a chegada para a corrida e corredor.
+ * @param {{
+ *   race: { id?: string, endTime?: string|null } | undefined | null,
+ *   runnerData: { id: string, raceId: string|null },
+ *   runnerRecord: { raceId: string } | undefined | null,
+ *   activeRaceId: string | null | undefined
+ * }} params
+ * @returns {{ valid: boolean, errorType?: 'race-finished'|'invalid-race'|'error', message?: string }}
+ */
+export function validateArrivalScan({ race, runnerData, runnerRecord, activeRaceId }) {
+  if (isRaceFinished(race)) {
+    return {
+      valid: false,
+      errorType: 'race-finished',
+      message: 'Esta corrida já foi encerrada! Não é permitido registrar novas chegadas.'
+    }
+  }
+
+  if (!activeRaceId) {
+    return {
+      valid: false,
+      errorType: 'error',
+      message: 'Nenhuma corrida ativa selecionada.'
+    }
+  }
+
+  if (!belongsToActiveRace(runnerData, runnerRecord, activeRaceId)) {
+    return {
+      valid: false,
+      errorType: 'invalid-race',
+      message: 'Este corredor está cadastrado em outra corrida. Verifique se ele pertence a esta corrida.'
+    }
+  }
+
+  return { valid: true }
+}
+
 

@@ -1,12 +1,12 @@
-// Responsabilidade única: orquestrar câmera, decodificação de QR e registro da chegada.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import { addResult } from '../results/results.repository.js'
+import { getRaceById } from '../races/races.repository.js'
 import { getRunnerById } from '../runners/runners.repository.js'
 import { decodeRunnerPayload } from '../runners/qrcode.service.js'
-import { buildArrivalResult, belongsToActiveRace } from './scanner.rules.js'
+import { buildArrivalResult, validateArrivalScan } from './scanner.rules.js'
 
-/** @typedef {'idle'|'scanning'|'recorded'|'invalid-race'|'error'} ScanStatus */
+/** @typedef {'idle'|'scanning'|'recorded'|'invalid-race'|'race-finished'|'error'} ScanStatus */
 
 /** Tempo mínimo entre leituras do mesmo QR, para evitar registros repetidos em sequência. */
 const SAME_CODE_COOLDOWN_MS = 4000
@@ -21,16 +21,32 @@ const CAMERA_CONSTRAINTS = {
   advanced: [{ focusMode: 'continuous' }]
 }
 
-/** @param {string} raceId */
-export function useScanner(raceId) {
+/**
+ * @param {string|import('../races/races.types.js').Race|null|undefined} activeRaceOrId
+ */
+export function useScanner(activeRaceOrId) {
+  const activeRace = typeof activeRaceOrId === 'object' && activeRaceOrId !== null ? activeRaceOrId : null
+  const raceId = activeRace?.id ?? (typeof activeRaceOrId === 'string' ? activeRaceOrId : null)
+
   const videoRef = useRef(null)
   const controlsRef = useRef(null)
   const activeRef = useRef(true)
   const lastReadRef = useRef({ text: null, at: 0 })
   const resultTimeoutRef = useRef(null)
+  const activeRaceRef = useRef(activeRace)
+
+  useEffect(() => {
+    activeRaceRef.current = activeRace
+  }, [activeRace])
+
   const [status, setStatus] = useState(/** @type {ScanStatus} */('idle'))
-  const [message, setMessage] = useState('Aponte a câmera para o QR code')
+  const [message, setMessage] = useState(
+    activeRace?.endTime
+      ? 'Corrida encerrada - leituras de chegada bloqueadas'
+      : 'Aponte a câmera para o QR code'
+  )
   const [lastArrival, setLastArrival] = useState(null)
+  const [rejectedScan, setRejectedScan] = useState(null)
 
   const stopScanning = useCallback(() => {
     activeRef.current = false
@@ -91,27 +107,54 @@ export function useScanner(raceId) {
     lastReadRef.current = { text, at: now }
 
     const runnerData = decodeRunnerPayload(text)
-    const runner = await getRunnerById(runnerData.id)
+
+    // Busca o corredor e a versão mais recente da corrida no banco de dados
+    const [runner, currentRaceDoc] = await Promise.all([
+      getRunnerById(runnerData.id),
+      raceId ? getRaceById(raceId) : Promise.resolve(undefined)
+    ])
+
+    const currentRace = currentRaceDoc ?? activeRaceRef.current
 
     if (resultTimeoutRef.current) clearTimeout(resultTimeoutRef.current)
 
-    if (!belongsToActiveRace(runnerData, runner, raceId)) {
-      setStatus('invalid-race')
-      setMessage('Este corredor está cadastrado em outra corrida. Verifique se ele pertence a esta corrida.')
+    // Valida se a corrida não está encerrada e se o corredor pertence à corrida ativa
+    const validation = validateArrivalScan({
+      race: currentRace,
+      runnerData,
+      runnerRecord: runner,
+      activeRaceId: raceId
+    })
+
+    if (!validation.valid) {
+      setStatus(validation.errorType ?? 'error')
+      setMessage(validation.message)
+      setRejectedScan({
+        runnerName: runner?.name ?? runnerData.name ?? null,
+        runnerNumber: runner?.number ?? runnerData.number ?? null,
+        barcode: runnerData.id,
+        reason: validation.message,
+        errorType: validation.errorType
+      })
+
+      // Mantém a crítica visível na tela
+      const timeoutMs = validation.errorType === 'race-finished' ? 4000 : RESULT_DISPLAY_MS
       resultTimeoutRef.current = setTimeout(() => {
         setStatus('scanning')
-        setMessage('Aponte a câmera para o QR code')
-      }, RESULT_DISPLAY_MS)
+        setMessage(currentRace?.endTime ? 'Corrida encerrada - leituras de chegada bloqueadas' : 'Aponte a câmera para o QR code')
+      }, timeoutMs)
       return
     }
 
+    setRejectedScan(null)
     const readAt = new Date()
     const runnerName = runner?.name ?? runnerData.name ?? null
-    const arrivalResult = { ...buildArrivalResult(runnerData, raceId, readAt), runnerName }
+    const runnerNumber = runner?.number ?? runnerData.number ?? null
+    const arrivalResult = { ...buildArrivalResult(runnerData, raceId, readAt), runnerName, runnerNumber }
     await addResult(arrivalResult)
 
     setStatus('recorded')
-    setLastArrival({ ...arrivalResult, name: runnerName })
+    setLastArrival({ ...arrivalResult, name: runnerName, number: runnerNumber })
     setMessage('Chegada registrada!')
     resultTimeoutRef.current = setTimeout(() => {
       setStatus('scanning')
@@ -119,6 +162,6 @@ export function useScanner(raceId) {
     }, RESULT_DISPLAY_MS)
   }, [raceId])
 
-  return { videoRef, status, message, lastArrival }
+  return { videoRef, status, message, lastArrival, rejectedScan }
 }
 

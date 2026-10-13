@@ -58,6 +58,41 @@ function RegisterForm({ race }) {
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
 
+  const handleNumberKeyDown = (e) => {
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Home',
+        'End'
+      ].includes(e.key)
+    ) {
+      return
+    }
+    if (e.ctrlKey || e.metaKey) {
+      return
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumberPaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text')
+    const digitsOnly = pasted.replace(/\D/g, '')
+    if (digitsOnly) {
+      setNumber(prev => `${prev}${digitsOnly}`)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     await createRunner(name, number)
@@ -73,9 +108,15 @@ function RegisterForm({ race }) {
           <h2>Cadastrar corredor</h2>
           <form onSubmit={handleSubmit}>
             <input
-              placeholder="Número do corredor"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
+              placeholder="Número do corredor (apenas números)"
               value={number}
-              onChange={e => setNumber(e.target.value)}
+              onKeyDown={handleNumberKeyDown}
+              onPaste={handleNumberPaste}
+              onChange={e => setNumber(e.target.value.replace(/\D/g, ''))}
               autoFocus
               required
             />

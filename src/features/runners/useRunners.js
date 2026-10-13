@@ -62,6 +62,10 @@ export function useRunners(raceId) {
       setError('Informe o número do corredor.')
       return null
     }
+    if (!/^\d+$/.test(trimmedNumber)) {
+      setError('O número do corredor deve conter apenas números (dígitos).')
+      return null
+    }
     if (!effectiveRaceId) {
       setError('Selecione uma corrida específica para realizar o cadastro.')
       return null
