@@ -1,7 +1,6 @@
-// UI only: exibição do ranking de colocação dos corredores.
 import React, { useState } from 'react'
 import { useResults } from './useResults.js'
-import { formatDateTimeBR } from './date.formatter.js'
+import { formatDateTimeBR, formatTimeOnlyBR } from './date.formatter.js'
 import { formatDuration } from './duration.formatter.js'
 import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
@@ -26,16 +25,25 @@ export default function ResultsPage() {
   placements.forEach((p) => {
     if (!p.barcode || seenArrivalIds.has(p.barcode)) return
     seenArrivalIds.add(p.barcode)
+    const displayTime = p.elapsedMs != null
+      ? formatDuration(p.elapsedMs)
+      : '—'
+    const arrivalTime = formatTimeOnlyBR(p.dateTime)
     rankedArrivals.push({
       position: rankedArrivals.length + 1,
       runner: runnersById[p.barcode] ?? null,
       barcode: p.barcode,
-      name: p.runnerName ?? runnerNameById[p.barcode] ?? '—'
+      name: p.runnerName ?? runnerNameById[p.barcode] ?? '—',
+      displayTime,
+      arrivalTime
     })
   })
   const getRunnerName = (barcode) => runnerNameById[barcode] ?? null
+  const getRunnerNumber = (barcode) => runnersById[barcode]?.number ?? null
 
-  const rankingText = activeRace ? buildRankingText(activeRace.name, placements, getRunnerName) : ''
+  const rankingText = activeRace
+    ? buildRankingText(activeRace.name, placements, getRunnerName, getRunnerNumber)
+    : ''
 
   return (
     <div className="results-page">
@@ -87,7 +95,14 @@ export default function ResultsPage() {
               <ul>
                 {rankedArrivals.map(item => (
                   <li key={`arrived-${item.barcode}`}>
-                    <strong>{item.position}º</strong> · Nº {item.runner?.number ?? '—'} · {item.name}
+                    <div>
+                      <strong>{item.position}º</strong> · Nº {item.runner?.number ?? '—'} · {item.name}
+                    </div>
+                    <div className="ranking-arrived-sub">
+                      <span>Tempo: <strong>{item.displayTime}</strong></span>
+                      {' · '}
+                      <span>Chegada: <strong>{item.arrivalTime}</strong></span>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -121,20 +136,28 @@ export default function ResultsPage() {
             <thead>
               <tr>
                 <th>Pos.</th>
+                <th>Número</th>
                 <th>Nome</th>
-                <th>Id</th>
+                <th>Hora Chegada</th>
                 <th>Tempo</th>
               </tr>
             </thead>
             <tbody>
-              {placements.map(p => (
-                <tr key={`${p.barcode}-${p.position}`}>
-                  <td>{p.position}º</td>
-                  <td>{p.runnerName ?? runnerNameById[p.barcode] ?? '—'}</td>
-                  <td>{p.barcode}</td>
-                  <td>{p.elapsedMs != null ? formatDuration(p.elapsedMs) : formatDateTimeBR(p.dateTime)}</td>
-                </tr>
-              ))}
+              {placements.map(p => {
+                const runner = runnersById[p.barcode]
+                const runnerNumber = runner?.number ?? p.runnerNumber ?? '—'
+                const arrivalTime = formatTimeOnlyBR(p.dateTime)
+                const duration = p.elapsedMs != null ? formatDuration(p.elapsedMs) : '—'
+                return (
+                  <tr key={`${p.barcode}-${p.position}`}>
+                    <td><strong>{p.position}º</strong></td>
+                    <td><span className="results-number-badge">Nº {runnerNumber}</span></td>
+                    <td>{p.runnerName ?? runnerNameById[p.barcode] ?? '—'}</td>
+                    <td className="results-arrival-time">{arrivalTime}</td>
+                    <td><strong>{duration}</strong></td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}

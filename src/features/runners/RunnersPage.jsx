@@ -1,21 +1,37 @@
-// UI only: tela de corredores com busca por nome/corrida, cadastro com seleção de prova,
-// prevenção de duplicatas, reimpressão segura de QR code, menu de ações (⋮) e lazy loading por scroll.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRunners } from './useRunners.js'
 import { useRaces } from '../races/useRaces.js'
 import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 import RunnerQRItem from './RunnerQRItem.jsx'
 import RunnerHistoryModal from './RunnerHistoryModal.jsx'
+import BluetoothPrinterModal from './BluetoothPrinterModal.jsx'
 import { buildQRFilename } from './qr-filename.service.js'
 import { printRunnerQRCode } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
 import { getAllRunners, normalizeComparable } from './runners.repository.js'
+import {
+  getPrinterStatus,
+  isBluetoothSupported,
+  printRunnerToBluetooth,
+  subscribePrinterStatus
+} from './bluetooth-printer.service.js'
 
 const PAGE_SIZE = 35
 
 export default function RunnersPage() {
   const { races } = useRaces()
   const { activeRace } = useActiveRace()
+
+  // Gerenciamento de Impressora Bluetooth
+  const [printerModalOpen, setPrinterModalOpen] = useState(false)
+  const [printerStatus, setPrinterStatus] = useState(getPrinterStatus())
+  const [printingBt, setPrintingBt] = useState(false)
+  const btSupported = isBluetoothSupported()
+
+  useEffect(() => {
+    const unsubscribe = subscribePrinterStatus(setPrinterStatus)
+    return unsubscribe
+  }, [])
 
   // Corrida selecionada para visualização/filtro: 'ALL' ou id da corrida
   const [selectedRaceId, setSelectedRaceId] = useState(activeRace?.id || 'ALL')
@@ -115,6 +131,19 @@ export default function RunnersPage() {
     }
   }
 
+  const handlePrintCreatedBt = async (qrDataUrl, runner, raceName) => {
+    setPrintingBt(true)
+    try {
+      await printRunnerToBluetooth(qrDataUrl, runner, raceName)
+    } catch (err) {
+      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
+        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+      }
+    } finally {
+      setPrintingBt(false)
+    }
+  }
+
   // Filtragem dos corredores com base na busca
   const normalizedSearch = normalizeComparable(search)
   const filteredRunners = useMemo(() => {
@@ -195,16 +224,29 @@ export default function RunnersPage() {
             </select>
           </div>
 
-          <button
-            type="button"
-            className="create-runner-toggle-btn"
-            onClick={() => {
-              setShowCreateForm(prev => !prev)
-              clearError()
-            }}
-          >
-            {showCreateForm ? '✕ Fechar cadastro' : '+ Cadastrar corredor'}
-          </button>
+          <div className="runners-controls-actions">
+            {btSupported && (
+              <button
+                type="button"
+                className={`printer-status-toggle-btn ${printerStatus.connected ? 'connected' : ''}`}
+                onClick={() => setPrinterModalOpen(true)}
+                title="Configurar impressora térmica Bluetooth"
+              >
+                {printerStatus.connected ? `🟢 ${printerStatus.deviceName}` : '🖨️ Conectar Térmica'}
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="create-runner-toggle-btn"
+              onClick={() => {
+                setShowCreateForm(prev => !prev)
+                clearError()
+              }}
+            >
+              {showCreateForm ? '✕ Fechar cadastro' : '+ Cadastrar corredor'}
+            </button>
+          </div>
         </div>
 
         {/* Campo de pesquisa por Nome ou Número */}
@@ -316,6 +358,31 @@ export default function RunnersPage() {
                 style={{ width: 180, height: 180 }}
               />
               <div className="created-qr-actions">
+                {btSupported && (
+                  <button
+                    type="button"
+                    className="print-btn"
+                    onClick={() => handlePrintCreatedBt(
+                      lastQrCode.qrDataUrl,
+                      lastQrCode.runner,
+                      racesMap[lastQrCode.runner.raceId]?.name
+                    )}
+                    disabled={printingBt}
+                  >
+                    {printingBt ? 'Enviando...' : '🖨️ Imprimir Térmica'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => printRunnerQRCode(
+                    lastQrCode.qrDataUrl,
+                    lastQrCode.runner,
+                    racesMap[lastQrCode.runner.raceId]?.name
+                  )}
+                >
+                  📄 Cupom Sistema
+                </button>
                 <a
                   className="secondary-btn"
                   href={lastQrCode.qrDataUrl}
@@ -323,17 +390,6 @@ export default function RunnersPage() {
                 >
                   📥 Baixar PNG
                 </a>
-                <button
-                  type="button"
-                  className="print-btn"
-                  onClick={() => printRunnerQRCode(
-                    lastQrCode.qrDataUrl,
-                    lastQrCode.runner,
-                    racesMap[lastQrCode.runner.raceId]?.name
-                  )}
-                >
-                  🖨️ Imprimir QR Agora
-                </button>
               </div>
             </div>
           )}
@@ -438,6 +494,12 @@ export default function RunnersPage() {
           }}
         />
       )}
+
+      {/* Modal de Gerenciamento da Impressora Bluetooth */}
+      <BluetoothPrinterModal
+        isOpen={printerModalOpen}
+        onClose={() => setPrinterModalOpen(false)}
+      />
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { subscribeToRace } from '../races/races.repository.js'
 import { useResults } from './useResults.js'
 import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
-import { formatDateTimeBR } from './date.formatter.js'
+import { formatDateTimeBR, formatTimeOnlyBR } from './date.formatter.js'
 import { formatDuration } from './duration.formatter.js'
 import RaceChronometer from '../races/RaceChronometer.jsx'
 
@@ -45,12 +45,14 @@ export default function PublicRankingPage() {
     const displayTime = p.elapsedMs != null
       ? formatDuration(p.elapsedMs)
       : formatDateTimeBR(p.dateTime)
+    const arrivalTime = formatTimeOnlyBR(p.dateTime)
     rankedArrivals.push({
       position: rankedArrivals.length + 1,
       runner: runnersById[p.barcode] ?? null,
       barcode: p.barcode,
       name: p.runnerName ?? runnerNameById[p.barcode] ?? '—',
-      displayTime
+      displayTime,
+      arrivalTime
     })
   })
   const showTop10 = runners.length > 50
@@ -125,6 +127,7 @@ export default function PublicRankingPage() {
                   <span>Pos.</span>
                   <span>Número</span>
                   <span>Nome</span>
+                  <span>Chegada</span>
                   <span>Tempo</span>
                 </div>
                 {rankedArrivals.map((item) => (
@@ -132,6 +135,7 @@ export default function PublicRankingPage() {
                     <span>{item.position}º</span>
                     <span>{item.runner?.number ?? '—'}</span>
                     <span>{item.name}</span>
+                    <span className="tv-arrival-time">{item.arrivalTime}</span>
                     <span>{item.displayTime}</span>
                   </div>
                 ))}
@@ -151,7 +155,9 @@ export default function PublicRankingPage() {
               {top10Arrivals.map((item) => (
                 <li key={`top10-${item.barcode}`}>
                   <span className="public-top10-name">{item.name}</span>
-                  <span className="public-top10-extra">Nº {item.runner?.number ?? '—'} · {item.displayTime}</span>
+                  <span className="public-top10-extra">
+                    Nº {item.runner?.number ?? '—'} · {item.displayTime} (Chegada: {item.arrivalTime})
+                  </span>
                 </li>
               ))}
             </ol>

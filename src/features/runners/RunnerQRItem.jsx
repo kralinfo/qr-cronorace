@@ -4,6 +4,7 @@ import { useRunnerQRCode } from './useRunnerQRCode.js'
 import { printRunnerQRCode } from './print.service.js'
 import { downloadDataUrl } from './download.service.js'
 import { buildQRFilename } from './qr-filename.service.js'
+import { isBluetoothSupported, printRunnerToBluetooth } from './bluetooth-printer.service.js'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
 
 /**
@@ -24,6 +25,8 @@ export default function RunnerQRItem({
 }) {
   const { qrDataUrl, loading, ensureQRCode } = useRunnerQRCode(runner)
   const [showPreview, setShowPreview] = useState(false)
+  const [printingBt, setPrintingBt] = useState(false)
+  const btSupported = isBluetoothSupported()
 
   const handleToggleView = async () => {
     if (!showPreview) {
@@ -34,9 +37,23 @@ export default function RunnerQRItem({
     }
   }
 
-  const handlePrint = async () => {
+  const handlePrintStandard = async () => {
     const dataUrl = await ensureQRCode()
     printRunnerQRCode(dataUrl, runner, raceName)
+  }
+
+  const handlePrintBluetooth = async () => {
+    setPrintingBt(true)
+    try {
+      const dataUrl = await ensureQRCode()
+      await printRunnerToBluetooth(dataUrl, runner, raceName)
+    } catch (err) {
+      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
+        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+      }
+    } finally {
+      setPrintingBt(false)
+    }
   }
 
   const handleDownload = async () => {
@@ -45,6 +62,16 @@ export default function RunnerQRItem({
   }
 
   const menuItems = [
+    ...(btSupported
+      ? [{
+        label: printingBt ? 'Enviando p/ Térmica...' : '🖨️ Imprimir Térmica (Bluetooth)',
+        onClick: handlePrintBluetooth
+      }]
+      : []),
+    {
+      label: '📄 Imprimir Cupom (58mm / Sistema)',
+      onClick: handlePrintStandard
+    },
     {
       label: showPreview ? 'Ocultar QR Code' : 'Ver QR Code',
       onClick: handleToggleView
@@ -52,10 +79,6 @@ export default function RunnerQRItem({
     {
       label: 'Baixar PNG',
       onClick: handleDownload
-    },
-    {
-      label: 'Imprimir QR Code',
-      onClick: handlePrint
     },
     ...(onShowHistory
       ? [{ label: 'Ver histórico', onClick: () => onShowHistory(runner) }]
@@ -103,11 +126,21 @@ export default function RunnerQRItem({
           </div>
           <img src={qrDataUrl} alt={`QR de ${runner.name}`} style={{ width: 140, height: 140 }} />
           <div className="runner-qr-preview-actions">
-            <button type="button" onClick={handleDownload} disabled={loading}>
-              Baixar PNG
+            {btSupported && (
+              <button
+                type="button"
+                className="print-btn"
+                onClick={handlePrintBluetooth}
+                disabled={loading || printingBt}
+              >
+                {printingBt ? 'Enviando...' : '🖨️ Térmica Bluetooth'}
+              </button>
+            )}
+            <button type="button" onClick={handlePrintStandard} disabled={loading}>
+              📄 Cupom Sistema
             </button>
-            <button type="button" className="print-btn" onClick={handlePrint} disabled={loading}>
-              🖨️ Imprimir QR
+            <button type="button" onClick={handleDownload} disabled={loading}>
+              📥 Baixar PNG
             </button>
           </div>
         </div>

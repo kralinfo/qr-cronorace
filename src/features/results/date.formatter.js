@@ -9,6 +9,12 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('pt-BR', {
   second: '2-digit'
 })
 
+const TIME_ONLY_FORMATTER = new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit'
+})
+
 /**
  * Formata uma string de data/hora (ISO ou timestamp) para o padrão pt-BR (dd/mm/aaaa hh:mm:ss).
  * Retorna o valor original caso não seja possível converter.
@@ -20,3 +26,15 @@ export function formatDateTimeBR(dateTime) {
   if (Number.isNaN(parsed.getTime())) return dateTime
   return DATE_TIME_FORMATTER.format(parsed)
 }
+
+/**
+ * Formata apenas o horário (hh:mm:ss) para mostrar o instante que o corredor cruzou a linha.
+ * @param {string} dateTime
+ * @returns {string}
+ */
+export function formatTimeOnlyBR(dateTime) {
+  const parsed = new Date(dateTime)
+  if (Number.isNaN(parsed.getTime())) return dateTime
+  return TIME_ONLY_FORMATTER.format(parsed)
+}
+

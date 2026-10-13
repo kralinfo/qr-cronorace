@@ -1,19 +1,21 @@
-// Responsabilidade única: construir o texto da classificação e os links de compartilhamento
-// (WhatsApp e e-mail) a partir do ranking atual.
-import { formatDateTimeBR } from './date.formatter.js'
+import { formatDateTimeBR, formatTimeOnlyBR } from './date.formatter.js'
 import { formatDuration } from './duration.formatter.js'
 
 /**
  * @param {string} raceName
  * @param {Array<import('./results.types.js').PlacementResult & { elapsedMs: number|null }>} placements
  * @param {(barcode: string) => string} getRunnerName
+ * @param {(barcode: string) => string|undefined} [getRunnerNumber]
  * @returns {string}
  */
-export function buildRankingText(raceName, placements, getRunnerName) {
+export function buildRankingText(raceName, placements, getRunnerName, getRunnerNumber) {
   const lines = placements.map(p => {
     const name = getRunnerName(p.barcode) ?? '—'
-    const time = p.elapsedMs != null ? formatDuration(p.elapsedMs) : formatDateTimeBR(p.dateTime)
-    return `${p.position}º ${name} - ${time}`
+    const num = getRunnerNumber ? getRunnerNumber(p.barcode) : p.runnerNumber
+    const numPrefix = num ? `(Nº ${num}) ` : ''
+    const time = p.elapsedMs != null ? formatDuration(p.elapsedMs) : '—'
+    const arrivalTime = formatTimeOnlyBR(p.dateTime)
+    return `${p.position}º ${numPrefix}${name} - Tempo: ${time} | Chegada: ${arrivalTime}`
   })
   return `Classificação - ${raceName}\n\n${lines.join('\n')}`
 }
