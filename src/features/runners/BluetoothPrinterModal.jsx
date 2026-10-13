@@ -83,15 +83,16 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
         <div className="printer-modal-body">
           {!supported ? (
             <div className="printer-unsupported-box">
-              <p>⚠️ <strong>Conexão direta Web Bluetooth indisponível neste navegador ou endereço.</strong></p>
+              <p>⚠️ <strong>Conexão direta Web Bluetooth indisponível neste navegador.</strong></p>
               <p>
-                Os navegadores exigem <strong>conexão segura HTTPS</strong> (ex: <code>https://...</code>) e o navegador <strong>Google Chrome</strong> no Android para liberar a busca direta por dispositivos Bluetooth BLE.
+                No <strong>Apple iOS (iPhone e iPad)</strong>, o Safari e o Chrome não suportam a Web Bluetooth API por limitações da própria Apple (WebKit). No <strong>Android</strong> e computadores, o Google Chrome oferece suporte completo com HTTPS.
               </p>
               <div style={{ marginTop: '10px', padding: '10px', background: '#e3f2fd', borderRadius: '8px', color: '#0d47a1', fontSize: '0.9rem' }}>
-                <strong>💡 Como imprimir pelo celular agora:</strong>
-                <p style={{ margin: '6px 0 0' }}>
-                  Utilize o botão <strong>"📄 Imprimir Cupom Sistema"</strong>. Ele abre o diálogo de impressão nativo do celular/Android e envia o cupom diretamente para a sua mini impressora térmica pareada.
-                </p>
+                <strong>💡 Como imprimir no iPhone / iOS:</strong>
+                <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
+                  <li><strong>Opção 1 (Recomendada):</strong> Ao clicar em imprimir, o sistema abre diretamente o cupom térmico (58mm) no diálogo de impressão do iOS, imprimindo na sua impressora conectada.</li>
+                  <li><strong>Opção 2 (Bluetooth Direto no iOS):</strong> Acesse este app pelo navegador gratuito <strong>Bluefy (Web BLE Browser)</strong>, disponível na App Store do iPhone, que ativa o suporte a Web Bluetooth no iOS.</li>
+                </ul>
               </div>
             </div>
           ) : (

@@ -7,14 +7,7 @@
  * @param {string} [raceName] - Nome da corrida.
  */
 export function printRunnerQRCode(qrDataUrl, runner, raceName) {
-  const printWindow = window.open('', '_blank', 'width=380,height=520')
-  if (!printWindow) return
-
-  const numberHtml = runner.number
-    ? `<div class="receipt-number">Nº ${escapeHtml(runner.number)}</div>`
-    : ''
-
-  printWindow.document.write(`
+  const htmlContent = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -35,20 +28,6 @@ export function printRunnerQRCode(qrDataUrl, runner, raceName) {
             text-align: center;
             background: #ffffff;
             color: #000000;
-          }
-          .receipt-race {
-            font-size: 11px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            line-height: 1.2;
-            word-break: break-word;
-          }
-          .receipt-name {
-            font-size: 15px;
-            font-weight: 800;
-            margin: 2px 0;
-            line-height: 1.2;
-            word-break: break-word;
           }
           .receipt-number {
             font-size: 26px;
@@ -85,10 +64,52 @@ export function printRunnerQRCode(qrDataUrl, runner, raceName) {
         <div class="receipt-name">${escapeHtml(runner.name)}</div>
       </body>
     </html>
-  `)
-  printWindow.document.close()
-  printWindow.focus()
-  printWindow.onload = () => printWindow.print()
+  `
+
+  const printWindow = window.open('', '_blank', 'width=380,height=520')
+  if (printWindow) {
+    printWindow.document.open()
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      try {
+        printWindow.print()
+      } catch (e) {
+        console.error(e)
+      }
+    }, 250)
+    return
+  }
+
+  // Fallback quando window.open é bloqueado (comum em Safari iOS)
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  document.body.appendChild(iframe)
+
+  const doc = iframe.contentWindow?.document || iframe.contentDocument
+  if (doc) {
+    doc.open()
+    doc.write(htmlContent)
+    doc.close()
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus()
+        iframe.contentWindow?.print()
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setTimeout(() => {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
+        }, 3000)
+      }
+    }, 350)
+  }
 }
 
 /** @param {string} value @returns {string} */

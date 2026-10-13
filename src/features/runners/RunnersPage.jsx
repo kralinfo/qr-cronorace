@@ -179,10 +179,7 @@ export default function RunnersPage() {
 
   const handlePrintCreatedBt = async (qrDataUrl, runner, raceName) => {
     if (!isBluetoothSupported()) {
-      alert(
-        '⚠️ A conexão direta via Bluetooth exige conexão segura HTTPS ou navegador compatível (ex: Chrome no Android).\n\n' +
-        'Como você está acessando sem suporte ao Web Bluetooth direto, utilize o botão "📄 Cupom Sistema". Ela abre o diálogo de impressão do celular e imprime diretamente na sua mini impressora térmica instalada.'
-      )
+      printRunnerQRCode(qrDataUrl, runner, raceName)
       return
     }
     setPrintingBt(true)
