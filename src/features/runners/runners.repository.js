@@ -1,11 +1,21 @@
 // Responsabilidade única: persistência dos corredores cadastrados (Cloud Firestore).
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
+import { normalizeCpf } from './runner-formatter.service.js'
 
 /**
  * @param {import('./runners.types.js').Runner} runner
  */
 export async function addRunner(runner) {
+  if (runner.cpf) {
+    const existingWithCpf = await findRunnerInRaceByCpf(runner.raceId, runner.cpf)
+    if (existingWithCpf) {
+      const error = new Error('RUNNER_CPF_ALREADY_EXISTS')
+      error.existingRunner = existingWithCpf
+      throw error
+    }
+  }
+
   const existingWithNumber = await findRunnerInRaceByNumber(runner.raceId, runner.number)
   if (existingWithNumber) {
     const error = new Error('RUNNER_NUMBER_ALREADY_EXISTS')
@@ -37,6 +47,15 @@ export async function updateRunner(id, updates) {
 
   const effectiveRaceId = updates.raceId ?? current.raceId
 
+  if (updates.cpf) {
+    const existingWithCpf = await findRunnerInRaceByCpf(effectiveRaceId, updates.cpf)
+    if (existingWithCpf && existingWithCpf.id !== id) {
+      const error = new Error('RUNNER_CPF_ALREADY_EXISTS')
+      error.existingRunner = existingWithCpf
+      throw error
+    }
+  }
+
   if (updates.number) {
     const existingWithNumber = await findRunnerInRaceByNumber(effectiveRaceId, updates.number)
     if (existingWithNumber && existingWithNumber.id !== id) {
@@ -58,6 +77,7 @@ export async function updateRunner(id, updates) {
   const payload = {}
   if (updates.name !== undefined) payload.name = updates.name
   if (updates.number !== undefined) payload.number = updates.number
+  if (updates.cpf !== undefined) payload.cpf = updates.cpf
   if (updates.raceId !== undefined) payload.raceId = updates.raceId
 
   await updateDoc(doc(db, COLLECTIONS.runners, id), payload)
@@ -147,6 +167,20 @@ export async function findRunnerInRaceByName(raceId, runnerName) {
 
   const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
   const foundDoc = snap.docs.find(d => normalizeComparable(d.data().name) === normalizedName)
+  return foundDoc ? foundDoc.data() : undefined
+}
+
+/**
+ * @param {string} raceId
+ * @param {string|undefined} runnerCpf
+ * @returns {Promise<import('./runners.types.js').Runner | undefined>}
+ */
+export async function findRunnerInRaceByCpf(raceId, runnerCpf) {
+  const normalizedTargetCpf = normalizeCpf(runnerCpf)
+  if (!normalizedTargetCpf) return undefined
+
+  const snap = await getDocs(query(collection(db, COLLECTIONS.runners), where('raceId', '==', raceId)))
+  const foundDoc = snap.docs.find(d => normalizeCpf(d.data().cpf) === normalizedTargetCpf)
   return foundDoc ? foundDoc.data() : undefined
 }
 

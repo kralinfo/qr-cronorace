@@ -1,17 +1,19 @@
-// UI only: modal para edição de dados do corredor (nome, número de peito e corrida)
+// UI only: modal para edição de dados do corredor (nome, número de peito, CPF e corrida)
 import React, { useState } from 'react'
+import { maskCpf } from './runner-formatter.service.js'
 
 /**
  * @param {{
  *   runner: import('./runners.types.js').Runner,
  *   races: Array<import('../races/races.types.js').Race>,
- *   onSave: (id: string, updates: { name: string, number: string, raceId: string }) => Promise<boolean|null|undefined>,
+ *   onSave: (id: string, updates: { name: string, number: string, cpf?: string, raceId: string }) => Promise<boolean|null|undefined>,
  *   onClose: () => void
  * }} props
  */
 export default function EditRunnerModal({ runner, races, onSave, onClose }) {
   const [name, setName] = useState(runner.name || '')
   const [number, setNumber] = useState(runner.number || '')
+  const [cpf, setCpf] = useState(runner.cpf || '')
   const [raceId, setRaceId] = useState(runner.raceId || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -60,6 +62,7 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
       const success = await onSave(runner.id, {
         name,
         number,
+        cpf,
         raceId
       })
       if (success) {
@@ -132,6 +135,23 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
               value={name}
               onChange={e => setName(e.target.value)}
               required
+            />
+          </div>
+
+          <div className="edit-runner-field">
+            <label htmlFor="edit-runner-cpf">
+              CPF do corredor:
+              <span className="field-hint"> (Evita cadastros duplicados)</span>
+            </label>
+            <input
+              id="edit-runner-cpf"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="000.000.000-00"
+              value={cpf}
+              onChange={e => setCpf(maskCpf(e.target.value))}
+              maxLength={14}
             />
           </div>
 

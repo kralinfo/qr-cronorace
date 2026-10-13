@@ -11,7 +11,13 @@ import {
 import { generateRunnerId } from './runner-id.service.js'
 import { generateRunnerQRCode } from './qrcode.service.js'
 import { composeQRWithLabel } from './qr-label.service.js'
-import { capitalizeName, formatRunnerNumber } from './runner-formatter.service.js'
+import {
+  capitalizeName,
+  formatRunnerNumber,
+  maskCpf,
+  normalizeCpf,
+  validateCpf
+} from './runner-formatter.service.js'
 
 /**
  * @param {string|'ALL'|undefined|null} raceId - ID da corrida ou 'ALL' para todas
@@ -50,23 +56,29 @@ export function useRunners(raceId) {
   const clearError = useCallback(() => setError(null), [])
   const clearLastQrCode = useCallback(() => setLastQrCode(null), [])
 
-  const createRunner = useCallback(async (name, number, targetRaceId) => {
+  const createRunner = useCallback(async (name, number, cpf, targetRaceId) => {
     setError(null)
     const effectiveRaceId = targetRaceId || (raceId !== 'ALL' ? raceId : null)
 
-    const trimmedName = name.trim()
-    const trimmedNumber = number.trim()
+    const trimmedName = (name || '').trim()
+    const trimmedNumber = (number || '').trim()
+    const trimmedCpf = (cpf || '').trim()
 
-    if (!trimmedName) {
-      setError('Informe o nome do corredor.')
-      return null
-    }
     if (!trimmedNumber) {
-      setError('Informe o número do corredor.')
+      setError('Informe o número de peito do corredor.')
       return null
     }
     if (!/^\d+$/.test(trimmedNumber)) {
       setError('O número do corredor deve conter apenas números (dígitos).')
+      return null
+    }
+    if (!trimmedName) {
+      setError('Informe o nome do corredor.')
+      return null
+    }
+    const cpfValidation = validateCpf(trimmedCpf)
+    if (!cpfValidation.valid) {
+      setError(cpfValidation.message || 'CPF inválido.')
       return null
     }
     if (!effectiveRaceId) {
@@ -76,6 +88,8 @@ export function useRunners(raceId) {
 
     const formattedName = capitalizeName(trimmedName)
     const formattedNumber = formatRunnerNumber(trimmedNumber)
+    const formattedCpf = maskCpf(trimmedCpf)
+    const normalizedDigitsCpf = normalizeCpf(trimmedCpf)
 
     const currentRaceRunners = raceId === effectiveRaceId
       ? runners
@@ -84,15 +98,21 @@ export function useRunners(raceId) {
     const normalizedName = normalizeComparable(formattedName)
     const normalizedNumber = normalizeComparable(formattedNumber)
 
-    const existingName = currentRaceRunners.find(r => normalizeComparable(r.name) === normalizedName)
-    if (existingName) {
-      setError(`O corredor "${existingName.name}" já está cadastrado nesta corrida (Nº ${existingName.number || '—'}). Busque-o na lista para reimprimir o QR code.`)
+    const existingCpf = currentRaceRunners.find(r => normalizeCpf(r.cpf) === normalizedDigitsCpf)
+    if (existingCpf) {
+      setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida para o corredor "${existingCpf.name}" (Nº ${existingCpf.number || '—'}).`)
       return null
     }
 
     const existingNumber = currentRaceRunners.find(r => normalizeComparable(r.number) === normalizedNumber)
     if (existingNumber) {
       setError(`O número ${formattedNumber} já está sendo usado pelo corredor "${existingNumber.name}" nesta corrida.`)
+      return null
+    }
+
+    const existingName = currentRaceRunners.find(r => normalizeComparable(r.name) === normalizedName)
+    if (existingName) {
+      setError(`O corredor "${existingName.name}" já está cadastrado nesta corrida (Nº ${existingName.number || '—'}). Busque-o na lista para reimprimir o QR code.`)
       return null
     }
 
@@ -106,6 +126,7 @@ export function useRunners(raceId) {
       const runner = {
         id: generateRunnerId(effectiveRaceId, sequenceNumber),
         number: formattedNumber,
+        cpf: formattedCpf,
         name: formattedName,
         raceId: effectiveRaceId
       }
@@ -118,6 +139,11 @@ export function useRunners(raceId) {
       setLastQrCode(result)
       return result
     } catch (e) {
+      if (e instanceof Error && e.message === 'RUNNER_CPF_ALREADY_EXISTS') {
+        const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}", Nº ${e.existingRunner.number || '—'})` : ''
+        setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida${ownerName}.`)
+        return null
+      }
       if (e instanceof Error && e.message === 'RUNNER_NUMBER_ALREADY_EXISTS') {
         const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}")` : ''
         setError(`Número de corredor ${formattedNumber} já cadastrado nesta corrida${ownerName}.`)
@@ -133,10 +159,11 @@ export function useRunners(raceId) {
     }
   }, [raceId, runners])
 
-  const editRunner = useCallback(async (id, { name, number, raceId: targetRaceId }) => {
+  const editRunner = useCallback(async (id, { name, number, cpf, raceId: targetRaceId }) => {
     setError(null)
     const trimmedName = name != null ? name.trim() : null
     const trimmedNumber = number != null ? number.trim() : null
+    const trimmedCpf = cpf != null ? cpf.trim() : null
 
     if (trimmedName !== null && !trimmedName) {
       setError('Informe o nome do corredor.')
@@ -150,6 +177,18 @@ export function useRunners(raceId) {
       }
     }
 
+    let formattedCpf = undefined
+    if (trimmedCpf !== null && trimmedCpf !== '') {
+      const cpfValidation = validateCpf(trimmedCpf)
+      if (!cpfValidation.valid) {
+        setError(cpfValidation.message || 'CPF inválido.')
+        return null
+      }
+      formattedCpf = maskCpf(trimmedCpf)
+    } else if (trimmedCpf === '') {
+      formattedCpf = ''
+    }
+
     const formattedName = trimmedName != null ? capitalizeName(trimmedName) : undefined
     const formattedNumber = trimmedNumber != null && trimmedNumber !== ''
       ? formatRunnerNumber(trimmedNumber)
@@ -161,10 +200,16 @@ export function useRunners(raceId) {
       const updated = await updateRunner(id, {
         name: formattedName,
         number: formattedNumber,
+        cpf: formattedCpf,
         raceId: targetRaceId
       })
       return updated
     } catch (e) {
+      if (e instanceof Error && e.message === 'RUNNER_CPF_ALREADY_EXISTS') {
+        const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}", Nº ${e.existingRunner.number || '—'})` : ''
+        setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida${ownerName}.`)
+        return null
+      }
       if (e instanceof Error && e.message === 'RUNNER_NUMBER_ALREADY_EXISTS') {
         const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}")` : ''
         setError(`Número de corredor ${formattedNumber} já cadastrado nesta corrida${ownerName}.`)
@@ -179,6 +224,7 @@ export function useRunners(raceId) {
       return null
     }
   }, [])
+
 
   const removeRunner = useCallback(async (id) => {
     setError(null)

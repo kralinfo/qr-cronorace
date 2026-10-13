@@ -11,6 +11,7 @@ import { buildQRFilename } from './qr-filename.service.js'
 import { printRunnerQRCode } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
 import { getAllRunners, normalizeComparable } from './runners.repository.js'
+import { maskCpf, normalizeCpf } from './runner-formatter.service.js'
 import {
   getPrinterStatus,
   isBluetoothSupported,
@@ -75,6 +76,7 @@ export default function RunnersPage() {
   const [targetRaceId, setTargetRaceId] = useState('')
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
+  const [cpf, setCpf] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   // Modais de edição e exclusão de corredor
@@ -161,10 +163,11 @@ export default function RunnersPage() {
     clearError()
     setSubmitting(true)
     try {
-      const result = await createRunner(name, number, targetRaceId)
+      const result = await createRunner(name, number, cpf, targetRaceId)
       if (result) {
         setName('')
         setNumber('')
+        setCpf('')
         if (selectedRaceId !== 'ALL' && selectedRaceId !== targetRaceId) {
           setSelectedRaceId(targetRaceId)
         }
@@ -189,6 +192,7 @@ export default function RunnersPage() {
 
   // Filtragem dos corredores com base na busca
   const normalizedSearch = normalizeComparable(search)
+  const normalizedSearchDigits = normalizeCpf(search)
   const filteredRunners = useMemo(() => {
     if (!normalizedSearch) return runners
 
@@ -196,9 +200,11 @@ export default function RunnersPage() {
       const matchName = normalizeComparable(runner.name).includes(normalizedSearch)
       const matchNumber = normalizeComparable(runner.number).includes(normalizedSearch)
       const matchId = normalizeComparable(runner.id).includes(normalizedSearch)
-      return matchName || matchNumber || matchId
+      const matchCpf = runner.cpf && normalizedSearchDigits && normalizeCpf(runner.cpf).includes(normalizedSearchDigits)
+      return matchName || matchNumber || matchId || Boolean(matchCpf)
     })
-  }, [runners, normalizedSearch])
+  }, [runners, normalizedSearch, normalizedSearchDigits])
+
 
   // Lazy loading: paginação incremental por scroll para performance com 1000+ corredores
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
@@ -377,6 +383,19 @@ export default function RunnersPage() {
               placeholder="ex: Carlos Silva"
               value={name}
               onChange={e => setName(e.target.value)}
+              required
+            />
+
+            <label htmlFor="runner-cpf-input">CPF do corredor:</label>
+            <input
+              id="runner-cpf-input"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="000.000.000-00"
+              value={cpf}
+              onChange={e => setCpf(maskCpf(e.target.value))}
+              maxLength={14}
               required
             />
 

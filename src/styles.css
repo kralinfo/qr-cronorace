@@ -431,10 +431,23 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   display: inline-block;
   padding: 2px 8px;
   border-radius: 10px;
-  background: #e3f2fd;
-  color: #1565c0;
+  background: #e0f2fe;
+  color: #0284c7;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid #bae6fd;
+}
+
+.race-code-tag {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #e2e8f0;
 }
 
 .secondary-btn {
@@ -1393,7 +1406,6 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   color: #212121;
 }
 
-button.runner-number-badge,
 .runner-number-badge {
   background: #e3f2fd;
   color: #1565c0;
@@ -1402,27 +1414,14 @@ button.runner-number-badge,
   padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.3px;
-  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: normal;
   font-family: inherit;
-  transition: all 0.15s ease;
 }
 
-button.runner-number-badge.clickable {
-  cursor: pointer;
-}
-
-button.runner-number-badge.clickable:hover {
-  background: #bbdefb;
-  border-color: #90caf9;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(21, 101, 192, 0.15);
-}
-
-button.runner-number-badge.empty {
+.runner-number-badge.empty {
   background: #f1f5f9;
   color: #94a3b8;
   font-weight: 500;
@@ -1440,6 +1439,17 @@ button.runner-number-badge.empty {
 .runner-id-tag {
   color: #78909c;
   font-family: monospace;
+}
+
+.runner-cpf-tag {
+  background: #f8fafc;
+  color: #475569;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
 }
 
 .runner-race-badge {

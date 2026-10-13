@@ -124,6 +124,7 @@ export default function RunnerQRItem({
           </div>
           <div className="runner-meta-row">
             <span className="runner-id-tag">ID: {runner.id}</span>
+            {runner.cpf && <span className="runner-cpf-tag">CPF: {runner.cpf}</span>}
             {raceName && (
               <span className={`runner-race-badge ${highlightRaceBadge ? 'highlight' : ''}`}>
                 🏁 {raceName}

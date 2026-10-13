@@ -1,14 +1,38 @@
-// UI only: tela pública de cadastro de corredores, acessada por um link + código (fora do login do organizador).
-import React, { useState } from 'react'
+// UI only: tela pública de cadastro de corredores, acessada por link direto ou link + código (fora do login do organizador).
+import React, { useEffect, useState } from 'react'
 import { getRaceById } from '../races/races.repository.js'
 import { useRunners } from './useRunners.js'
 import { buildQRFilename } from './qr-filename.service.js'
+import { maskCpf } from './runner-formatter.service.js'
 
 export default function PublicRunnerRegister() {
   const [code, setCode] = useState('')
   const [race, setRace] = useState(null)
   const [checking, setChecking] = useState(false)
   const [gateError, setGateError] = useState(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const initialCode = (params.get('corrida') || params.get('codigo') || '').trim()
+    if (initialCode) {
+      setCode(initialCode)
+      setChecking(true)
+      getRaceById(initialCode)
+        .then((found) => {
+          if (found) {
+            setRace(found)
+          } else {
+            setGateError(`Corrida "${initialCode}" não encontrada. Verifique o link ou digite o código da corrida.`)
+          }
+        })
+        .catch(() => {
+          setGateError('Falha ao validar a corrida informada no link. Tente novamente.')
+        })
+        .finally(() => {
+          setChecking(false)
+        })
+    }
+  }, [])
 
   const handleValidate = async (e) => {
     e.preventDefault()
@@ -25,6 +49,19 @@ export default function PublicRunnerRegister() {
     }
   }
 
+  if (checking && !race) {
+    return (
+      <div className="app">
+        <header className="app-header"><h1>Cadastro de corredores</h1></header>
+        <main>
+          <section className="create-race-section">
+            <p>Carregando informações da corrida...</p>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
   if (!race) {
     return (
       <div className="app">
@@ -35,7 +72,7 @@ export default function PublicRunnerRegister() {
             <p>Digite o código que a pessoa organizadora te enviou junto com este link.</p>
             <form onSubmit={handleValidate}>
               <input
-                placeholder="Código da corrida"
+                placeholder="Código da corrida (ex: CRT-13102026)"
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 autoFocus
@@ -57,6 +94,7 @@ function RegisterForm({ race }) {
   const { error, lastQrCode, createRunner } = useRunners(race.id)
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
+  const [cpf, setCpf] = useState('')
 
   const handleNumberKeyDown = (e) => {
     if (
@@ -95,9 +133,12 @@ function RegisterForm({ race }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await createRunner(name, number)
-    setName('')
-    setNumber('')
+    const result = await createRunner(name, number, cpf)
+    if (result) {
+      setName('')
+      setNumber('')
+      setCpf('')
+    }
   }
 
   return (
@@ -112,7 +153,7 @@ function RegisterForm({ race }) {
               inputMode="numeric"
               pattern="[0-9]*"
               autoComplete="off"
-              placeholder="Número do corredor (apenas números)"
+              placeholder="Número de peito do corredor (apenas números)"
               value={number}
               onKeyDown={handleNumberKeyDown}
               onPaste={handleNumberPaste}
@@ -124,6 +165,16 @@ function RegisterForm({ race }) {
               placeholder="Nome do corredor"
               value={name}
               onChange={e => setName(e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="CPF do corredor (000.000.000-00)"
+              value={cpf}
+              onChange={e => setCpf(maskCpf(e.target.value))}
+              maxLength={14}
               required
             />
             <button type="submit">Criar + Gerar QR</button>
@@ -142,3 +193,4 @@ function RegisterForm({ race }) {
     </div>
   )
 }
+

@@ -1,11 +1,19 @@
 // Responsabilidade única: construir os links públicos (cadastro e ranking) para compartilhar.
 
-/** @returns {string} link que abre a tela de cadastro público (fora do fluxo do organizador) */
-export function buildRegistrationLink() {
+/**
+ * Constrói link para cadastro público de corredores.
+ * @param {string|null} [raceId] - ID ou código da corrida
+ * @param {boolean} [direct=false] - Se true, inclui o código da corrida na URL para entrar direto sem exigir digitar código.
+ * @returns {string}
+ */
+export function buildRegistrationLink(raceId = null, direct = false) {
   const url = new URL(window.location.href)
   url.search = ''
   url.hash = ''
   url.searchParams.set('cadastro', '1')
+  if (direct && raceId) {
+    url.searchParams.set('corrida', raceId)
+  }
   return url.toString()
 }
 
@@ -21,4 +29,3 @@ export function buildRankingLink(raceId) {
   url.searchParams.set('corrida', raceId)
   return url.toString()
 }
-

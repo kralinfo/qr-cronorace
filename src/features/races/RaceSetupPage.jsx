@@ -112,12 +112,13 @@ export default function RaceSetupPage({ onRaceSelected }) {
                   <div className="race-row-info">
                     <strong className="race-row-name">{race.name}</strong>
                     <div className="race-row-meta">
+                      <span className="race-code-tag">Cód: {race.id}</span>
                       {race.eventDate && <span className="race-event-date">{formatDateOnlyBR(race.eventDate)}</span>}
                       {race.distanceKm ? <span className="race-event-date">{race.distanceKm} km</span> : null}
                       <span className={`race-status-badge ${race.endTime ? 'finished' : race.startTime ? 'running' : 'pending'}`}>
                         {race.endTime ? 'Encerrada' : race.startTime ? 'Em andamento' : 'Não iniciada'}
                       </span>
-                      {race.id === activeRace?.id ? <span className="race-current-badge">Corrida atual</span> : null}
+                      {race.id === activeRace?.id ? <span className="race-current-badge">Visualizando</span> : null}
                     </div>
                   </div>
                   <div className="race-row-actions">

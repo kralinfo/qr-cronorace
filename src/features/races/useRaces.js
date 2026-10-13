@@ -42,7 +42,9 @@ export function useRaces() {
     }
     try {
       const parsedDistance = distanceKm ? Number(distanceKm) : null
-      const race = { id: generateRaceId(), name: trimmedName, createdAt: new Date().toISOString(), eventDate, startTime: null, distanceKm: Number.isFinite(parsedDistance) ? parsedDistance : null }
+      const existingIds = races.map(r => r.id)
+      const raceId = generateRaceId(trimmedName, eventDate, existingIds)
+      const race = { id: raceId, name: trimmedName, createdAt: new Date().toISOString(), eventDate, startTime: null, distanceKm: Number.isFinite(parsedDistance) ? parsedDistance : null }
       await addRace(race)
       await loadRaces()
       return race
@@ -50,7 +52,7 @@ export function useRaces() {
       setError('Falha ao criar corrida.')
       return null
     }
-  }, [loadRaces])
+  }, [loadRaces, races])
 
   const setStartTime = useCallback(async (raceId, startTime) => {
     setError(null)

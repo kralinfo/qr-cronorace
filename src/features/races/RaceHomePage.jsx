@@ -129,7 +129,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <div className="dashboard-card-icon">🏃</div>
             <div className="dashboard-card-info">
               <strong>Corredores</strong>
-              <span>{runners.length} cadastrado{runners.length === 1 ? '' : 's'}</span>
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>
@@ -142,7 +141,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <div className="dashboard-card-icon">📷</div>
             <div className="dashboard-card-info">
               <strong>Marcar Chegada</strong>
-              <span>Leitor de QR Code / Manual</span>
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>
@@ -155,7 +153,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <div className="dashboard-card-icon">🏆</div>
             <div className="dashboard-card-info">
               <strong>Ranking / Resultados</strong>
-              <span>{arrivedCount} de {runners.length} na chegada</span>
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>
@@ -168,7 +165,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <div className="dashboard-card-icon">📺</div>
             <div className="dashboard-card-info">
               <strong>Telão TV (Ao Vivo)</strong>
-              <span>Link público de transmissão</span>
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>
@@ -181,7 +177,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <div className="dashboard-card-icon">📝</div>
             <div className="dashboard-card-info">
               <strong>Link de Inscrição</strong>
-              <span>Cadastro público de atletas</span>
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>
@@ -194,7 +189,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <div className="dashboard-card-icon">🏁</div>
             <div className="dashboard-card-info">
               <strong>Trocar Corrida</strong>
-              <span>Ver todas as provas</span>
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>
@@ -217,9 +211,24 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       {panel === 'register-link' && (
         <div className="share-panel">
           <button className="close-panel-btn" onClick={closePanel}>Fechar ✕</button>
-          <p>Envie o link e o código abaixo para a pessoa que vai ajudar a cadastrar corredores:</p>
-          <CopyableField label="Link" value={buildRegistrationLink()} />
-          <CopyableField label="Código da corrida" value={activeRace.id} />
+          <h3 style={{ margin: '0 0 12px', fontSize: '1.1rem' }}>Compartilhar Inscrição de Corredores</h3>
+
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#1565c0' }}>⚡ Link direto (Sem exigir código)</h4>
+            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#546e7a' }}>
+              O atleta clica no link e já entra direto na tela de cadastro desta corrida:
+            </p>
+            <CopyableField label="Link direto" value={buildRegistrationLink(activeRace.id, true)} />
+          </div>
+
+          <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '12px' }}>
+            <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#37474f' }}>🔒 Compartilhar exigindo código</h4>
+            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#546e7a' }}>
+              O atleta acessa a página e precisa digitar o código da prova para cadastrar:
+            </p>
+            <CopyableField label="Link" value={buildRegistrationLink(null, false)} />
+            <CopyableField label="Código da corrida" value={activeRace.id} />
+          </div>
         </div>
       )}
 
