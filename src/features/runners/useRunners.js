@@ -166,14 +166,16 @@ export function useRunners(raceId) {
     const trimmedCpf = cpf != null ? cpf.trim() : null
 
     if (trimmedName !== null && !trimmedName) {
-      setError('Informe o nome do corredor.')
-      return null
+      const msg = 'Informe o nome do corredor.'
+      setError(msg)
+      throw new Error(msg)
     }
 
     if (trimmedNumber !== null && trimmedNumber !== '') {
       if (!/^\d+$/.test(trimmedNumber)) {
-        setError('O número do corredor deve conter apenas números (dígitos).')
-        return null
+        const msg = 'O número do corredor deve conter apenas números (dígitos).'
+        setError(msg)
+        throw new Error(msg)
       }
     }
 
@@ -181,8 +183,9 @@ export function useRunners(raceId) {
     if (trimmedCpf !== null && trimmedCpf !== '') {
       const cpfValidation = validateCpf(trimmedCpf)
       if (!cpfValidation.valid) {
-        setError(cpfValidation.message || 'CPF inválido.')
-        return null
+        const msg = cpfValidation.message || 'CPF inválido.'
+        setError(msg)
+        throw new Error(msg)
       }
       formattedCpf = maskCpf(trimmedCpf)
     } else if (trimmedCpf === '') {
@@ -205,23 +208,21 @@ export function useRunners(raceId) {
       })
       return updated
     } catch (e) {
+      let msg = 'Falha ao atualizar dados do corredor.'
       if (e instanceof Error && e.message === 'RUNNER_CPF_ALREADY_EXISTS') {
         const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}", Nº ${e.existingRunner.number || '—'})` : ''
-        setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida${ownerName}.`)
-        return null
-      }
-      if (e instanceof Error && e.message === 'RUNNER_NUMBER_ALREADY_EXISTS') {
+        msg = `O CPF ${formattedCpf || cpf} já está cadastrado nesta corrida${ownerName}.`
+      } else if (e instanceof Error && e.message === 'RUNNER_NUMBER_ALREADY_EXISTS') {
         const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}")` : ''
-        setError(`Número de corredor ${formattedNumber} já cadastrado nesta corrida${ownerName}.`)
-        return null
-      }
-      if (e instanceof Error && e.message === 'RUNNER_NAME_ALREADY_EXISTS') {
+        msg = `Número de corredor ${formattedNumber || number} já cadastrado nesta corrida${ownerName}.`
+      } else if (e instanceof Error && e.message === 'RUNNER_NAME_ALREADY_EXISTS') {
         const existingNum = e.existingRunner?.number ? ` (Nº ${e.existingRunner.number})` : ''
-        setError(`Já existe um corredor cadastrado com o nome "${formattedName}" nesta corrida${existingNum}.`)
-        return null
+        msg = `Já existe um corredor cadastrado com o nome "${formattedName || name}" nesta corrida${existingNum}.`
+      } else if (e instanceof Error && e.message) {
+        msg = e.message
       }
-      setError('Falha ao atualizar dados do corredor.')
-      return null
+      setError(msg)
+      throw new Error(msg)
     }
   }, [])
 

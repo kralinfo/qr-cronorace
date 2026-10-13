@@ -59,7 +59,8 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
     setSaving(true)
 
     try {
-      const success = await onSave(runner.id, {
+      const targetId = runner.id || runner.token
+      const success = await onSave(targetId, {
         name,
         number,
         cpf,
