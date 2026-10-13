@@ -135,12 +135,18 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
           <button
             type="button"
-            className="dashboard-card primary-accent"
-            onClick={() => onOpenScanner?.() || onNavigate?.('scanner')}
+            className={`dashboard-card primary-accent ${!activeRace.startTime ? 'disabled' : ''}`}
+            onClick={() => {
+              if (!activeRace.startTime) return
+              onOpenScanner?.() || onNavigate?.('scanner')
+            }}
+            disabled={!activeRace.startTime}
+            title={!activeRace.startTime ? 'A corrida precisa ser iniciada para marcar chegadas' : 'Marcar chegada de corredores'}
           >
             <div className="dashboard-card-icon">📷</div>
             <div className="dashboard-card-info">
               <strong>Marcar Chegada</strong>
+              {!activeRace.startTime && <span className="dashboard-card-hint">Não iniciada</span>}
             </div>
             <span className="dashboard-card-arrow">→</span>
           </button>

@@ -31,6 +31,15 @@ export function belongsToActiveRace(runnerData, runnerRecord, activeRaceId) {
 }
 
 /**
+ * Verifica se a corrida foi iniciada.
+ * @param {{ startTime?: string|null }|undefined|null} race
+ * @returns {boolean}
+ */
+export function isRaceStarted(race) {
+  return Boolean(race?.startTime)
+}
+
+/**
  * Verifica se a corrida está encerrada.
  * @param {{ endTime?: string|null }|undefined|null} race
  * @returns {boolean}
@@ -42,14 +51,22 @@ export function isRaceFinished(race) {
 /**
  * Valida se é permitido registrar a chegada para a corrida e corredor.
  * @param {{
- *   race: { id?: string, endTime?: string|null } | undefined | null,
+ *   race: { id?: string, startTime?: string|null, endTime?: string|null } | undefined | null,
  *   runnerData: { id: string, raceId: string|null },
  *   runnerRecord: { raceId: string } | undefined | null,
  *   activeRaceId: string | null | undefined
  * }} params
- * @returns {{ valid: boolean, errorType?: 'race-finished'|'invalid-race'|'error', message?: string }}
+ * @returns {{ valid: boolean, errorType?: 'race-not-started'|'race-finished'|'invalid-race'|'error', message?: string }}
  */
 export function validateArrivalScan({ race, runnerData, runnerRecord, activeRaceId }) {
+  if (!isRaceStarted(race)) {
+    return {
+      valid: false,
+      errorType: 'race-not-started',
+      message: 'Esta corrida ainda não foi iniciada! Dê a largada antes de registrar chegadas.'
+    }
+  }
+
   if (isRaceFinished(race)) {
     return {
       valid: false,

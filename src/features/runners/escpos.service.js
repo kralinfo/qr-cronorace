@@ -130,7 +130,7 @@ export function concatByteArrays(arrays) {
  * @param {string} [raceName] - Nome da corrida.
  * @returns {Promise<Uint8Array>}
  */
-export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName) {
+export async function buildRunnerEscPosReceipt(qrDataUrl, runner) {
   const commands = []
 
   // 1. Inicializar impressora (ESC @)
@@ -139,42 +139,30 @@ export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName) {
   // 2. Alinhamento central (ESC a 1)
   commands.push(new Uint8Array([0x1B, 0x61, 0x01]))
 
-  // 3. Nome da corrida (se houver) - Negrito
-  if (raceName) {
-    commands.push(new Uint8Array([0x1B, 0x45, 0x01])) // Negrito ON
-    commands.push(textToBytes(`${raceName}\n`))
-    commands.push(new Uint8Array([0x1B, 0x45, 0x00])) // Negrito OFF
-  }
-
-  // 4. Nome do atleta - Negrito com altura dupla (ESC ! 0x10)
-  commands.push(new Uint8Array([0x1B, 0x21, 0x10, 0x1B, 0x45, 0x01]))
-  commands.push(textToBytes(`${runner.name}\n`))
-  commands.push(new Uint8Array([0x1B, 0x21, 0x00, 0x1B, 0x45, 0x00]))
-
-  // 5. Número de peito em destaque grande (ESC ! 0x30 - Altura e Largura dupla)
+  // 3. Número de peito em destaque grande acima do QR code (ESC ! 0x30 - Altura e Largura dupla)
   if (runner.number) {
-    commands.push(new Uint8Array([0x1B, 0x21, 0x30, 0x1B, 0x45, 0x01]))
+    commands.push(new Uint8Array([0x1B, 0x21, 0x30, 0x1B, 0x45, 0x01])) // Altura/largura dupla + Negrito
     commands.push(textToBytes(`N. ${runner.number}\n`))
-    commands.push(new Uint8Array([0x1B, 0x21, 0x00, 0x1B, 0x45, 0x00]))
+    commands.push(new Uint8Array([0x1B, 0x21, 0x00, 0x1B, 0x45, 0x00])) // Normal
   }
 
-  // 6. Espaçamento antes do QR
+  // 4. Espaçamento sutil antes do QR
   commands.push(textToBytes('\n'))
 
-  // 7. QR Code como Bitmap ESC/POS (largura de 256px - ideal para papel de 58mm/80mm)
+  // 5. QR Code como Bitmap ESC/POS (largura de 256px - ideal para papel de 58mm/80mm)
   const qrBitmapBytes = await convertImageToEscPosBitmap(qrDataUrl, 256)
   commands.push(qrBitmapBytes)
 
-  // 8. Identificador e rodapé
-  commands.push(textToBytes(`\n${runner.cpf ? `CPF: ${runner.cpf}` : `ID: ${runner.id}`}\n`))
-  commands.push(textToBytes('--------------------------------\n'))
-  commands.push(textToBytes('PWA QR Timing\n'))
+  // 6. Nome do atleta abaixo do QR code - Negrito com altura dupla (ESC ! 0x10)
+  commands.push(new Uint8Array([0x1B, 0x21, 0x10, 0x1B, 0x45, 0x01]))
+  commands.push(textToBytes(`\n${runner.name}\n`))
+  commands.push(new Uint8Array([0x1B, 0x21, 0x00, 0x1B, 0x45, 0x00]))
 
-  // 9. Avanço de linhas para corte e destaque do papel (ESC d 4 ou quebras de linha)
-  commands.push(new Uint8Array([0x1B, 0x64, 0x04]))
+  // 7. Avanço de linhas para corte do papel
+  commands.push(new Uint8Array([0x1B, 0x64, 0x03]))
   commands.push(textToBytes('\n\n'))
 
-  // 10. Comando de corte parcial de papel (GS V 65 0) - para impressoras com guilhotina
+  // 8. Comando de corte parcial de papel (GS V 65 0) - para impressoras com guilhotina
   commands.push(new Uint8Array([0x1D, 0x56, 0x41, 0x00]))
 
   return concatByteArrays(commands)

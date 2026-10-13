@@ -73,6 +73,7 @@ function AppContent() {
         onNavigate={setTab}
         raceName={activeRace.name}
         onChangeRace={clearActiveRace}
+        isRaceStarted={Boolean(activeRace.startTime)}
       />
 
       <main>

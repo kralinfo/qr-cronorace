@@ -16,6 +16,7 @@ export default function ScannerPage({ onBack }) {
   const [manualConfirmation, setManualConfirmation] = useState(null)
   const [manualError, setManualError] = useState(null)
 
+  const isStarted = Boolean(activeRace?.startTime)
   const isFinished = Boolean(activeRace?.endTime)
 
   if (!activeRace) {
@@ -33,6 +34,11 @@ export default function ScannerPage({ onBack }) {
   }
 
   const handleManualConfirm = async (runner) => {
+    if (!isStarted) {
+      setManualError('Não é possível registrar chegada: esta corrida ainda não foi iniciada.')
+      return
+    }
+
     if (isFinished) {
       setManualError('Não é possível registrar chegada: esta corrida já foi encerrada.')
       return
@@ -59,6 +65,12 @@ export default function ScannerPage({ onBack }) {
         ← Voltar
       </button>
 
+      {!isStarted && (
+        <div className="scanner-race-not-started-banner">
+          <span>⚠️ <strong>Corrida Não Iniciada</strong>. Dê a largada na tela inicial para liberar a marcação de chegadas.</span>
+        </div>
+      )}
+
       {isFinished && (
         <div className="scanner-race-finished-banner">
           <span>⛔ <strong>Corrida Encerrada</strong> às {new Date(activeRace.endTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}. Leituras bloqueadas.</span>
@@ -76,14 +88,18 @@ export default function ScannerPage({ onBack }) {
           type="button"
           className="secondary-btn manual-arrival-btn"
           onClick={() => {
+            if (!isStarted) {
+              setManualError('Não é possível registrar chegada: esta corrida ainda não foi iniciada.')
+              return
+            }
             if (isFinished) {
               setManualError('Não é possível registrar chegada: esta corrida já foi encerrada.')
               return
             }
             setShowManual(true)
           }}
-          disabled={isFinished}
-          title={isFinished ? 'Corrida encerrada' : undefined}
+          disabled={!isStarted || isFinished}
+          title={!isStarted ? 'Corrida ainda não iniciada' : isFinished ? 'Corrida encerrada' : undefined}
         >
           ✍️ Registrar chegada manualmente
         </button>
@@ -100,6 +116,7 @@ export default function ScannerPage({ onBack }) {
         <div className="share-panel">
           <ManualArrivalForm
             runners={runners}
+            isStarted={isStarted}
             isFinished={isFinished}
             onConfirm={handleManualConfirm}
             onCancel={() => setShowManual(false)}

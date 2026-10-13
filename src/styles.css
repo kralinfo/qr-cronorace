@@ -122,6 +122,19 @@ body {
   font-weight: 600;
 }
 
+.app-menu-item:disabled,
+.app-menu-item.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-menu-badge-disabled {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
 .app-menu-icon {
   font-size: 1.2rem;
 }
@@ -1033,6 +1046,19 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   background: #fef2f2;
   border: 1px solid #f87171;
   color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scanner-race-not-started-banner {
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  color: #92400e;
   padding: 10px 14px;
   border-radius: 8px;
   margin-bottom: 12px;
@@ -2195,6 +2221,29 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 .dashboard-card.primary-accent:hover {
   background: #dbeafe;
   border-color: #2563eb;
+}
+
+.dashboard-card:disabled,
+.dashboard-card.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.dashboard-card:disabled:hover,
+.dashboard-card.disabled:hover {
+  transform: none !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-card-hint {
+  font-size: 0.78rem;
+  color: #ef4444;
+  font-weight: 600;
 }
 
 .dashboard-card-icon {

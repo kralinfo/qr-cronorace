@@ -5,12 +5,13 @@ import React, { useMemo, useState } from 'react'
 /**
  * @param {{
  *   runners: Array<{ id: string, name: string, number?: string }>,
+ *   isStarted?: boolean,
  *   isFinished?: boolean,
  *   onConfirm: (runner: { id: string, name: string, number?: string }) => Promise<void>|void,
  *   onCancel: () => void
  * }} props
  */
-export default function ManualArrivalForm({ runners, isFinished = false, onConfirm, onCancel }) {
+export default function ManualArrivalForm({ runners, isStarted = true, isFinished = false, onConfirm, onCancel }) {
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState('')
   const [saving, setSaving] = useState(false)
@@ -29,7 +30,7 @@ export default function ManualArrivalForm({ runners, isFinished = false, onConfi
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedRunner || isFinished) return
+    if (!selectedRunner || !isStarted || isFinished) return
     setSaving(true)
     await onConfirm(selectedRunner)
     setSaving(false)
@@ -38,7 +39,9 @@ export default function ManualArrivalForm({ runners, isFinished = false, onConfi
   return (
     <form className="manual-arrival-form" onSubmit={handleSubmit}>
       <h3>Registrar chegada manualmente</h3>
-      {isFinished ? (
+      {!isStarted ? (
+        <p className="error">⚠️ Esta corrida ainda não foi iniciada. O registro manual de chegadas está bloqueado.</p>
+      ) : isFinished ? (
         <p className="error">⛔ Esta corrida já foi encerrada. O registro manual está bloqueado.</p>
       ) : (
         <p>Use esta opção quando não for possível ler o QR code do corredor.</p>
@@ -77,8 +80,8 @@ export default function ManualArrivalForm({ runners, isFinished = false, onConfi
 
       <div className="manual-arrival-actions">
         <button type="button" className="secondary-btn" onClick={onCancel}>Cancelar</button>
-        <button type="submit" disabled={!selectedRunner || saving || isFinished}>
-          {saving ? 'Registrando...' : isFinished ? 'Corrida encerrada' : 'Registrar chegada agora'}
+        <button type="submit" disabled={!selectedRunner || saving || !isStarted || isFinished}>
+          {saving ? 'Registrando...' : !isStarted ? 'Corrida não iniciada' : isFinished ? 'Corrida encerrada' : 'Registrar chegada agora'}
         </button>
       </div>
     </form>

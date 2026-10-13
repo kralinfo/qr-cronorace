@@ -181,7 +181,7 @@ export async function printRunnerToBluetooth(qrDataUrl, runner, raceName) {
     await connectBluetoothPrinter()
   }
 
-  const receiptBytes = await buildRunnerEscPosReceipt(qrDataUrl, runner, raceName)
+  const receiptBytes = await buildRunnerEscPosReceipt(qrDataUrl, runner)
   await sendDataInChunks(receiptBytes)
   return true
 }

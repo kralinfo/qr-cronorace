@@ -12,13 +12,19 @@ import React from 'react'
  *   hasActiveRace?: boolean
  * }} props
  */
-export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceName, onChangeRace, hasActiveRace = true }) {
+export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceName, onChangeRace, hasActiveRace = true, isRaceStarted = true }) {
   const items = hasActiveRace
     ? [
       { id: 'home', label: 'Início', icon: '🏠' },
       { id: 'races', label: 'Corridas', icon: '🏁' },
       { id: 'runners', label: 'Corredores', icon: '🏃' },
-      { id: 'scanner', label: 'Scanner', icon: '📷' },
+      {
+        id: 'scanner',
+        label: 'Scanner',
+        icon: '📷',
+        disabled: !isRaceStarted,
+        subtitle: !isRaceStarted ? 'Não iniciada' : undefined
+      },
       { id: 'results', label: 'Ranking', icon: '🏆' }
     ]
     : [
@@ -44,11 +50,19 @@ export default function AppMenu({ isOpen, onClose, currentTab, onNavigate, raceN
           {items.map(item => (
             <button
               key={item.id}
-              className={`app-menu-item ${currentTab === item.id ? 'active' : ''}`}
-              onClick={() => handleNavigate(item.id)}
+              className={`app-menu-item ${currentTab === item.id ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
+              onClick={() => {
+                if (item.disabled) return
+                handleNavigate(item.id)
+              }}
+              disabled={item.disabled}
+              title={item.disabled ? 'A corrida precisa ser iniciada para marcar chegadas' : undefined}
             >
               <span className="app-menu-icon">{item.icon}</span>
-              {item.label}
+              <span className="app-menu-label-wrap">
+                {item.label}
+                {item.subtitle ? <span className="app-menu-badge-disabled"> ({item.subtitle})</span> : null}
+              </span>
             </button>
           ))}
         </nav>

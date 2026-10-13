@@ -6,7 +6,7 @@ import { getRunnerById } from '../runners/runners.repository.js'
 import { decodeRunnerPayload } from '../runners/qrcode.service.js'
 import { buildArrivalResult, validateArrivalScan } from './scanner.rules.js'
 
-/** @typedef {'idle'|'scanning'|'recorded'|'invalid-race'|'race-finished'|'error'} ScanStatus */
+/** @typedef {'idle'|'scanning'|'recorded'|'invalid-race'|'race-not-started'|'race-finished'|'error'} ScanStatus */
 
 /** Tempo mínimo entre leituras do mesmo QR, para evitar registros repetidos em sequência. */
 const SAME_CODE_COOLDOWN_MS = 4000
@@ -41,9 +41,11 @@ export function useScanner(activeRaceOrId) {
 
   const [status, setStatus] = useState(/** @type {ScanStatus} */('idle'))
   const [message, setMessage] = useState(
-    activeRace?.endTime
-      ? 'Corrida encerrada - leituras de chegada bloqueadas'
-      : 'Aponte a câmera para o QR code'
+    !activeRace?.startTime
+      ? 'Corrida não iniciada - leituras de chegada bloqueadas'
+      : activeRace?.endTime
+        ? 'Corrida encerrada - leituras de chegada bloqueadas'
+        : 'Aponte a câmera para o QR code'
   )
   const [lastArrival, setLastArrival] = useState(null)
   const [rejectedScan, setRejectedScan] = useState(null)
@@ -138,10 +140,16 @@ export function useScanner(activeRaceOrId) {
       })
 
       // Mantém a crítica visível na tela
-      const timeoutMs = validation.errorType === 'race-finished' ? 4000 : RESULT_DISPLAY_MS
+      const timeoutMs = (validation.errorType === 'race-finished' || validation.errorType === 'race-not-started') ? 4000 : RESULT_DISPLAY_MS
       resultTimeoutRef.current = setTimeout(() => {
         setStatus('scanning')
-        setMessage(currentRace?.endTime ? 'Corrida encerrada - leituras de chegada bloqueadas' : 'Aponte a câmera para o QR code')
+        setMessage(
+          !currentRace?.startTime
+            ? 'Corrida não iniciada - leituras de chegada bloqueadas'
+            : currentRace?.endTime
+              ? 'Corrida encerrada - leituras de chegada bloqueadas'
+              : 'Aponte a câmera para o QR code'
+        )
       }, timeoutMs)
       return
     }

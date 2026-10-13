@@ -13,9 +13,6 @@ export function printRunnerQRCode(qrDataUrl, runner, raceName) {
   const numberHtml = runner.number
     ? `<div class="receipt-number">Nº ${escapeHtml(runner.number)}</div>`
     : ''
-  const raceHtml = raceName
-    ? `<div class="receipt-race">${escapeHtml(raceName)}</div>`
-    : ''
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -54,29 +51,25 @@ export function printRunnerQRCode(qrDataUrl, runner, raceName) {
             word-break: break-word;
           }
           .receipt-number {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 900;
-            margin: 4px 0;
+            margin: 4px 0 6px;
             line-height: 1;
             letter-spacing: 0.5px;
           }
           .receipt-qr {
             display: block;
             margin: 6px auto;
-            width: 160px;
-            height: 160px;
+            width: 170px;
+            height: 170px;
             image-rendering: pixelated;
           }
-          .receipt-id {
-            font-size: 10px;
-            font-family: monospace;
-            margin: 4px 0 2px;
-          }
-          .receipt-footer {
-            font-size: 9px;
-            margin-top: 6px;
-            border-top: 1px dashed #000000;
-            padding-top: 4px;
+          .receipt-name {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 6px 0 2px;
+            line-height: 1.25;
+            word-break: break-word;
           }
           @media print {
             body {
@@ -87,12 +80,9 @@ export function printRunnerQRCode(qrDataUrl, runner, raceName) {
         </style>
       </head>
       <body>
-        ${raceHtml}
-        <div class="receipt-name">${escapeHtml(runner.name)}</div>
         ${numberHtml}
         <img class="receipt-qr" src="${qrDataUrl}" alt="QR" />
-        <div class="receipt-id">${runner.cpf ? `CPF: ${escapeHtml(runner.cpf)}` : `ID: ${escapeHtml(runner.id)}`}</div>
-        <div class="receipt-footer">PWA QR Timing</div>
+        <div class="receipt-name">${escapeHtml(runner.name)}</div>
       </body>
     </html>
   `)
