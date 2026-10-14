@@ -1,4 +1,3 @@
-// UI only: leitura de QR code via câmera e registro da chegada com data/hora.
 import React, { useState } from 'react'
 import { useScanner } from './useScanner.js'
 import { formatDateTimeBR } from '../results/date.formatter.js'
@@ -6,11 +5,12 @@ import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 import { useRunners } from '../runners/useRunners.js'
 import { addResult } from '../results/results.repository.js'
 import ManualArrivalForm from './ManualArrivalForm.jsx'
+import { IconCheck } from '../../shared/Icons.jsx'
 
 /** @param {{ onBack?: () => void }} props */
 export default function ScannerPage({ onBack }) {
   const { activeRace } = useActiveRace()
-  const { videoRef, status, message, lastArrival, rejectedScan } = useScanner(activeRace)
+  const { videoRef, status, message, lastArrival, rejectedScan, isRaceActive } = useScanner(activeRace)
   const { runners } = useRunners(activeRace?.id)
   const [showManual, setShowManual] = useState(false)
   const [manualConfirmation, setManualConfirmation] = useState(null)
@@ -80,6 +80,13 @@ export default function ScannerPage({ onBack }) {
       <div className="video-wrap">
         <video ref={videoRef} muted playsInline autoPlay style={{ width: '100%', height: '100%' }} />
         <div className="reticle" />
+        {status === 'recorded' && (
+          <div className="scanner-success-overlay" aria-live="polite">
+            <div className="scanner-success-check">
+              <IconCheck size={56} color="#fff" />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="controls">

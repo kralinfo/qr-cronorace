@@ -2,11 +2,18 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
 import { normalizeCpf } from './runner-formatter.service.js'
+import { getRaceById } from '../races/races.repository.js'
 
 /**
  * @param {import('./runners.types.js').Runner} runner
  */
 export async function addRunner(runner) {
+  const race = await getRaceById(runner.raceId)
+  if (race?.startTime && !race?.endTime) {
+    const error = new Error('RACE_RUNNING_REGISTRATION_BLOCKED')
+    throw error
+  }
+
   if (runner.cpf) {
     const existingWithCpf = await findRunnerInRaceByCpf(runner.raceId, runner.cpf)
     if (existingWithCpf) {

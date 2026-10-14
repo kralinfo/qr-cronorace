@@ -35,6 +35,7 @@ export default function PublicRankingPage() {
   const placements = withElapsedTime(rawPlacements, race?.startTime)
   const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
   const arrivedCount = arrivedBarcodes.size
+  const runnersStillRunning = runners.filter(r => !arrivedBarcodes.has(r.id))
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
   const runnersById = Object.fromEntries(runners.map(r => [r.id, r]))
   const rankedArrivals = []
@@ -105,9 +106,11 @@ export default function PublicRankingPage() {
           <h2>Corredores na prova</h2>
           {runners.length === 0 ? (
             <p>Nenhum corredor cadastrado.</p>
+          ) : runnersStillRunning.length === 0 ? (
+            <p>Todos chegaram!</p>
           ) : (
             <ul>
-              {runners.map(r => (
+              {runnersStillRunning.map(r => (
                 <li key={`tv-all-${r.id}`}>
                   <strong>Nº {r.number ?? '—'}</strong> · {r.name}
                 </li>

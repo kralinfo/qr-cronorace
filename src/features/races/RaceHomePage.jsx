@@ -13,13 +13,13 @@ import CopyableField from './CopyableField.jsx'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import ReopenRaceModal from './ReopenRaceModal.jsx'
+import Modal from '../../shared/Modal.jsx'
 import {
   IconRunner,
   IconScanner,
   IconTrophy,
   IconTV,
   IconEditDoc,
-  IconFlag,
   IconRefresh,
   IconPlay
 } from '../../shared/Icons.jsx'
@@ -96,13 +96,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       icon: <IconEditDoc size={24} />,
       color: 'icon-teal',
       onClick: () => setPanel('register-link')
-    },
-    {
-      id: 'races',
-      label: 'Corridas',
-      icon: <IconFlag size={24} />,
-      color: 'icon-slate',
-      onClick: () => onNavigate?.('races')
     }
   ]
 
@@ -124,9 +117,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
               ? [{ label: 'Editar largada', onClick: () => setPanel('start') }]
               : []),
             { label: 'Editar corrida', onClick: () => setPanel('edit') },
-            { label: 'Link de cadastro', onClick: () => setPanel('register-link') },
-            { label: 'Link do ranking (TV)', onClick: () => setPanel('ranking-link') },
-            { label: 'Trocar corrida', onClick: clearActiveRace },
             { label: 'Excluir corrida', onClick: () => setConfirmingDelete(true), danger: true }
           ]} />
         </div>
@@ -206,23 +196,19 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       </section>
 
       {panel === 'start' && (
-        <div className="share-panel">
-          <button className="close-panel-btn" onClick={closePanel}>Fechar</button>
-          <StartTimeField race={activeRace} onSave={setStartTime} />
-        </div>
+        <Modal title="Editar Largada" onClose={closePanel} maxWidth={480}>
+          <StartTimeField race={activeRace} onSave={setStartTime} onClose={closePanel} />
+        </Modal>
       )}
 
       {panel === 'edit' && (
-        <div className="share-panel">
+        <Modal title="Editar Corrida" onClose={closePanel} maxWidth={480}>
           <EditRaceForm race={activeRace} onSave={editRace} onCancel={closePanel} />
-        </div>
+        </Modal>
       )}
 
       {panel === 'register-link' && (
-        <div className="share-panel">
-          <button className="close-panel-btn" onClick={closePanel}>Fechar</button>
-          <h3 style={{ margin: '0 0 12px', fontSize: '1.1rem' }}>Compartilhar Inscrição de Corredores</h3>
-
+        <Modal title="Compartilhar Link de Inscrição" onClose={closePanel} maxWidth={520}>
           <div style={{ marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#0071e3', fontWeight: 600 }}>Link direto (Sem exigir código)</h4>
             <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#86868b' }}>
@@ -239,15 +225,16 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             <CopyableField label="Link" value={buildRegistrationLink(null, false)} />
             <CopyableField label="Código da corrida" value={activeRace.id} />
           </div>
-        </div>
+        </Modal>
       )}
 
       {panel === 'ranking-link' && (
-        <div className="share-panel">
-          <button className="close-panel-btn" onClick={closePanel}>Fechar</button>
-          <p>Compartilhe este link para acompanhar a classificação em tempo real (ex: numa TV/telão):</p>
+        <Modal title="Link do Ranking para TV / Telão" onClose={closePanel} maxWidth={520}>
+          <p style={{ margin: '0 0 12px', fontSize: '0.9rem', color: '#6e6e73' }}>
+            Compartilhe ou abra este link em uma TV ou telão para acompanhar a classificação dos corredores em tempo real:
+          </p>
           <CopyableField label="Link do ranking" value={buildRankingLink(activeRace.id)} />
-        </div>
+        </Modal>
       )}
 
       {confirmingDelete && (

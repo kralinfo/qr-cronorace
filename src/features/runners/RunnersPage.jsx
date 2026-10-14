@@ -96,12 +96,13 @@ export default function RunnersPage() {
   const [historyRunnerName, setHistoryRunnerName] = useState(null)
   const [allRunnersCache, setAllRunnersCache] = useState([])
 
-  // Sincroniza targetRaceId com a corrida atualmente selecionada ao abrir o formulário
+  // Sincroniza targetRaceId com a corrida ativa ou atualmente selecionada
   useEffect(() => {
-    if (selectedRaceId && selectedRaceId !== 'ALL') {
-      setTargetRaceId(selectedRaceId)
-    } else if (activeRace?.id) {
+    if (activeRace?.id) {
       setTargetRaceId(activeRace.id)
+      setSelectedRaceId(activeRace.id)
+    } else if (selectedRaceId && selectedRaceId !== 'ALL') {
+      setTargetRaceId(selectedRaceId)
     } else if (races.length > 0) {
       setTargetRaceId(races[0].id)
     }
@@ -130,6 +131,9 @@ export default function RunnersPage() {
   }, [races])
 
   const selectedRace = selectedRaceId !== 'ALL' ? racesMap[selectedRaceId] : null
+  const isSelectedRaceRunning = Boolean(selectedRace?.startTime && !selectedRace?.endTime)
+  const targetRace = racesMap[targetRaceId]
+  const isTargetRaceRunning = Boolean(targetRace?.startTime && !targetRace?.endTime)
 
   const handleNumberKeyDown = (e) => {
     if (
@@ -258,40 +262,35 @@ export default function RunnersPage() {
       {/* Barra superior de controle: Seletor de Corrida, Botão de Cadastrar e Busca */}
       <section className="runners-controls-section">
         <div className="runners-controls-header">
-          <div className="runners-race-select-wrap">
-            <label htmlFor="runners-race-filter">Filtrar por corrida:</label>
-            <select
-              id="runners-race-filter"
-              className="runners-race-select"
-              value={selectedRaceId}
-              onChange={(e) => {
-                setSelectedRaceId(e.target.value)
-                clearError()
-                clearLastQrCode()
-              }}
-            >
-              {activeRace && (
-                <option value={activeRace.id}>
-                  {activeRace.name} (Corrida ativa)
-                </option>
-              )}
-              {races
-                .filter(r => r.id !== activeRace?.id)
-                .map(r => (
+          {!activeRace && (
+            <div className="runners-race-select-wrap">
+              <label htmlFor="runners-race-filter">Filtrar por corrida:</label>
+              <select
+                id="runners-race-filter"
+                className="runners-race-select"
+                value={selectedRaceId}
+                onChange={(e) => {
+                  setSelectedRaceId(e.target.value)
+                  clearError()
+                  clearLastQrCode()
+                }}
+              >
+                {races.map(r => (
                   <option key={r.id} value={r.id}>
                     {r.name} {r.eventDate ? `(${formatDateOnlyBR(r.eventDate)})` : ''}
                   </option>
                 ))}
-              <option value="ALL">Todas as corridas (Histórico geral)</option>
-            </select>
-          </div>
+                <option value="ALL">Todas as corridas (Histórico geral)</option>
+              </select>
+            </div>
+          )}
 
           <div className="runners-controls-actions">
             <button
               type="button"
               className={`printer-status-toggle-btn ${printerStatus.connected ? 'connected' : ''}`}
               onClick={() => setPrinterModalOpen(true)}
-              title="Configurar impressora térmica Bluetooth"
+              title="Configurar impressora Bluetooth"
             >
               {printerStatus.connected ? (
                 <>
@@ -301,20 +300,27 @@ export default function RunnersPage() {
               ) : (
                 <>
                   <IconBluetooth size={16} />
-                  <span>Conectar Térmica</span>
+                  <span>Conectar Impressora</span>
                 </>
               )}
             </button>
 
             <button
               type="button"
-              className="create-runner-toggle-btn"
+              className={`create-runner-toggle-btn ${isSelectedRaceRunning ? 'disabled' : ''}`}
               onClick={() => {
+                if (isSelectedRaceRunning) return
                 setShowCreateForm(prev => !prev)
                 clearError()
               }}
+              disabled={isSelectedRaceRunning}
+              title={isSelectedRaceRunning ? 'Inscrições bloqueadas: corrida em andamento' : undefined}
             >
-              {showCreateForm ? 'Fechar cadastro' : '+ Cadastrar corredor'}
+              {isSelectedRaceRunning
+                ? 'Inscrições bloqueadas (Em andamento)'
+                : showCreateForm
+                  ? 'Fechar cadastro'
+                  : '+ Cadastrar corredor'}
             </button>
           </div>
         </div>
@@ -350,7 +356,7 @@ export default function RunnersPage() {
       {showCreateForm && (
         <section className="share-panel create-runner-panel">
           <div className="create-runner-panel-header">
-            <h3>Cadastrar corredor para uma corrida</h3>
+            <h3>{activeRace ? `Cadastrar corredor · ${activeRace.name}` : 'Cadastrar corredor'}</h3>
             <button
               type="button"
               className="close-panel-btn"
@@ -364,24 +370,29 @@ export default function RunnersPage() {
           </div>
 
           <p className="create-runner-help-text">
-            Selecione a corrida desejada e informe o número e nome do atleta.
-            O sistema impedirá duplicatas de nome ou número nesta prova.
+            {activeRace
+              ? 'Informe o número, nome e CPF do atleta para esta corrida.'
+              : 'Selecione a corrida desejada e informe o número e nome do atleta.'}
           </p>
 
           <form onSubmit={handleSubmit} className="create-runner-form">
-            <label htmlFor="target-race-select">Corrida de destino:</label>
-            <select
-              id="target-race-select"
-              value={targetRaceId}
-              onChange={(e) => setTargetRaceId(e.target.value)}
-              required
-            >
-              {races.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.name} {r.id === activeRace?.id ? ' (Ativa)' : ''} {r.eventDate ? `· ${formatDateOnlyBR(r.eventDate)}` : ''}
-                </option>
-              ))}
-            </select>
+            {!activeRace && (
+              <div className="form-field-group">
+                <label htmlFor="target-race-select">Corrida de destino:</label>
+                <select
+                  id="target-race-select"
+                  value={targetRaceId}
+                  onChange={(e) => setTargetRaceId(e.target.value)}
+                  required
+                >
+                  {races.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} {r.eventDate ? `· ${formatDateOnlyBR(r.eventDate)}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <label htmlFor="runner-number-input">Número de peito do corredor:</label>
             <input
@@ -420,8 +431,18 @@ export default function RunnersPage() {
               required
             />
 
-            <button type="submit" disabled={submitting || loadingRunners}>
-              {submitting ? 'Cadastrando e gerando QR...' : 'Criar Corredor + Gerar QR Code'}
+            {isTargetRaceRunning && (
+              <div style={{ background: 'rgba(255, 149, 0, 0.12)', border: '1px solid rgba(255, 149, 0, 0.3)', color: '#b25000', padding: '12px 14px', borderRadius: '10px', fontSize: '0.88rem', lineHeight: 1.4 }}>
+                <strong>Inscrições Bloqueadas:</strong> Esta corrida está em andamento. Não é permitido realizar novas inscrições após o início da prova.
+              </div>
+            )}
+
+            <button type="submit" disabled={submitting || loadingRunners || isTargetRaceRunning}>
+              {isTargetRaceRunning
+                ? 'Inscrições bloqueadas (Em andamento)'
+                : submitting
+                  ? 'Cadastrando e gerando QR...'
+                  : 'Criar Corredor + Gerar QR Code'}
             </button>
           </form>
 
@@ -539,6 +560,7 @@ export default function RunnersPage() {
                     key={runner.id}
                     runner={runner}
                     raceName={raceName}
+                    showRaceName={selectedRaceId === 'ALL'}
                     highlightRaceBadge={selectedRaceId === 'ALL'}
                     onShowHistory={() => handleOpenHistory(runner.name)}
                     onEdit={setEditingRunner}

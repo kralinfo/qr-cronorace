@@ -8,6 +8,7 @@ import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import BottomNav from './shared/BottomNav.jsx'
+import { IconChevronLeft } from './shared/Icons.jsx'
 
 /** @returns {boolean} true quando a URL atual pede a tela pública de cadastro (link compartilhado) */
 function isPublicRegisterRequest() {
@@ -20,7 +21,7 @@ function isPublicRankingRequest() {
 }
 
 const TAB_TITLES = {
-  home: '',
+  home: 'Início',
   races: 'Corridas',
   runners: 'Corredores',
   scanner: 'Scanner',
@@ -29,7 +30,28 @@ const TAB_TITLES = {
 
 function AppContent() {
   const { activeRace, loading, clearActiveRace } = useActiveRace()
-  const [tab, setTab] = useState('home')
+  const [tab, setTabState] = useState('home')
+  const [navHistory, setNavHistory] = useState(['home'])
+
+  const handleNavigate = (newTab) => {
+    if (newTab === tab) return
+    setNavHistory(prev => [...prev, newTab])
+    setTabState(newTab)
+  }
+
+  const handleBack = () => {
+    if (navHistory.length > 1) {
+      const nextHistory = [...navHistory]
+      nextHistory.pop()
+      const prevTab = nextHistory[nextHistory.length - 1]
+      setNavHistory(nextHistory)
+      setTabState(prevTab)
+    } else {
+      setTabState('home')
+    }
+  }
+
+  const canGoBack = tab !== 'home'
 
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
 
@@ -37,6 +59,17 @@ function AppContent() {
     return (
       <div className="app">
         <header className="app-header">
+          {canGoBack && (
+            <button
+              type="button"
+              className="header-back-btn"
+              onClick={handleBack}
+              aria-label="Voltar"
+              title="Voltar à tela anterior"
+            >
+              <IconChevronLeft size={20} />
+            </button>
+          )}
           <div className="app-header-title-wrap">
             <h1>{TAB_TITLES[tab] || 'PWA QR Timing'}</h1>
           </div>
@@ -44,13 +77,13 @@ function AppContent() {
 
         <main>
           {tab === 'runners' && <RunnersPage />}
-          {tab === 'races' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
-          {tab === 'home' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
+          {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
+          {tab === 'home' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
         </main>
 
         <BottomNav
           currentTab={tab}
-          onNavigate={setTab}
+          onNavigate={handleNavigate}
           hasActiveRace={false}
         />
       </div>
@@ -59,24 +92,38 @@ function AppContent() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <div className="app-header-title-wrap">
-          {/* <span className="app-header-race-name">{activeRace.name}</span> */}
-          <h1>{TAB_TITLES[tab]}</h1>
-        </div>
-      </header>
+      {tab !== 'home' && (
+        <header className="app-header">
+          <div className="app-header-inner">
+            {canGoBack && (
+              <button
+                type="button"
+                className="header-back-btn"
+                onClick={handleBack}
+                aria-label="Voltar"
+                title="Voltar à tela anterior"
+              >
+                <IconChevronLeft size={20} />
+              </button>
+            )}
+            <div className="app-header-title-wrap">
+              <h1>{tab === 'runners' && activeRace?.name ? `Corredores - ${activeRace.name}` : TAB_TITLES[tab]}</h1>
+            </div>
+          </div>
+        </header>
+      )}
 
-      <main>
-        {tab === 'home' && <RaceHomePage onNavigate={setTab} onOpenScanner={() => setTab('scanner')} />}
-        {tab === 'races' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
+      <main className={tab === 'home' ? 'no-header' : ''}>
+        {tab === 'home' && <RaceHomePage onNavigate={handleNavigate} onOpenScanner={() => handleNavigate('scanner')} />}
+        {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
         {tab === 'runners' && <RunnersPage />}
-        {tab === 'scanner' && <ScannerPage onBack={() => setTab('home')} />}
+        {tab === 'scanner' && <ScannerPage onBack={handleBack} />}
         {tab === 'results' && <ResultsPage />}
       </main>
 
       <BottomNav
         currentTab={tab}
-        onNavigate={setTab}
+        onNavigate={handleNavigate}
         hasActiveRace={true}
         isRaceStarted={Boolean(activeRace.startTime)}
       />

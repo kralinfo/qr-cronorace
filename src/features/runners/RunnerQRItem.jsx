@@ -22,6 +22,7 @@ import { IconPrinter, IconReceipt, IconDownload, IconClose } from '../../shared/
 export default function RunnerQRItem({
   runner,
   raceName,
+  showRaceName = false,
   onShowHistory,
   onEdit,
   onDelete,
@@ -132,7 +133,7 @@ export default function RunnerQRItem({
             ) : (
               <span className="runner-cpf-tag empty">Sem CPF</span>
             )}
-            {raceName && (
+            {showRaceName && raceName && (
               <span className={`runner-race-badge ${highlightRaceBadge ? 'highlight' : ''}`}>
                 {raceName}
               </span>
@@ -148,7 +149,7 @@ export default function RunnerQRItem({
       {showPreview && qrDataUrl && (
         <div className="runner-qr-preview">
           <div className="runner-qr-preview-header">
-            {raceName && <p className="runner-preview-race">Corrida: <strong>{raceName}</strong></p>}
+            {showRaceName && raceName && <p className="runner-preview-race">Corrida: <strong>{raceName}</strong></p>}
             <button
               type="button"
               className="runner-qr-preview-close"

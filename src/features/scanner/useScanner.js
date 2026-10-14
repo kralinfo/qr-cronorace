@@ -13,6 +13,13 @@ const SAME_CODE_COOLDOWN_MS = 4000
 /** Tempo que o resultado fica em destaque na tela antes de voltar a aguardar leitura. */
 const RESULT_DISPLAY_MS = 2500
 
+/** Vibra o dispositivo brevemente quando suportado. */
+function vibrateSuccess() {
+  try {
+    if (navigator.vibrate) navigator.vibrate(120)
+  } catch (_) { /* noop */ }
+}
+
 /** Restrições de câmera priorizando resolução alta e câmera traseira, para ler QR a maior distância. */
 const CAMERA_CONSTRAINTS = {
   facingMode: { ideal: 'environment' },
@@ -27,6 +34,9 @@ const CAMERA_CONSTRAINTS = {
 export function useScanner(activeRaceOrId) {
   const activeRace = typeof activeRaceOrId === 'object' && activeRaceOrId !== null ? activeRaceOrId : null
   const raceId = activeRace?.id ?? (typeof activeRaceOrId === 'string' ? activeRaceOrId : null)
+
+  // A câmera só processa leituras quando a corrida está em andamento
+  const isRaceActive = Boolean(activeRace?.startTime && !activeRace?.endTime)
 
   const videoRef = useRef(null)
   const controlsRef = useRef(null)
@@ -161,6 +171,7 @@ export function useScanner(activeRaceOrId) {
     const arrivalResult = { ...buildArrivalResult(runnerData, raceId, readAt), runnerName, runnerNumber }
     await addResult(arrivalResult)
 
+    vibrateSuccess()
     setStatus('recorded')
     setLastArrival({ ...arrivalResult, name: runnerName, number: runnerNumber })
     setMessage('Chegada registrada!')
@@ -170,6 +181,6 @@ export function useScanner(activeRaceOrId) {
     }, RESULT_DISPLAY_MS)
   }, [raceId])
 
-  return { videoRef, status, message, lastArrival, rejectedScan }
+  return { videoRef, status, message, lastArrival, rejectedScan, isRaceActive }
 }
 

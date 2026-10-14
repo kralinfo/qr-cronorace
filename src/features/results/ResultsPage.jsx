@@ -18,6 +18,7 @@ export default function ResultsPage() {
   const placements = withElapsedTime(rawPlacements, activeRace?.startTime)
   const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
   const arrivedCount = arrivedBarcodes.size
+  const runnersStillRunning = runners.filter(r => !arrivedBarcodes.has(r.id))
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
   const runnersById = Object.fromEntries(runners.map(r => [r.id, r]))
   const rankedArrivals = []
@@ -75,9 +76,11 @@ export default function ResultsPage() {
             <h3>Corredores na prova</h3>
             {runners.length === 0 ? (
               <p>Nenhum corredor cadastrado.</p>
+            ) : runnersStillRunning.length === 0 ? (
+              <p>Todos os corredores já chegaram!</p>
             ) : (
               <ul>
-                {runners.map(r => (
+                {runnersStillRunning.map(r => (
                   <li key={`all-${r.id}`}>
                     <strong>Nº {r.number ?? '—'}</strong> · {r.name}
                   </li>

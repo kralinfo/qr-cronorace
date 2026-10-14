@@ -79,10 +79,34 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.header-back-btn {
+  background: var(--fill-secondary);
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  margin-right: 12px;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.header-back-btn:hover {
+  background: var(--fill-tertiary);
+}
+.header-back-btn:active {
+  transform: scale(0.95);
+}
+
 .app-header-title-wrap {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  min-width: 0;
+  flex: 1;
 }
 
 .app-header-race-name {
@@ -98,6 +122,9 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* =====================================
@@ -111,6 +138,9 @@ main {
   max-width: 720px;
   margin: 0 auto;
   width: 100%;
+}
+main.no-header {
+  padding-top: max(16px, env(safe-area-inset-top, 16px));
 }
 
 /* =====================================
@@ -614,7 +644,70 @@ form label {
 /* =====================================
    CONFIRM DIALOG
    ===================================== */
+/* ═══════════════════════════════════════════════
+   Modal centralizado (componente Modal.jsx)
+═══════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  padding-bottom: calc(var(--bottom-nav-h) + 20px);
+}
+.modal-sheet {
+  background: var(--card);
+  border-radius: 20px;
+  width: 100%;
+  max-height: calc(100vh - var(--bottom-nav-h) - 56px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  gap: 12px;
+}
+.modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+}
+.modal-body {
+  overflow-y: auto;
+  padding: 20px;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-close-btn {
+  background: var(--fill-secondary);
+  border: none;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.modal-close-btn:hover { background: var(--fill-tertiary); }
+
 .confirm-dialog-overlay {
+
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
@@ -703,15 +796,21 @@ form label {
 }
 
 .copy-btn {
-  flex: 0 0 auto;
-  background: var(--accent);
-  color: white;
-  white-space: nowrap;
-  padding: 10px 14px;
-  font-size: 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: #34c759;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: background 0.15s;
+  flex-shrink: 0;
 }
-
-.copy-btn:hover { background: var(--accent-hover); }
+.copy-btn:hover { background: rgba(52,199,89,0.1); }
 
 /* =====================================
    SHARE BUTTONS (ranking)
@@ -942,10 +1041,10 @@ form label {
 }
 
 .runners-controls-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
 }
 
 .printer-status-toggle-btn {
@@ -954,13 +1053,17 @@ form label {
   border: 1px solid rgba(0,0,0,0.1);
   font-size: 0.85rem;
   font-weight: 600;
-  padding: 8px 13px;
+  padding: 10px 12px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   white-space: nowrap;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
   transition: all 0.15s ease;
 }
 
@@ -973,10 +1076,27 @@ form label {
 .create-runner-toggle-btn {
   background: var(--accent);
   color: white;
+  border: 1px solid transparent;
+  font-size: 0.85rem;
   font-weight: 600;
   white-space: nowrap;
-  padding: 10px 16px;
+  padding: 10px 12px;
   border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.create-runner-toggle-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--fill-secondary);
+  color: var(--text-muted);
 }
 
 /* Search bar */
@@ -1228,6 +1348,7 @@ form label {
   cursor: pointer;
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
 .runner-qr-preview img {
@@ -1385,7 +1506,39 @@ form label {
   pointer-events: none;
 }
 
-.scanner-page .controls { text-align: center; }
+/* Overlay verde de confirmação de chegada */
+.scanner-success-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(52, 199, 89, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  animation: scannerSuccessFade 0.25s ease;
+  z-index: 10;
+  pointer-events: none;
+}
+.scanner-success-check {
+  background: #34c759;
+  border-radius: 50%;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(52,199,89,0.5);
+  animation: scannerCheckPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes scannerSuccessFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scannerCheckPop {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 .scanner-page .controls p { margin: 8px 0 0; font-size: 1rem; color: var(--text-secondary); }
 
 .scanner-race-not-started-banner,
@@ -1644,9 +1797,42 @@ form label {
 }
 
 /* Edit runner modal */
-.edit-runner-modal { width: 93vw; max-width: 480px; }
+.edit-runner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-.edit-runner-form { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.edit-runner-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100dvh - 32px);
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: auto;
+}
+
+.edit-runner-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
+}
 
 .edit-runner-field { display: flex; flex-direction: column; gap: 5px; }
 
@@ -1657,13 +1843,14 @@ form label {
 .edit-runner-field input,
 .edit-runner-field select {
   width: 100%;
-  padding: 11px 13px;
+  padding: 12px 14px;
   font-size: 0.95rem;
   font-family: inherit;
   border: 1px solid rgba(0,0,0,0.12);
   border-radius: var(--radius-sm);
   box-sizing: border-box;
   outline: none;
+  background: white;
 }
 
 .edit-runner-field input:focus,
@@ -1672,7 +1859,14 @@ form label {
   box-shadow: 0 0 0 3px rgba(0,113,227,0.1);
 }
 
-.edit-runner-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.edit-runner-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
 
 .error { color: var(--red-text); margin: 6px 0; font-size: 0.9rem; }
 
@@ -1842,6 +2036,15 @@ form label {
   gap: 10px;
   align-items: center;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.public-ranking-arrived-head span:nth-child(3),
+.public-ranking-arrived-row span:nth-child(3) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .public-ranking-arrived-head { font-size: 0.88rem; font-weight: 700; color: #ffe082; text-transform: uppercase; }
@@ -1883,11 +2086,296 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   max-width: 100%;
 }
 
+/* ═══════════════════════════════════════════════
+   MODERN DATE PICKER (FLOATING / POPOVER)
+═══════════════════════════════════════════════ */
+.datepicker-field-wrap {
+  position: relative;
+  width: 100%;
+}
+.datepicker-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+.datepicker-trigger-btn {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--fill-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.datepicker-trigger-btn:hover {
+  background: var(--fill-tertiary);
+}
+.datepicker-trigger-btn.active {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+.datepicker-icon {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+}
+.datepicker-value.placeholder {
+  color: var(--text-muted);
+}
+
+.datepicker-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 300;
+  width: 300px;
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--border);
+  padding: 14px;
+  animation: datepickerPop 0.15s ease-out;
+}
+@keyframes datepickerPop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 480px) {
+  .datepicker-popover {
+    position: fixed;
+    top: auto;
+    bottom: calc(var(--bottom-nav-h) + 14px);
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: 360px;
+    margin: 0 auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.datepicker-month-label {
+  font-size: 0.98rem;
+  color: var(--text-primary);
+}
+.datepicker-nav-btn {
+  background: var(--fill-secondary);
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+.datepicker-nav-btn:hover { background: var(--fill-tertiary); }
+
+.datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.datepicker-weekday {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.datepicker-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.datepicker-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background 0.15s, color 0.15s;
+}
+.datepicker-day:hover:not(.selected):not(.empty) {
+  background: var(--fill-secondary);
+}
+.datepicker-day.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+.datepicker-day.today:not(.selected) {
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.datepicker-day.empty {
+  cursor: default;
+}
+
+.datepicker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.datepicker-today-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.datepicker-today-btn:hover { background: rgba(0, 113, 227, 0.08); }
+.datepicker-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.datepicker-close-btn:hover { background: var(--fill-secondary); }
+
+/* ═══════════════════════════════════════════════
+   FORM CONFIRMATION PROMPTS (SIM / NÃO)
+═══════════════════════════════════════════════ */
+.form-confirm-prompt {
+  text-align: center;
+  padding: 10px 4px;
+}
+.form-confirm-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+.form-confirm-title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.form-confirm-desc {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+.form-confirm-summary {
+  background: var(--fill-secondary);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.form-confirm-summary p {
+  margin: 4px 0;
+  color: var(--text-primary);
+}
+.form-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.form-confirm-actions button {
+  flex: 1;
+  max-width: 160px;
+  padding: 12px 18px;
+}
+
+/* ═══════════════════════════════════════════════
+   START TIME FORM MODERNIZED
+═══════════════════════════════════════════════ */
+.start-time-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.start-time-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.start-time-current-badge {
+  background: var(--fill-secondary);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.start-time-current-label {
+  color: var(--text-secondary);
+}
+.start-time-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--fill-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.start-time-input:focus {
+  border-color: var(--accent);
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+.continue-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+
 /* =====================================
    RESPONSIVE
    ===================================== */
 @media (min-width: 600px) {
   main { padding: 24px; padding-top: calc(var(--header-h) + 24px); padding-bottom: calc(var(--bottom-nav-h) + 28px); }
+  main.no-header { padding-top: 24px; }
   .quick-actions-grid { grid-template-columns: repeat(4, 1fr); }
 }
 

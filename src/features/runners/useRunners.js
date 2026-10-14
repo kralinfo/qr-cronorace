@@ -17,6 +17,7 @@ import {
   normalizeCpf,
   validateCpf
 } from './runner-formatter.service.js'
+import { getRaceById } from '../races/races.repository.js'
 
 /**
  * @param {string|'ALL'|undefined|null} raceId - ID da corrida ou 'ALL' para todas
@@ -116,6 +117,12 @@ export function useRunners(raceId) {
     }
 
     try {
+      const race = await getRaceById(effectiveRaceId)
+      if (race?.startTime && !race?.endTime) {
+        setError('Não é possível cadastrar: esta corrida está em andamento e novas inscrições foram bloqueadas.')
+        return null
+      }
+
       let sequenceNumber = currentRaceRunners.length + 1
       if (raceId !== effectiveRaceId && currentRaceRunners.length === 0) {
         const raceRunners = await getRunnersByRace(effectiveRaceId)
@@ -136,6 +143,10 @@ export function useRunners(raceId) {
       setLastQrCode(result)
       return result
     } catch (e) {
+      if (e instanceof Error && e.message === 'RACE_RUNNING_REGISTRATION_BLOCKED') {
+        setError('Não é possível cadastrar: esta corrida está em andamento e novas inscrições foram bloqueadas.')
+        return null
+      }
       if (e instanceof Error && e.message === 'RUNNER_CPF_ALREADY_EXISTS') {
         const ownerName = e.existingRunner?.name ? ` ("${e.existingRunner.name}", Nº ${e.existingRunner.number || '—'})` : ''
         setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida${ownerName}.`)

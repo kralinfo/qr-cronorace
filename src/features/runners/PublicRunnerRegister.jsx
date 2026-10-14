@@ -87,6 +87,47 @@ export default function PublicRunnerRegister() {
     )
   }
 
+  const isRunning = Boolean(race.startTime && !race.endTime)
+  const isFinished = Boolean(race.endTime)
+
+  if (isRunning) {
+    return (
+      <div className="app">
+        <header className="app-header"><h1>{race.name}</h1></header>
+        <main>
+          <section className="create-race-section" style={{ textAlign: 'center', padding: '32px 16px' }}>
+            <h2>Inscrições Bloqueadas</h2>
+            <div className="race-status-pill running" style={{ display: 'inline-flex', margin: '16px 0' }}>
+              <span className="status-dot green" /> Corrida em andamento
+            </div>
+            <p style={{ color: '#6e6e73', maxWidth: 440, margin: '0 auto 20px', lineHeight: 1.5 }}>
+              Esta corrida já teve sua largada iniciada e novas inscrições foram bloqueadas para manter a integridade da cronometragem.
+            </p>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
+  if (isFinished) {
+    return (
+      <div className="app">
+        <header className="app-header"><h1>{race.name}</h1></header>
+        <main>
+          <section className="create-race-section" style={{ textAlign: 'center', padding: '32px 16px' }}>
+            <h2>Inscrições Encerradas</h2>
+            <div className="race-status-pill finished" style={{ display: 'inline-flex', margin: '16px 0' }}>
+              Corrida encerrada
+            </div>
+            <p style={{ color: '#6e6e73', maxWidth: 440, margin: '0 auto 20px', lineHeight: 1.5 }}>
+              Esta prova já foi finalizada e não aceita mais cadastros.
+            </p>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
   return <RegisterForm race={race} />
 }
 
