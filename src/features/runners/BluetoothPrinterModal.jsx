@@ -8,6 +8,7 @@ import {
   printTestToBluetooth,
   subscribePrinterStatus
 } from './bluetooth-printer.service.js'
+import { IconClose, IconBluetooth, IconPrinter, IconSearch } from '../../shared/Icons.jsx'
 
 /**
  * @param {{
@@ -77,18 +78,18 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
             <h2>Impressora Térmica Bluetooth</h2>
             <p className="printer-modal-subtitle">Conexão direta com mini impressoras de cupom (58mm / 80mm ESC/POS)</p>
           </div>
-          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar">✕</button>
+          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar"><IconClose size={16} /></button>
         </div>
 
         <div className="printer-modal-body">
           {!supported ? (
             <div className="printer-unsupported-box">
-              <p>⚠️ <strong>Conexão direta Web Bluetooth indisponível neste navegador.</strong></p>
+              <p><strong>Conexão direta Web Bluetooth indisponível neste navegador.</strong></p>
               <p>
                 No <strong>Apple iOS (iPhone e iPad)</strong>, o Safari e o Chrome não suportam a Web Bluetooth API por limitações da própria Apple (WebKit). No <strong>Android</strong> e computadores, o Google Chrome oferece suporte completo com HTTPS.
               </p>
               <div style={{ marginTop: '10px', padding: '10px', background: '#e3f2fd', borderRadius: '8px', color: '#0d47a1', fontSize: '0.9rem' }}>
-                <strong>💡 Como imprimir no iPhone / iOS:</strong>
+                <strong>Como imprimir no iPhone / iOS:</strong>
                 <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
                   <li><strong>Opção 1 (Recomendada):</strong> Ao clicar em imprimir, o sistema abre diretamente o cupom térmico (58mm) no diálogo de impressão do iOS, imprimindo na sua impressora conectada.</li>
                   <li><strong>Opção 2 (Bluetooth Direto no iOS):</strong> Acesse este app pelo navegador gratuito <strong>Bluefy (Web BLE Browser)</strong>, disponível na App Store do iPhone, que ativa o suporte a Web Bluetooth no iOS.</li>
@@ -127,7 +128,7 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
                     onClick={handleConnect}
                     disabled={loading}
                   >
-                    {loading ? 'Buscando impressoras...' : '🔍 Conectar Impressora Bluetooth'}
+                    {loading ? 'Buscando impressoras...' : <><IconSearch size={15} /> Conectar Impressora Bluetooth</>}
                   </button>
                 ) : (
                   <div className="printer-connected-actions">
@@ -137,7 +138,7 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
                       onClick={handleTestPrint}
                       disabled={loading}
                     >
-                      {loading ? 'Imprimindo...' : '🖨️ Imprimir Cupom de Teste'}
+                      {loading ? 'Imprimindo...' : <><IconPrinter size={15} /> Imprimir Cupom de Teste</>}
                     </button>
                     <button
                       type="button"
@@ -152,7 +153,7 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
               </div>
 
               <div className="printer-help-guide">
-                <h4>ℹ️ Instruções para impressora térmica de cupom:</h4>
+                <h4>Instruções para impressora térmica de cupom:</h4>
                 <ul>
                   <li>Ligue a impressora e verifique se o LED de Bluetooth está piscando/ativo.</li>
                   <li>Modelos comuns suportados: POS-58, MPT-II, Goojprt, PeriPage, Mini POS 58mm/80mm.</li>

@@ -1,6 +1,7 @@
 // UI only: modal para edição de dados do corredor (nome, número de peito, CPF e corrida)
 import React, { useState } from 'react'
 import { maskCpf } from './runner-formatter.service.js'
+import { IconClose } from '../../shared/Icons.jsx'
 
 /**
  * @param {{
@@ -86,7 +87,7 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
               <p className="runner-history-subtitle">CPF: <strong>{runner.cpf}</strong></p>
             ) : null}
           </div>
-          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar">✕</button>
+          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar"><IconClose size={16} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="edit-runner-form">

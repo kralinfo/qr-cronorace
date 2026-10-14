@@ -1,6 +1,7 @@
 // UI only: campo somente-leitura com botão para copiar o valor para a área de transferência.
 import React, { useState } from 'react'
 import { copyToClipboard } from '../../shared/clipboard.service.js'
+import { IconCheck } from '../../shared/Icons.jsx'
 
 /** @param {{ label: string, value: string }} props */
 export default function CopyableField({ label, value }) {
@@ -20,7 +21,7 @@ export default function CopyableField({ label, value }) {
       <div className="copyable-field-row">
         <input readOnly value={value} onFocus={e => e.target.select()} />
         <button type="button" className="copy-btn" onClick={handleCopy}>
-          {copied ? '✓ Copiado' : 'Copiar'}
+          {copied ? <><IconCheck size={14} /> Copiado</> : 'Copiar'}
         </button>
       </div>
     </div>

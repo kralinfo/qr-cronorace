@@ -1,5 +1,4 @@
-// UI only: painel principal da corrida ativa — mostra as informações essenciais
-// (nome, data, horário de largada, cronômetro ao vivo) e as ações via menu de contexto.
+// UI only: painel principal da corrida ativa — visual estilo app mobile moderno
 import React, { useState } from 'react'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { useRaces } from './useRaces.js'
@@ -21,7 +20,6 @@ import {
   IconTV,
   IconEditDoc,
   IconFlag,
-  IconChevronRight,
   IconRefresh,
   IconPlay
 } from '../../shared/Icons.jsx'
@@ -58,8 +56,60 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
   const arrivedCount = new Set(placements.map(p => p.barcode).filter(Boolean)).size
 
+  // Grid de acesso rápido (pequenos, estilo "Favoritos")
+  const quickActions = [
+    {
+      id: 'runners',
+      label: 'Corredores',
+      icon: <IconRunner size={24} />,
+      color: 'icon-blue',
+      onClick: () => onNavigate?.('runners')
+    },
+    {
+      id: 'scanner',
+      label: 'Chegada',
+      icon: <IconScanner size={24} />,
+      color: 'icon-green',
+      disabled: !activeRace.startTime,
+      onClick: () => {
+        if (!activeRace.startTime) return
+        onOpenScanner?.() || onNavigate?.('scanner')
+      }
+    },
+    {
+      id: 'results',
+      label: 'Ranking',
+      icon: <IconTrophy size={24} />,
+      color: 'icon-amber',
+      onClick: () => onNavigate?.('results')
+    },
+    {
+      id: 'tv',
+      label: 'Telão TV',
+      icon: <IconTV size={24} />,
+      color: 'icon-purple',
+      onClick: () => setPanel('ranking-link')
+    },
+    {
+      id: 'link',
+      label: 'Inscrição',
+      icon: <IconEditDoc size={24} />,
+      color: 'icon-teal',
+      onClick: () => setPanel('register-link')
+    },
+    {
+      id: 'races',
+      label: 'Corridas',
+      icon: <IconFlag size={24} />,
+      color: 'icon-slate',
+      onClick: () => onNavigate?.('races')
+    }
+  ]
+
   return (
     <div className="race-home-page">
+
+      {/* Card de status da corrida */}
       <div className="race-home-card">
         <div className="race-home-card-header">
           <div>
@@ -118,9 +168,6 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                 Encerrar corrida
               </button>
             </div>
-            <button type="button" className="secondary-btn race-home-scanner-shortcut" onClick={() => onOpenScanner?.()}>
-              <IconScanner size={18} /> Marcar chegada (Scanner)
-            </button>
           </>
         ) : (
           <div className="race-home-status pending">
@@ -133,108 +180,28 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
         )}
       </div>
 
-      {/* Opções rápidas do menu organizadas e distribuídas na tela */}
-      <section className="race-dashboard-section" aria-label="Acesso rápido às opções">
+      {/* Acesso Rápido — grid de ícones pequenos estilo Favoritos */}
+      <section className="race-dashboard-section" aria-label="Acesso rápido">
         <h3 className="race-dashboard-title">Acesso Rápido</h3>
-        <div className="race-dashboard-grid">
-          <button
-            type="button"
-            className="dashboard-card"
-            onClick={() => onNavigate?.('runners')}
-          >
-            <div className="dashboard-card-icon icon-blue">
-              <IconRunner size={20} />
-            </div>
-            <div className="dashboard-card-info">
-              <strong>Corredores</strong>
-              <span>Lista e QR Codes</span>
-            </div>
-            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
-          </button>
-
-          <button
-            type="button"
-            className={`dashboard-card primary-accent ${!activeRace.startTime ? 'disabled' : ''}`}
-            onClick={() => {
-              if (!activeRace.startTime) return
-              onOpenScanner?.() || onNavigate?.('scanner')
-            }}
-            disabled={!activeRace.startTime}
-            title={!activeRace.startTime ? 'A corrida precisa ser iniciada para marcar chegadas' : 'Marcar chegada de corredores'}
-          >
-            <div className="dashboard-card-icon icon-green">
-              <IconScanner size={20} />
-            </div>
-            <div className="dashboard-card-info">
-              <strong>Marcar Chegada</strong>
-              {!activeRace.startTime ? (
-                <span className="dashboard-card-hint">Não iniciada</span>
-              ) : (
-                <span>Scanner de câmera</span>
+        <div className="quick-actions-grid">
+          {quickActions.map(action => (
+            <button
+              key={action.id}
+              type="button"
+              className={`quick-action-item ${action.disabled ? 'disabled' : ''}`}
+              onClick={action.onClick}
+              disabled={action.disabled}
+              title={action.disabled ? 'Inicie a corrida para liberar' : action.label}
+            >
+              <div className={`quick-action-icon ${action.color || ''}`}>
+                {action.icon}
+              </div>
+              <span className="quick-action-label">{action.label}</span>
+              {action.disabled && (
+                <span className="quick-action-lock">Bloq.</span>
               )}
-            </div>
-            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
-          </button>
-
-          <button
-            type="button"
-            className="dashboard-card"
-            onClick={() => onNavigate?.('results')}
-          >
-            <div className="dashboard-card-icon icon-amber">
-              <IconTrophy size={20} />
-            </div>
-            <div className="dashboard-card-info">
-              <strong>Ranking / Resultados</strong>
-              <span>Classificação geral</span>
-            </div>
-            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
-          </button>
-
-          <button
-            type="button"
-            className="dashboard-card"
-            onClick={() => setPanel('ranking-link')}
-          >
-            <div className="dashboard-card-icon icon-purple">
-              <IconTV size={20} />
-            </div>
-            <div className="dashboard-card-info">
-              <strong>Telão TV (Ao Vivo)</strong>
-              <span>Transmissão em tempo real</span>
-            </div>
-            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
-          </button>
-
-          <button
-            type="button"
-            className="dashboard-card"
-            onClick={() => setPanel('register-link')}
-          >
-            <div className="dashboard-card-icon icon-teal">
-              <IconEditDoc size={20} />
-            </div>
-            <div className="dashboard-card-info">
-              <strong>Link de Inscrição</strong>
-              <span>Compartilhar com atletas</span>
-            </div>
-            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
-          </button>
-
-          <button
-            type="button"
-            className="dashboard-card"
-            onClick={() => onNavigate?.('races')}
-          >
-            <div className="dashboard-card-icon icon-slate">
-              <IconFlag size={20} />
-            </div>
-            <div className="dashboard-card-info">
-              <strong>Trocar Corrida</strong>
-              <span>Ver todas as provas</span>
-            </div>
-            <span className="dashboard-card-arrow"><IconChevronRight size={16} /></span>
-          </button>
+            </button>
+          ))}
         </div>
       </section>
 

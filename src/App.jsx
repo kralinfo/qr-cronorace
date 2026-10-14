@@ -7,8 +7,7 @@ import PublicRankingPage from './features/results/PublicRankingPage.jsx'
 import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
-import AppMenu from './shared/AppMenu.jsx'
-import { IconMenu } from './shared/Icons.jsx'
+import BottomNav from './shared/BottomNav.jsx'
 
 /** @returns {boolean} true quando a URL atual pede a tela pública de cadastro (link compartilhado) */
 function isPublicRegisterRequest() {
@@ -21,7 +20,7 @@ function isPublicRankingRequest() {
 }
 
 const TAB_TITLES = {
-  home: 'Início',
+  home: '',
   races: 'Corridas',
   runners: 'Corredores',
   scanner: 'Scanner',
@@ -31,7 +30,6 @@ const TAB_TITLES = {
 function AppContent() {
   const { activeRace, loading, clearActiveRace } = useActiveRace()
   const [tab, setTab] = useState('home')
-  const [menuOpen, setMenuOpen] = useState(false)
 
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
 
@@ -39,23 +37,22 @@ function AppContent() {
     return (
       <div className="app">
         <header className="app-header">
-          <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><IconMenu size={20} /></button>
-          <h1>{TAB_TITLES[tab] || 'PWA QR Timing'}</h1>
+          <div className="app-header-title-wrap">
+            <h1>{TAB_TITLES[tab] || 'PWA QR Timing'}</h1>
+          </div>
         </header>
-        <AppMenu
-          isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          currentTab={tab}
-          onNavigate={setTab}
-          raceName="PWA QR Timing"
-          onChangeRace={clearActiveRace}
-          hasActiveRace={false}
-        />
+
         <main>
           {tab === 'runners' && <RunnersPage />}
           {tab === 'races' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
           {tab === 'home' && <RaceSetupPage onRaceSelected={() => setTab('home')} />}
         </main>
+
+        <BottomNav
+          currentTab={tab}
+          onNavigate={setTab}
+          hasActiveRace={false}
+        />
       </div>
     )
   }
@@ -63,19 +60,11 @@ function AppContent() {
   return (
     <div className="app">
       <header className="app-header">
-        <button className="menu-toggle-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><IconMenu size={20} /></button>
-        <h1>{TAB_TITLES[tab]}</h1>
+        <div className="app-header-title-wrap">
+          {/* <span className="app-header-race-name">{activeRace.name}</span> */}
+          <h1>{TAB_TITLES[tab]}</h1>
+        </div>
       </header>
-
-      <AppMenu
-        isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        currentTab={tab}
-        onNavigate={setTab}
-        raceName={activeRace.name}
-        onChangeRace={clearActiveRace}
-        isRaceStarted={Boolean(activeRace.startTime)}
-      />
 
       <main>
         {tab === 'home' && <RaceHomePage onNavigate={setTab} onOpenScanner={() => setTab('scanner')} />}
@@ -84,6 +73,13 @@ function AppContent() {
         {tab === 'scanner' && <ScannerPage onBack={() => setTab('home')} />}
         {tab === 'results' && <ResultsPage />}
       </main>
+
+      <BottomNav
+        currentTab={tab}
+        onNavigate={setTab}
+        hasActiveRace={true}
+        isRaceStarted={Boolean(activeRace.startTime)}
+      />
     </div>
   )
 }
@@ -101,5 +97,3 @@ export default function App(){
     </ActiveRaceProvider>
   )
 }
-
-

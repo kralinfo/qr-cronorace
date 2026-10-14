@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
 import { normalizeComparable } from './runners.repository.js'
 import RunnerQRItem from './RunnerQRItem.jsx'
+import { IconClose, IconFlag } from '../../shared/Icons.jsx'
 
 /**
  * @param {{
@@ -44,12 +45,12 @@ export default function RunnerHistoryModal({
               Atleta: <strong>{runnerName}</strong> ({sortedParticipations.length} {sortedParticipations.length === 1 ? 'corrida' : 'corridas'})
             </p>
           </div>
-          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar">✕</button>
+          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar"><IconClose size={16} /></button>
         </div>
 
         <div className="runner-history-alert">
           <p>
-            ℹ️ Cada corrida possui seu próprio QR Code e número de peito.
+            Cada corrida possui seu próprio QR Code e número de peito.
             Certifique-se de reimprimir o QR correspondente à prova desejada.
           </p>
         </div>
@@ -66,7 +67,7 @@ export default function RunnerHistoryModal({
                   <li key={runner.id} className="runner-history-card">
                     <div className="runner-history-card-header">
                       <div>
-                        <strong className="runner-history-race-title">🏁 {raceName}</strong>
+                        <strong className="runner-history-race-title"><IconFlag size={14} /> {raceName}</strong>
                         {race?.eventDate && (
                           <span className="runner-history-race-date">
                             {formatDateOnlyBR(race.eventDate)}

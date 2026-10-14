@@ -1,6 +1,7 @@
 // UI only: modal para reabrir uma corrida que foi encerrada acidentalmente ou que precisa continuar
 import React, { useState } from 'react'
 import { formatDateTimeBR } from '../results/date.formatter.js'
+import { IconClose, IconRunner, IconClock, IconRefresh } from '../../shared/Icons.jsx'
 
 /**
  * @param {{
@@ -40,12 +41,12 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
             <h2>Reabrir Corrida</h2>
             <p className="reopen-race-subtitle">{race.name}</p>
           </div>
-          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar">✕</button>
+          <button type="button" className="menu-close-btn" onClick={onClose} aria-label="Fechar"><IconClose size={16} /></button>
         </div>
 
         <div className="reopen-race-content">
           <div className="reopen-race-detected-box">
-            <p className="reopen-detected-title">⏱️ Parada detectada:</p>
+            <p className="reopen-detected-title">Parada detectada:</p>
             <ul>
               <li><strong>Largada original:</strong> {race.startTime ? formatDateTimeBR(race.startTime) : '—'}</li>
               <li><strong>Hora do encerramento:</strong> {race.endTime ? formatDateTimeBR(race.endTime) : '—'}</li>
@@ -62,7 +63,7 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
               onClick={() => handleAction('resume')}
               disabled={submitting}
             >
-              <div className="reopen-option-icon">🏃</div>
+              <div className="reopen-option-icon"><IconRunner size={22} /></div>
               <div className="reopen-option-text">
                 <strong>Continuar sem interrupção (Tempo Real)</strong>
                 <span>
@@ -78,7 +79,7 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
                 onClick={() => handleAction('compensate')}
                 disabled={submitting}
               >
-                <div className="reopen-option-icon">⏳</div>
+                <div className="reopen-option-icon"><IconClock size={22} /></div>
                 <div className="reopen-option-text">
                   <strong>Descontar tempo parado ({pausedText})</strong>
                   <span>
@@ -94,7 +95,7 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
               onClick={() => handleAction('reset')}
               disabled={submitting}
             >
-              <div className="reopen-option-icon">🔄</div>
+              <div className="reopen-option-icon"><IconRefresh size={22} /></div>
               <div className="reopen-option-text">
                 <strong>Zerar cronômetro e reiniciar agora</strong>
                 <span>
