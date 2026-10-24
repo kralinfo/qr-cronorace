@@ -33,6 +33,7 @@ export default function ManualArrivalForm({ runners, isStarted = true, isFinishe
     if (!selectedRunner || !isStarted || isFinished) return
     setSaving(true)
     await onConfirm(selectedRunner)
+    try { if (navigator.vibrate) navigator.vibrate(120) } catch (_) { /* noop */ }
     setSaving(false)
   }
 

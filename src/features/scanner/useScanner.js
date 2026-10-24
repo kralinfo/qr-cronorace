@@ -20,6 +20,13 @@ function vibrateSuccess() {
   } catch (_) { /* noop */ }
 }
 
+/** Vibra em padrão de erro (duas vibrações curtas) quando suportado. */
+function vibrateError() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([80, 60, 80])
+  } catch (_) { /* noop */ }
+}
+
 /** Restrições de câmera priorizando resolução alta e câmera traseira, para ler QR a maior distância. */
 const CAMERA_CONSTRAINTS = {
   facingMode: { ideal: 'environment' },
@@ -161,6 +168,7 @@ export function useScanner(activeRaceOrId) {
               : 'Aponte a câmera para o QR code'
         )
       }, timeoutMs)
+      vibrateError()
       return
     }
 
