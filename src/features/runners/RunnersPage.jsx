@@ -136,8 +136,10 @@ export default function RunnersPage() {
 
   const selectedRace = selectedRaceId !== 'ALL' ? racesMap[selectedRaceId] : null
   const isSelectedRaceRunning = Boolean(selectedRace?.startTime && !selectedRace?.endTime)
+  const isSelectedRaceFinished = Boolean(selectedRace?.endTime)
   const targetRace = racesMap[targetRaceId]
   const isTargetRaceRunning = Boolean(targetRace?.startTime && !targetRace?.endTime)
+  const isTargetRaceFinished = Boolean(targetRace?.endTime)
 
   const handleNumberKeyDown = (e) => {
     if (
@@ -453,22 +455,32 @@ export default function RunnersPage() {
             />
 
             <label htmlFor="runner-category-input">Categoria do corredor:</label>
-            <input
+            <select
               id="runner-category-input"
-              type="text"
-              placeholder="ex: Masculino 30-39"
               value={category}
               onChange={e => setCategory(e.target.value)}
-            />
+            >
+              <option value="">Selecione (opcional)</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="PCD">PCD</option>
+            </select>
 
             {isTargetRaceRunning && (
               <div style={{ background: 'rgba(255, 149, 0, 0.12)', border: '1px solid rgba(255, 149, 0, 0.3)', color: '#b25000', padding: '12px 14px', borderRadius: '10px', fontSize: '0.88rem', lineHeight: 1.4 }}>
                 <strong>Inscrições Bloqueadas:</strong> Esta corrida está em andamento. Não é permitido realizar novas inscrições após o início da prova.
               </div>
             )}
+            {isTargetRaceFinished && (
+              <div style={{ background: 'rgba(255, 59, 48, 0.12)', border: '1px solid rgba(255, 59, 48, 0.3)', color: '#b31d1d', padding: '12px 14px', borderRadius: '10px', fontSize: '0.88rem', lineHeight: 1.4 }}>
+                <strong>Inscrições Bloqueadas:</strong> Esta corrida já foi encerrada. Não é permitido realizar novas inscrições.
+              </div>
+            )}
 
-            <button type="submit" disabled={submitting || loadingRunners || isTargetRaceRunning}>
-              {isTargetRaceRunning
+            <button type="submit" disabled={submitting || loadingRunners || isTargetRaceRunning || isTargetRaceFinished}>
+              {isTargetRaceFinished
+                ? 'Inscrições bloqueadas (Encerrada)'
+                : isTargetRaceRunning
                 ? 'Inscrições bloqueadas (Em andamento)'
                 : submitting
                   ? 'Cadastrando e gerando QR...'
@@ -596,6 +608,7 @@ export default function RunnersPage() {
                     onEdit={setEditingRunner}
                     onDelete={setDeletingRunner}
                     onSelectRace={selectedRaceId === 'ALL' ? (rId) => setSelectedRaceId(rId) : undefined}
+                    disableActions={Boolean(racesMap[runner.raceId]?.startTime || racesMap[runner.raceId]?.endTime)}
                   />
                 )
               })}

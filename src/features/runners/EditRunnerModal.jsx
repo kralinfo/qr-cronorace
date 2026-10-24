@@ -235,16 +235,17 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
             <div className="edit-runner-field">
               <label htmlFor="edit-runner-category">
                 Categoria:
-                <span className="field-hint"> (Ex: Masculino 30-39, Feminino 40+)</span>
               </label>
-              <input
+              <select
                 id="edit-runner-category"
-                type="text"
-                placeholder="ex: Masculino 30-39"
                 value={category}
-                onFocus={handleInputFocus}
                 onChange={e => setCategory(e.target.value)}
-              />
+              >
+                <option value="">Selecione (opcional)</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Feminino">Feminino</option>
+                <option value="PCD">PCD</option>
+              </select>
             </div>
 
             {error && <p className="error">{error}</p>}

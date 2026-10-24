@@ -39,8 +39,9 @@ export default function ActionsMenu({ items }) {
             <button
               key={i}
               type="button"
-              className={`actions-menu-item ${item.danger ? 'danger' : ''}`}
-              onClick={() => handleItemClick(item.onClick)}
+              className={`actions-menu-item ${item.danger ? 'danger' : ''} ${item.disabled ? 'disabled' : ''}`}
+              onClick={() => !item.disabled && handleItemClick(item.onClick)}
+              disabled={item.disabled}
             >
               {item.label}
             </button>

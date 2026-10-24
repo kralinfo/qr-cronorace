@@ -1,11 +1,14 @@
 // UI only: modal para importar corredores em lote a partir de uma planilha CSV ou Excel (.xlsx).
 // Cada linha deve conter: nome, cpf, número (de peito) e categoria (opcional).
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRunners } from './useRunners.js'
 import {
   parseRunnersFile,
   expectedColumns,
+  validateCategory,
+  VALID_CATEGORIES,
 } from './import-runners.service.js'
+import { getRaceById } from '../races/races.repository.js'
 import {
   maskCpf,
   normalizeCpf,
@@ -31,8 +34,26 @@ export default function ImportRunnersModal({ raceId, onClose }) {
   const [errorCount, setErrorCount] = useState(0)
   const [showSummary, setShowSummary] = useState(false)
   const [confirmingImport, setConfirmingImport] = useState(false)
+  const [race, setRace] = useState(null)
+  const [raceLoading, setRaceLoading] = useState(Boolean(raceId))
 
   const columns = expectedColumns()
+
+  useEffect(() => {
+    if (!raceId) {
+      setRace(null)
+      setRaceLoading(false)
+      return
+    }
+    setRaceLoading(true)
+    getRaceById(raceId)
+      .then((r) => setRace(r ?? null))
+      .catch(() => setRace(null))
+      .finally(() => setRaceLoading(false))
+  }, [raceId])
+
+  const isRaceRunning = Boolean(race?.startTime && !race?.endTime)
+  const isRaceFinished = Boolean(race?.endTime)
 
   // Corredores já cadastrados nesta corrida, indexados para checagem de duplicidade.
   const existing = useMemo(() => {
@@ -58,6 +79,9 @@ export default function ImportRunnersModal({ raceId, onClose }) {
 
       if (!rawName) errors.push('Nome obrigatório')
 
+      const categoryValidation = validateCategory(rawCategory)
+      if (!categoryValidation.valid) errors.push(categoryValidation.message)
+
       const cpfValidation = validateCpf(rawCpf)
       if (!cpfValidation.valid) errors.push(cpfValidation.message || 'CPF inválido')
 
@@ -77,7 +101,7 @@ export default function ImportRunnersModal({ raceId, onClose }) {
           name: formattedName,
           cpf: formattedCpf,
           number: formattedNumber,
-          category: rawCategory,
+          category: categoryValidation.normalized ?? rawCategory,
         },
         errors,
       }
@@ -167,7 +191,7 @@ export default function ImportRunnersModal({ raceId, onClose }) {
       csvField('João Silva da Costa'),
       csvField('123.456.789-01'),
       csvField('0104'),
-      csvField('Masculino 30-39'),
+      csvField('Masculino'),
     ].join(',')
     const csv = `${header}\n${example}\n`
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
@@ -184,6 +208,7 @@ export default function ImportRunnersModal({ raceId, onClose }) {
   const handleImport = async () => {
     const valid = preparedRows.filter((r) => r.status === 'ok')
     if (!valid.length || !raceId || raceId === 'ALL') return
+    if (isRaceRunning || isRaceFinished) return
 
     // Se há linhas com erro, pede confirmação antes de importar apenas os válidos
     if (errorRowCount > 0) {
@@ -195,6 +220,7 @@ export default function ImportRunnersModal({ raceId, onClose }) {
   }
 
   const runImport = async (valid) => {
+    if (isRaceRunning || isRaceFinished) return
     setImporting(true)
     setImportedCount(0)
     setErrorCount(0)
@@ -229,7 +255,7 @@ export default function ImportRunnersModal({ raceId, onClose }) {
   const validCount = preparedRows.filter((r) => r.status === 'ok').length
   const errorRowCount = preparedRows.filter((r) => r.status === 'error').length
 
-  const canImport = validCount > 0 && !importing && Boolean(raceId) && raceId !== 'ALL'
+  const canImport = validCount > 0 && !importing && Boolean(raceId) && raceId !== 'ALL' && !isRaceRunning && !isRaceFinished
 
   const missingRace = !raceId || raceId === 'ALL'
 
@@ -256,6 +282,16 @@ export default function ImportRunnersModal({ raceId, onClose }) {
           {missingRace && (
             <div style={{ background: 'var(--amber-bg)', border: '1px solid rgba(255,149,0,0.2)', color: 'var(--amber-text)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.88rem', marginBottom: 12 }}>
               Selecione uma corrida específica antes de importar a planilha.
+            </div>
+          )}
+          {isRaceRunning && (
+            <div style={{ background: 'rgba(255, 149, 0, 0.12)', border: '1px solid rgba(255, 149, 0, 0.3)', color: '#b25000', padding: '10px 14px', borderRadius: '10px', fontSize: '0.88rem', marginBottom: 12 }}>
+              Esta corrida está em andamento. Não é permitido importar novos corredores após o início da prova.
+            </div>
+          )}
+          {isRaceFinished && (
+            <div style={{ background: 'rgba(255, 59, 48, 0.12)', border: '1px solid rgba(255, 59, 48, 0.3)', color: '#b31d1d', padding: '10px 14px', borderRadius: '10px', fontSize: '0.88rem', marginBottom: 12 }}>
+              Esta corrida já foi encerrada. Não é permitido importar novos corredores.
             </div>
           )}
           <p style={{ margin: '0 0 8px', fontSize: '0.92rem', color: 'var(--text-secondary)' }}>

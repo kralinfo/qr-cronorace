@@ -220,11 +220,15 @@ function RegisterForm({ race }) {
               maxLength={14}
               required
             />
-            <input
-              placeholder="Categoria do corredor (ex: Masculino 30-39)"
+            <select
               value={category}
               onChange={e => setCategory(e.target.value)}
-            />
+            >
+              <option value="">Categoria (opcional)</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="PCD">PCD</option>
+            </select>
             <button type="submit">Criar + Gerar QR</button>
           </form>
           {error && <p className="error">{error}</p>}

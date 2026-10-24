@@ -27,7 +27,8 @@ export default function RunnerQRItem({
   onEdit,
   onDelete,
   highlightRaceBadge = false,
-  onSelectRace
+  onSelectRace,
+  disableActions = false
 }) {
   const { qrDataUrl, loading, ensureQRCode } = useRunnerQRCode(runner)
   const [showPreview, setShowPreview] = useState(false)
@@ -90,7 +91,7 @@ export default function RunnerQRItem({
       onClick: handleDownload
     },
     ...(onEdit
-      ? [{ label: 'Editar corredor', onClick: () => onEdit(runner) }]
+      ? [{ label: 'Editar corredor', onClick: () => onEdit(runner), disabled: disableActions }]
       : []),
     ...(onShowHistory
       ? [{ label: 'Ver histórico', onClick: () => onShowHistory(runner) }]
@@ -99,7 +100,7 @@ export default function RunnerQRItem({
       ? [{ label: 'Abrir nesta corrida', onClick: () => onSelectRace(runner.raceId) }]
       : []),
     ...(onDelete
-      ? [{ label: 'Excluir corredor', onClick: () => onDelete(runner), danger: true }]
+      ? [{ label: 'Excluir corredor', onClick: () => onDelete(runner), danger: true, disabled: disableActions }]
       : [])
   ]
 

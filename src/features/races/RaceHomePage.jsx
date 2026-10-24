@@ -134,7 +134,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             </p>
             <button
               type="button"
-              className="primary-btn reopen-race-btn"
+              className="reopen-race-btn"
               onClick={() => setReopenModalOpen(true)}
             >
               <IconRefresh size={16} /> Reabrir corrida

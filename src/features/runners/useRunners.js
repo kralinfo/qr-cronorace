@@ -119,6 +119,10 @@ export function useRunners(raceId) {
 
     try {
       const race = await getRaceById(effectiveRaceId)
+      if (race?.endTime) {
+        setError('Não é possível cadastrar: esta corrida já foi encerrada e não aceita mais inscrições.')
+        return null
+      }
       if (race?.startTime && !race?.endTime) {
         setError('Não é possível cadastrar: esta corrida está em andamento e novas inscrições foram bloqueadas.')
         return null
@@ -147,6 +151,10 @@ export function useRunners(raceId) {
     } catch (e) {
       if (e instanceof Error && e.message === 'RACE_RUNNING_REGISTRATION_BLOCKED') {
         setError('Não é possível cadastrar: esta corrida está em andamento e novas inscrições foram bloqueadas.')
+        return null
+      }
+      if (e instanceof Error && e.message === 'RACE_FINISHED_REGISTRATION_BLOCKED') {
+        setError('Não é possível cadastrar: esta corrida já foi encerrada e não aceita mais inscrições.')
         return null
       }
       if (e instanceof Error && e.message === 'RUNNER_CPF_ALREADY_EXISTS') {

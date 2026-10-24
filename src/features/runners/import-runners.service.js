@@ -9,13 +9,64 @@ const COLUMN_ALIASES = {
   categoria: ['categoria', 'category', 'cat'],
 }
 
+/** Categorias pré-definidas permitidas para o campo categoria. */
+export const VALID_CATEGORIES = ['Masculino', 'Feminino', 'PCD']
+
+/** Mapeia variações comuns para o valor canônico. Retorna undefined se não reconhecido. */
+const CATEGORY_ALIASES = {
+  m: 'Masculino',
+  masc: 'Masculino',
+  masculino: 'Masculino',
+  f: 'Feminino',
+  fem: 'Feminino',
+  feminino: 'Feminino',
+  pcd: 'PCD',
+}
+
+/**
+ * Normaliza a categoria informada para um dos valores predefinidos.
+ * Retorna undefined quando não reconhecido (ou vazio).
+ * @param {string|null|undefined} rawCategory
+ * @returns {string|undefined}
+ */
+export function normalizeCategory(rawCategory) {
+  if (rawCategory == null) return undefined
+  const trimmed = String(rawCategory).trim()
+  if (!trimmed) return undefined
+  const key = trimmed.toLowerCase()
+  if (CATEGORY_ALIASES[key]) return CATEGORY_ALIASES[key]
+  // Aceita já canônico (ex: 'Masculino' digitado exatamente)
+  for (const cat of VALID_CATEGORIES) {
+    if (cat.toLowerCase() === key) return cat
+  }
+  return undefined
+}
+
+/**
+ * Valida se a categoria está entre os valores predefinidos (ou está vazia/opcional).
+ * @returns {{ valid: boolean, message?: string, normalized?: string }}
+ */
+export function validateCategory(rawCategory) {
+  if (rawCategory == null) return { valid: true, normalized: undefined }
+  const trimmed = String(rawCategory).trim()
+  if (!trimmed) return { valid: true, normalized: undefined }
+  const normalized = normalizeCategory(trimmed)
+  if (!normalized) {
+    return {
+      valid: false,
+      message: `Categoria inválida. Use: ${VALID_CATEGORIES.join(', ')}.`,
+    }
+  }
+  return { valid: true, normalized }
+}
+
 /** @returns {Array<{key: string, label: string}>} */
 export function expectedColumns() {
   return [
     { key: 'nome', label: 'Nome do corredor' },
     { key: 'cpf', label: 'CPF' },
     { key: 'numero', label: 'Número de peito' },
-    { key: 'categoria', label: 'Categoria (opcional)' },
+    { key: 'categoria', label: `Categoria (opcional: ${VALID_CATEGORIES.join(', ')})` },
   ]
 }
 

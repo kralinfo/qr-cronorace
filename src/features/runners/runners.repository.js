@@ -9,6 +9,10 @@ import { getRaceById } from '../races/races.repository.js'
  */
 export async function addRunner(runner) {
   const race = await getRaceById(runner.raceId)
+  if (race?.endTime) {
+    const error = new Error('RACE_FINISHED_REGISTRATION_BLOCKED')
+    throw error
+  }
   if (race?.startTime && !race?.endTime) {
     const error = new Error('RACE_RUNNING_REGISTRATION_BLOCKED')
     throw error

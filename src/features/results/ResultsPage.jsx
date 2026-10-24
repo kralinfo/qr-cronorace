@@ -14,6 +14,7 @@ export default function ResultsPage() {
   const { placements: rawPlacements, loading, error } = useResults(activeRace?.id)
   const { runners } = useRunners(activeRace?.id)
   const [showShare, setShowShare] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState('ALL')
 
   const placements = withElapsedTime(rawPlacements, activeRace?.startTime)
   const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
@@ -25,6 +26,8 @@ export default function ResultsPage() {
   const seenArrivalIds = new Set()
   placements.forEach((p) => {
     if (!p.barcode || seenArrivalIds.has(p.barcode)) return
+    const runner = runnersById[p.barcode]
+    if (categoryFilter !== 'ALL' && (runner?.category ?? '') !== categoryFilter) return
     seenArrivalIds.add(p.barcode)
     const displayTime = p.elapsedMs != null
       ? formatDuration(p.elapsedMs)
@@ -39,7 +42,12 @@ export default function ResultsPage() {
       arrivalTime
     })
   })
-  const getRunnerName = (barcode) => runnerNameById[barcode] ?? null
+  const filteredPlacements = categoryFilter === 'ALL'
+    ? placements
+    : placements.filter(p => {
+        const runner = runnersById[p.barcode]
+        return (runner?.category ?? '') === categoryFilter
+      })
   const getRunnerNumber = (barcode) => runnersById[barcode]?.number ?? null
 
   const rankingText = activeRace
@@ -51,6 +59,20 @@ export default function ResultsPage() {
       <section className="placement-section">
         <div className="results-header-row">
           <h2>Ranking</h2>
+          <div className="results-filter-row">
+            <label className="results-filter-label" htmlFor="category-filter">Categoria:</label>
+            <select
+              id="category-filter"
+              className="results-category-select"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="ALL">Todas</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="PCD">PCD</option>
+            </select>
+          </div>
           <button className="secondary-btn" onClick={() => setShowShare(prev => !prev)}>
             {showShare ? 'Fechar' : 'Compartilhar ranking'}
           </button>
@@ -131,7 +153,7 @@ export default function ResultsPage() {
 
         {loading && <p>Carregando...</p>}
         {error && <p className="error">{error}</p>}
-        {placements.length === 0 ? (
+        {filteredPlacements.length === 0 ? (
           <p>Nenhum resultado registrado ainda.</p>
         ) : (
           <table>
@@ -145,7 +167,7 @@ export default function ResultsPage() {
               </tr>
             </thead>
             <tbody>
-              {placements.map(p => {
+              {filteredPlacements.map(p => {
                 const runner = runnersById[p.barcode]
                 const runnerNumber = runner?.number ?? p.runnerNumber ?? '—'
                 const arrivalTime = formatTimeOnlyBR(p.dateTime)

@@ -17,6 +17,7 @@ export default function PublicRankingPage() {
   const raceId = getRaceIdFromUrl()
   const [race, setRace] = useState(null)
   const [notFound, setNotFound] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState('ALL')
   const { placements: rawPlacements, loading } = useResults(raceId)
   const { runners } = useRunners(raceId)
 
@@ -42,6 +43,8 @@ export default function PublicRankingPage() {
   const seenArrivalIds = new Set()
   placements.forEach((p) => {
     if (!p.barcode || seenArrivalIds.has(p.barcode)) return
+    const runner = runnersById[p.barcode] ?? null
+    if (categoryFilter !== 'ALL' && (runner?.category ?? '') !== categoryFilter) return
     seenArrivalIds.add(p.barcode)
     const displayTime = p.elapsedMs != null
       ? formatDuration(p.elapsedMs)
@@ -87,6 +90,17 @@ export default function PublicRankingPage() {
           )}
         </div>
         <div className="public-ranking-header-right">
+          <select
+            className="public-ranking-category-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            aria-label="Filtrar por categoria"
+          >
+            <option value="ALL">Todas as categorias</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
+            <option value="PCD">PCD</option>
+          </select>
           <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
           {race?.endTime ? (
             <span className="live-badge finished">Encerrada</span>
