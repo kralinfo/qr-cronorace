@@ -13,10 +13,11 @@ function toDateTimeLocalValue(date) {
  * @param {{
  *   race: import('./races.types.js').Race,
  *   onSave: (raceId: string, startTimeIso: string) => Promise<void>,
- *   onClose?: () => void
+ *   onClose?: () => void,
+ *   runnerCount?: number
  * }} props
  */
-export default function StartTimeField({ race, onSave, onClose }) {
+export default function StartTimeField({ race, onSave, onClose, runnerCount = 0 }) {
   const [value, setValue] = useState(race.startTime ? toDateTimeLocalValue(new Date(race.startTime)) : '')
   const [confirming, setConfirming] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -64,6 +65,11 @@ export default function StartTimeField({ race, onSave, onClose }) {
 
           {error && <p className="error">{error}</p>}
 
+          {runnerCount === 0 && (
+            <p className="error" style={{ marginTop: 8 }}>
+              Atenção: esta corrida não tem corredores cadastrados.
+            </p>
+          )}
           <div className="form-confirm-actions">
             <button
               type="button"

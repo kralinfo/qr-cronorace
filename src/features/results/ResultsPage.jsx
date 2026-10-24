@@ -49,6 +49,7 @@ export default function ResultsPage() {
         return (runner?.category ?? '') === categoryFilter
       })
   const getRunnerNumber = (barcode) => runnersById[barcode]?.number ?? null
+  const getRunnerName = (barcode) => runnerNameById[barcode] ?? null
 
   const rankingText = activeRace
     ? buildRankingText(activeRace.name, placements, getRunnerName, getRunnerNumber)

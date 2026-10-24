@@ -35,6 +35,8 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [confirmingFinish, setConfirmingFinish] = useState(false)
   const [reopenModalOpen, setReopenModalOpen] = useState(false)
 
+  const [confirmingStartEmpty, setConfirmingStartEmpty] = useState(false)
+
   if (!activeRace) return null
 
   const closePanel = () => setPanel(null)
@@ -51,7 +53,16 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   }
 
   const handleStartNow = async () => {
+    if (runners.length === 0) {
+      setConfirmingStartEmpty(true)
+      return
+    }
     await setStartTime(activeRace.id, new Date().toISOString())
+  }
+
+  const handleConfirmStartEmpty = async () => {
+    await setStartTime(activeRace.id, new Date().toISOString())
+    setConfirmingStartEmpty(false)
   }
 
   const arrivedCount = new Set(placements.map(p => p.barcode).filter(Boolean)).size
@@ -197,7 +208,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
       {panel === 'start' && (
         <Modal title="Editar Largada" onClose={closePanel} maxWidth={480}>
-          <StartTimeField race={activeRace} onSave={setStartTime} onClose={closePanel} />
+          <StartTimeField race={activeRace} onSave={setStartTime} onClose={closePanel} runnerCount={runners.length} />
         </Modal>
       )}
 
@@ -255,15 +266,24 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
         />
       )}
 
-      {reopenModalOpen && (
-        <ReopenRaceModal
-          race={activeRace}
-          onReopen={async (mode) => {
-            await reopenRace(activeRace.id, mode)
-          }}
-          onClose={() => setReopenModalOpen(false)}
-        />
-      )}
+      {confirmingStartEmpty && (
+    <ConfirmDialog
+      message={`Esta corrida não tem corredores cadastrados. Deseja iniciar mesmo assim?`}
+      confirmLabel="Iniciar mesmo assim"
+      onConfirm={handleConfirmStartEmpty}
+      onCancel={() => setConfirmingStartEmpty(false)}
+    />
+  )}
+
+  {reopenModalOpen && (
+    <ReopenRaceModal
+      race={activeRace}
+      onReopen={async (mode) => {
+        await reopenRace(activeRace.id, mode)
+      }}
+      onClose={() => setReopenModalOpen(false)}
+    />
+  )}
     </div>
   )
 }
