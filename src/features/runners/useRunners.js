@@ -56,13 +56,14 @@ export function useRunners(raceId) {
   const clearError = useCallback(() => setError(null), [])
   const clearLastQrCode = useCallback(() => setLastQrCode(null), [])
 
-  const createRunner = useCallback(async (name, number, cpf, targetRaceId) => {
+  const createRunner = useCallback(async (name, number, cpf, targetRaceId, category) => {
     setError(null)
     const effectiveRaceId = targetRaceId || (raceId !== 'ALL' ? raceId : null)
 
     const trimmedName = (name || '').trim()
     const trimmedNumber = (number || '').trim()
     const trimmedCpf = (cpf || '').trim()
+    const trimmedCategory = (category || '').trim()
 
     if (!trimmedNumber) {
       setError('Informe o número de peito do corredor.')
@@ -134,6 +135,7 @@ export function useRunners(raceId) {
         number: formattedNumber,
         cpf: formattedCpf,
         name: formattedName,
+        category: trimmedCategory,
         raceId: effectiveRaceId
       }
 
@@ -167,11 +169,12 @@ export function useRunners(raceId) {
     }
   }, [raceId, runners])
 
-  const editRunner = useCallback(async (id, { name, number, cpf, raceId: targetRaceId }) => {
+  const editRunner = useCallback(async (id, { name, number, cpf, category, raceId: targetRaceId }) => {
     setError(null)
     const trimmedName = name != null ? name.trim() : null
     const trimmedNumber = number != null ? number.trim() : null
     const trimmedCpf = cpf != null ? cpf.trim() : null
+    const trimmedCategory = category != null ? category.trim() : null
 
     if (trimmedName !== null && !trimmedName) {
       const msg = 'Informe o nome do corredor.'
@@ -212,6 +215,7 @@ export function useRunners(raceId) {
         name: formattedName,
         number: formattedNumber,
         cpf: formattedCpf,
+        category: trimmedCategory,
         raceId: targetRaceId
       })
       return updated

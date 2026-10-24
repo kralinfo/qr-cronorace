@@ -5,6 +5,7 @@ import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 import RunnerQRItem from './RunnerQRItem.jsx'
 import RunnerHistoryModal from './RunnerHistoryModal.jsx'
 import EditRunnerModal from './EditRunnerModal.jsx'
+import ImportRunnersModal from './ImportRunnersModal.jsx'
 import BluetoothPrinterModal from './BluetoothPrinterModal.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import { buildQRFilename } from './qr-filename.service.js'
@@ -25,7 +26,8 @@ import {
   IconReceipt,
   IconDownload,
   IconBluetooth,
-  IconCheck
+  IconCheck,
+  IconUpload
 } from '../../shared/Icons.jsx'
 
 const PAGE_SIZE = 35
@@ -82,10 +84,12 @@ export default function RunnersPage() {
 
   // Painel de cadastro
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [targetRaceId, setTargetRaceId] = useState('')
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
   const [cpf, setCpf] = useState('')
+  const [category, setCategory] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   // Modais de edição e exclusão de corredor
@@ -176,11 +180,12 @@ export default function RunnersPage() {
     clearError()
     setSubmitting(true)
     try {
-      const result = await createRunner(name, number, cpf, targetRaceId)
+      const result = await createRunner(name, number, cpf, targetRaceId, category)
       if (result) {
         setName('')
         setNumber('')
         setCpf('')
+        setCategory('')
         if (selectedRaceId !== 'ALL' && selectedRaceId !== targetRaceId) {
           setSelectedRaceId(targetRaceId)
         }
@@ -322,6 +327,22 @@ export default function RunnersPage() {
                   ? 'Fechar cadastro'
                   : '+ Cadastrar corredor'}
             </button>
+
+            {!isSelectedRaceRunning && (
+              <button
+                type="button"
+                className="import-runner-btn"
+                onClick={() => {
+                  setShowImportModal(true)
+                  clearError()
+                }}
+                disabled={selectedRaceId === 'ALL'}
+                title={selectedRaceId === 'ALL' ? 'Selecione uma corrida específica para importar' : undefined}
+              >
+                <span style={{ marginRight: 6 }}><IconUpload size={15} /></span>
+                Importar planilha
+              </button>
+            )}
           </div>
         </div>
 
@@ -429,6 +450,15 @@ export default function RunnersPage() {
               onChange={e => setCpf(maskCpf(e.target.value))}
               maxLength={14}
               required
+            />
+
+            <label htmlFor="runner-category-input">Categoria do corredor:</label>
+            <input
+              id="runner-category-input"
+              type="text"
+              placeholder="ex: Masculino 30-39"
+              value={category}
+              onChange={e => setCategory(e.target.value)}
             />
 
             {isTargetRaceRunning && (
@@ -631,6 +661,14 @@ export default function RunnersPage() {
             setDeletingRunner(null)
           }}
           onCancel={() => setDeletingRunner(null)}
+        />
+      )}
+
+      {/* Modal de Importação de Corredores via Planilha */}
+      {showImportModal && (
+        <ImportRunnersModal
+          raceId={selectedRaceId !== 'ALL' ? selectedRaceId : ''}
+          onClose={() => setShowImportModal(false)}
         />
       )}
 

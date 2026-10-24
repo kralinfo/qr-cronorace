@@ -15,6 +15,7 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
   const [name, setName] = useState(runner.name || '')
   const [number, setNumber] = useState(runner.number || '')
   const [cpf, setCpf] = useState(runner.cpf || '')
+  const [category, setCategory] = useState(runner.category || '')
   const [raceId, setRaceId] = useState(runner.raceId || '')
   const [confirming, setConfirming] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -79,6 +80,7 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
         name: name.trim(),
         number: number.trim(),
         cpf: cpf.trim() || undefined,
+        category: category.trim() || undefined,
         raceId
       })
       if (success) {
@@ -227,6 +229,21 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
                 onFocus={handleInputFocus}
                 onChange={e => setCpf(maskCpf(e.target.value))}
                 maxLength={14}
+              />
+            </div>
+
+            <div className="edit-runner-field">
+              <label htmlFor="edit-runner-category">
+                Categoria:
+                <span className="field-hint"> (Ex: Masculino 30-39, Feminino 40+)</span>
+              </label>
+              <input
+                id="edit-runner-category"
+                type="text"
+                placeholder="ex: Masculino 30-39"
+                value={category}
+                onFocus={handleInputFocus}
+                onChange={e => setCategory(e.target.value)}
               />
             </div>
 

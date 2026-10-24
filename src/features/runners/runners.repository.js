@@ -85,6 +85,7 @@ export async function updateRunner(id, updates) {
   if (updates.name !== undefined) payload.name = updates.name
   if (updates.number !== undefined) payload.number = updates.number
   if (updates.cpf !== undefined) payload.cpf = updates.cpf
+  if (updates.category !== undefined) payload.category = updates.category
   if (updates.raceId !== undefined) payload.raceId = updates.raceId
 
   await updateDoc(doc(db, COLLECTIONS.runners, id), payload)

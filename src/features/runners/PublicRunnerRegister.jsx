@@ -136,6 +136,7 @@ function RegisterForm({ race }) {
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
   const [cpf, setCpf] = useState('')
+  const [category, setCategory] = useState('')
 
   const handleNumberKeyDown = (e) => {
     if (
@@ -174,11 +175,12 @@ function RegisterForm({ race }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const result = await createRunner(name, number, cpf)
+    const result = await createRunner(name, number, cpf, race.id, category)
     if (result) {
       setName('')
       setNumber('')
       setCpf('')
+      setCategory('')
     }
   }
 
@@ -217,6 +219,11 @@ function RegisterForm({ race }) {
               onChange={e => setCpf(maskCpf(e.target.value))}
               maxLength={14}
               required
+            />
+            <input
+              placeholder="Categoria do corredor (ex: Masculino 30-39)"
+              value={category}
+              onChange={e => setCategory(e.target.value)}
             />
             <button type="submit">Criar + Gerar QR</button>
           </form>
