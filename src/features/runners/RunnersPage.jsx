@@ -8,8 +8,9 @@ import EditRunnerModal from './EditRunnerModal.jsx'
 import ImportRunnersModal from './ImportRunnersModal.jsx'
 import BluetoothPrinterModal from './BluetoothPrinterModal.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
+import { generateRunnerQRCode } from './qrcode.service.js'
 import { buildQRFilename } from './qr-filename.service.js'
-import { printRunnerQRCode } from './print.service.js'
+import { printRunnerQRCode, printRunnersQRCodeBatch } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
 import { getAllRunners, normalizeComparable } from './runners.repository.js'
 import { maskCpf, normalizeCpf } from './runner-formatter.service.js'
@@ -40,6 +41,8 @@ export default function RunnersPage() {
   const [printerModalOpen, setPrinterModalOpen] = useState(false)
   const [printerStatus, setPrinterStatus] = useState(getPrinterStatus())
   const [printingBt, setPrintingBt] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [printingBatch, setPrintingBatch] = useState(false)
   const btSupported = isBluetoothSupported()
 
   useEffect(() => {
@@ -214,7 +217,56 @@ export default function RunnersPage() {
     }
   }
 
-  // Filtragem dos corredores com base na busca
+  const toggleSelectRunner = (id, checked) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  const selectAllFiltered = () => {
+    setSelectedIds(new Set(filteredRunners.map((r) => r.id)))
+  }
+
+  const clearSelection = () => setSelectedIds(new Set())
+
+  const selectedRunners = useMemo(
+    () => runners.filter((r) => selectedIds.has(r.id)),
+    [runners, selectedIds]
+  )
+
+  const handlePrintSelectedSystem = async () => {
+    if (selectedRunners.length === 0) return
+    setPrintingBatch(true)
+    try {
+      await printRunnersQRCodeBatch(selectedRunners, selectedRace?.name)
+    } finally {
+      setPrintingBatch(false)
+    }
+  }
+
+  const handlePrintSelectedBt = async () => {
+    if (selectedRunners.length === 0) return
+    if (!isBluetoothSupported()) {
+      await handlePrintSelectedSystem()
+      return
+    }
+    setPrintingBt(true)
+    try {
+      for (const runner of selectedRunners) {
+        const dataUrl = await generateRunnerQRCode(runner) // need import
+        await printRunnerToBluetooth(dataUrl, runner, selectedRace?.name || racesMap[runner.raceId]?.name)
+      }
+    } catch (err) {
+      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
+        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+      }
+    } finally {
+      setPrintingBt(false)
+    }
+  }
   const normalizedSearch = normalizeComparable(search)
   const normalizedSearchDigits = normalizeCpf(search)
   const filteredRunners = useMemo(() => {
@@ -565,6 +617,45 @@ export default function RunnersPage() {
           )}
         </div>
 
+        {filteredRunners.length > 0 && (
+          <div className="runners-batch-toolbar">
+            <label className="runners-batch-select-all">
+              <input
+                type="checkbox"
+                checked={filteredRunners.length > 0 && filteredRunners.every((r) => selectedIds.has(r.id))}
+                onChange={(e) => (e.target.checked ? selectAllFiltered() : clearSelection())}
+              />
+              Selecionar todos ({filteredRunners.length})
+            </label>
+            {selectedIds.size > 0 && (
+              <>
+                <span className="runners-batch-count">{selectedIds.size} selecionado(s)</span>
+                <button
+                  type="button"
+                  className="primary-btn"
+                  onClick={handlePrintSelectedSystem}
+                  disabled={printingBatch}
+                >
+                  {printingBatch ? 'Gerando...' : 'Imprimir selecionados (Cupom)'}
+                </button>
+                {btSupported && (
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={handlePrintSelectedBt}
+                    disabled={printingBt}
+                  >
+                    {printingBt ? 'Enviando...' : 'Imprimir selecionados (Térmica)'}
+                  </button>
+                )}
+                <button type="button" className="secondary-btn" onClick={clearSelection}>
+                  Limpar seleção
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {loadingRunners && <p className="runners-loading">Carregando corredores...</p>}
 
         {!loadingRunners && runners.length === 0 && (
@@ -609,6 +700,8 @@ export default function RunnersPage() {
                     onDelete={setDeletingRunner}
                     onSelectRace={selectedRaceId === 'ALL' ? (rId) => setSelectedRaceId(rId) : undefined}
                     disableActions={Boolean(racesMap[runner.raceId]?.startTime || racesMap[runner.raceId]?.endTime)}
+                    selected={selectedIds.has(runner.id)}
+                    onToggleSelect={toggleSelectRunner}
                   />
                 )
               })}

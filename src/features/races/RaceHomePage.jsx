@@ -21,7 +21,8 @@ import {
   IconTV,
   IconEditDoc,
   IconRefresh,
-  IconPlay
+  IconPlay,
+  IconPrinter
 } from '../../shared/Icons.jsx'
 
 /** @param {{ onNavigate?: (tab: string) => void, onOpenScanner?: () => void }} props */
@@ -107,6 +108,13 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       icon: <IconEditDoc size={24} />,
       color: 'icon-teal',
       onClick: () => setPanel('register-link')
+    },
+    {
+      id: 'print',
+      label: 'Impressão',
+      icon: <IconPrinter size={24} />,
+      color: 'icon-blue',
+      onClick: () => onNavigate?.('runners')
     }
   ]
 

@@ -28,7 +28,9 @@ export default function RunnerQRItem({
   onDelete,
   highlightRaceBadge = false,
   onSelectRace,
-  disableActions = false
+  disableActions = false,
+  selected = false,
+  onToggleSelect
 }) {
   const { qrDataUrl, loading, ensureQRCode } = useRunnerQRCode(runner)
   const [showPreview, setShowPreview] = useState(false)
@@ -118,6 +120,15 @@ export default function RunnerQRItem({
       title="Clique para ver o QR Code deste corredor"
     >
       <div className="runner-item-header">
+        {onToggleSelect && (
+          <label className="runner-select-checkbox" onClick={e => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={e => onToggleSelect(runner.id, e.target.checked)}
+            />
+          </label>
+        )}
         <div className="runner-info">
           <div className="runner-name-row">
             <strong className="runner-name">{runner.name}</strong>
