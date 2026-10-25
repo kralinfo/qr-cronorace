@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>JanelaMarca - Cronômetro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{brand:{dark:'#0B0813',card:'#151026',border:'#2a1f45'}}}}}
+</script>
+<style>
+*{-webkit-tap-highlight-color:transparent;user-select:none}input{user-select:auto}body{margin:0}
+.grid-bg{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px}
+</style>
+</head>
+<body class="h-full w-full bg-[#0B0813] text-slate-100 font-sans overflow-x-hidden grid-bg">
+<header class="w-full bg-[#120d24]/90 border-b border-[#2a1f45] px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+  <div class="flex items-center gap-2">
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20"><i class="fa-solid fa-clock text-white text-base"></i></div>
+    <span class="font-extrabold tracking-wider text-base bg-gradient-to-r from-purple-400 via-pink-400 to-purple-200 bg-clip-text text-transparent">JANELAMARCA</span>
+  </div>
+  <div id="statusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase">
+    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+    <span id="statusText">AGUARDANDO</span>
+  </div>
+</header>
+
+<main class="w-full min-h-screen box-border px-3 py-3 pb-24 grid grid-cols-1 lg:grid-cols-2 gap-3">
+  <!-- LEFT -->
+  <section class="flex flex-col gap-3">
+    <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col items-center">
+      <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Tempo Decorrido</span>
+      <div class="font-mono text-5xl font-black text-white tracking-tight my-2 drop-shadow-[0_0_15px_rgba(168,85,247,.3)]">
+        <span id="timerDisplay">00:00:00</span><span id="millisDisplay" class="text-purple-400 text-3xl">.000</span>
+      </div>
+      <button id="btnStart" onclick="toggleTimer()" class="w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+        <i class="fa-solid fa-play" id="iconStart"></i><span id="lblStart">INICIAR</span>
+      </button>
+    </div>
+
+    <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+      <h2 class="text-xs font-extrabold uppercase tracking-wider text-purple-400">REGISTRAR CHEGADA</h2>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="catMasc" onclick="selectCategory('MASC')" class="py-2.5 rounded-xl font-bold text-xs border transition-all bg-purple-600/30 border-purple-500 text-purple-200">♂ MASC</button>
+        <button id="catFem" onclick="selectCategory('FEM')" class="py-2.5 rounded-xl font-bold text-xs border transition-all bg-[#0B0813] border-[#2a1f45] text-slate-400">♀ FEM</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="number" id="bibInput" placeholder="000" inputmode="numeric" class="flex-1 bg-[#0B0813] border-2 border-purple-500/40 focus:border-purple-500 rounded-xl px-4 py-3 text-xl font-mono font-bold text-center text-white placeholder-slate-600 outline-none" onkeydown="if(event.key==='Enter') registerArrival()" />
+        <button onclick="registerArrival()" class="h-[52px] w-[58px] bg-gradient-to-tr from-purple-600 to-pink-600 text-white font-bold rounded-xl flex items-center justify-center text-xl active:scale-95"><i class="fa-solid fa-check"></i></button>
+      </div>
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">ÚLTIMAS CHEGADAS</div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="flex flex-col gap-3">
+    <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-1.5">
+          <span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono text-[11px] font-bold">TOTAL: <span id="countTotal">0</span></span>
+          <span class="px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/30 font-mono text-[11px] font-bold">MASC: <span id="countMasc">0</span></span>
+          <span class="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 border border-pink-500/30 font-mono text-[11px] font-bold">FEM: <span id="countFem">0</span></span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button class="px-3 py-1 rounded-lg bg-purple-600 text-white text-xs font-bold">TODOS</button>
+          <button class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 text-xs font-bold">♂</button>
+          <button class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 text-xs font-bold">♀</button>
+        </div>
+      </div>
+      <div class="w-full overflow-x-auto rounded-xl border border-[#2a1f45]">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-[#0B0813] text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-[#2a1f45]">
+              <th class="py-2.5 px-3 text-center">GERAL</th>
+              <th class="py-2.5 px-2">CAT.</th>
+              <th class="py-2.5 px-2">Nº</th>
+              <th class="py-2.5 px-2 text-center">POS. CAT.</th>
+              <th class="py-2.5 px-3 text-right">TEMPO</th>
+            </tr>
+          </thead>
+          <tbody id="arrivalsList" class="divide-y divide-[#2a1f45]/50 text-xs font-medium">
+            <tr><td colspan="5" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="fixed bottom-0 left-0 right-0 bg-[#120d24]/95 border-t border-[#2a1f45] px-4 py-3 flex items-center justify-between gap-3 z-50">
+  <button onclick="confirmFinish()" class="flex-1 py-3 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white active:scale-95">🏁 ENCERRAR</button>
+  <button onclick="resetTimer()" class="px-4 py-3 rounded-xl font-bold text-sm bg-rose-500/20 text-rose-400 border border-rose-500/30 active:scale-95">× Reiniciar</button>
+</footer>
+
+<script>
+let timer=null,startTime=0,elapsedTime=0,isRunning=false,selectedCategory='MASC',arrivals=[];
+const timerDisplay=document.getElementById('timerDisplay');const millisDisplay=document.getElementById('millisDisplay');const btnStart=document.getElementById('btnStart');const iconStart=document.getElementById('iconStart');const lblStart=document.getElementById('lblStart');const statusBadge=document.getElementById('statusBadge');const statusText=document.getElementById('statusText');const bibInput=document.getElementById('bibInput');const arrivalsList=document.getElementById('arrivalsList');const countTotal=document.getElementById('countTotal');const countMasc=document.getElementById('countMasc');const countFem=document.getElementById('countFem');const catMasc=document.getElementById('catMasc');const catFem=document.getElementById('catFem');
+function toggleTimer(){if(!isRunning){startTime=Date.now()-elapsedTime;timer=setInterval(updateTimer,10);isRunning=true;lblStart.textContent='PAUSAR';iconStart.className='fa-solid fa-pause';btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';statusText.textContent='Em Andamento';}else{clearInterval(timer);isRunning=false;lblStart.textContent='CONTINUAR';iconStart.className='fa-solid fa-play';btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase';statusText.textContent='Pausado';}}
+function updateTimer(){elapsedTime=Date.now()-startTime;formatTime(elapsedTime);}
+function formatTime(ms){const totalSeconds=Math.floor(ms/1000);const hours=Math.floor(totalSeconds/3600);const minutes=Math.floor((totalSeconds%3600)/60);const seconds=totalSeconds%60;const milliseconds=ms%1000;const pad=n=>n.toString().padStart(2,'0');const padMs=n=>n.toString().padStart(3,'0');timerDisplay.textContent=`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;millisDisplay.textContent=`.${padMs(milliseconds)}`;}
+function resetTimer(){if(isRunning){clearInterval(timer);isRunning=false;}elapsedTime=0;formatTime(0);lblStart.textContent='INICIAR';iconStart.className='fa-solid fa-play';btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';statusText.textContent='AGUARDANDO';showToast('Cronômetro reiniciado!');}
+function confirmFinish(){if(confirm('Deseja realmente encerrar esta corrida?')){if(isRunning){clearInterval(timer);isRunning=false;}statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';statusText.textContent='Encerrada';showToast('Corrida finalizada!');}}
+function selectCategory(cat){selectedCategory=cat;if(cat==='MASC'){catMasc.className='py-2.5 rounded-xl font-bold text-xs border transition-all bg-purple-600/30 border-purple-500 text-purple-200';catFem.className='py-2.5 rounded-xl font-bold text-xs border transition-all bg-[#0B0813] border-[#2a1f45] text-slate-400';}else{catFem.className='py-2.5 rounded-xl font-bold text-xs border transition-all bg-pink-600/30 border-pink-500 text-pink-200';catMasc.className='py-2.5 rounded-xl font-bold text-xs border transition-all bg-[#0B0813] border-[#2a1f45] text-slate-400';}}
+function registerArrival(){const bibNumber=bibInput.value.trim();if(!bibNumber){showToast('Digite o número de peito!',true);return;}const currentTime=`${timerDisplay.textContent}${millisDisplay.textContent}`;const totalGeral=arrivals.length+1;const posCat=arrivals.filter(a=>a.category===selectedCategory).length+1;const newArrival={id:Date.now(),posGeral:totalGeral,category:selectedCategory,bib:bibNumber.padStart(3,'0'),posCat:posCat,time:currentTime};arrivals.unshift(newArrival);renderArrivals();bibInput.value='';bibInput.focus();showToast(`Nº ${newArrival.bib} (${selectedCategory}) registrado!`);}
+function renderArrivals(){countTotal.textContent=arrivals.length;countMasc.textContent=arrivals.filter(a=>a.category==='MASC').length;countFem.textContent=arrivals.filter(a=>a.category==='FEM').length;if(arrivals.length===0){arrivalsList.innerHTML='<tr><td colspan="5" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>';return;}arrivalsList.innerHTML=arrivals.map(a=>`<tr class="hover:bg-purple-900/10 transition-colors border-b border-[#2a1f45]/30"><td class="py-2.5 px-3 text-center font-bold font-mono text-purple-300">${a.posGeral}º</td><td class="py-2.5 px-2 font-bold text-[11px]"><span class="px-1.5 py-0.5 rounded ${a.category==='MASC'?'bg-sky-500/20 text-sky-400 border border-sky-500/30':'bg-pink-500/20 text-pink-400 border border-pink-500/30'}">${a.category}</span></td><td class="py-2.5 px-2 font-mono font-extrabold text-sm text-white">Nº ${a.bib}</td><td class="py-2.5 px-2 text-center font-mono text-slate-300">${a.posCat}º</td><td class="py-2.5 px-3 text-right font-mono font-bold text-purple-200">${a.time}</td></tr>`).join('');}
+function showToast(msg,isError=false){const toast=document.createElement('div');toast.textContent=msg;toast.className='fixed top-16 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl font-bold text-xs shadow-2xl z-50 '+(isError?'bg-rose-500 text-white':'bg-emerald-500 text-slate-950');document.body.appendChild(toast);setTimeout(()=>toast.remove(),2000);}
+</script>
+</body>
+</html>

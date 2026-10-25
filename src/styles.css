@@ -133,11 +133,9 @@ body {
    ===================================== */
 main {
   flex: 1;
-  padding: 16px;
-  padding-top: calc(var(--header-h) + 16px);
+  padding: 20px;
+  padding-top: calc(var(--header-h) + 20px);
   padding-bottom: calc(var(--bottom-nav-h) + 24px);
-  max-width: 720px;
-  margin: 0 auto;
   width: 100%;
 }
 main.no-header {
@@ -2594,3 +2592,239 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 .ranking-running-number { font-weight: 700; color: var(--accent); font-size: 0.82rem; }
 .ranking-running-name { font-size: 0.9rem; }
+
+/* =====================================
+   RACE CONFIG (DARK)
+   ===================================== */
+.race-config-page {
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: #0B0013;
+  background-image:
+    linear-gradient(rgba(48,19,68,0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(48,19,68,0.35) 1px, transparent 1px);
+  background-size: 75px 75px;
+  color: #FFFFFF;
+  padding: 0;
+}
+.race-config-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  background: #0B0013;
+  border-bottom: 1px solid #301344;
+}
+.race-config-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #B347FF;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.race-config-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #20003F;
+  border: 1px solid #301344;
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: #898093;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.race-config-status .status-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #898093;
+}
+.race-config-main {
+  padding: 16px 8px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.race-config-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.race-config-title-row h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #FFFFFF;
+}
+.race-config-desc {
+  margin: 0;
+  color: #898093;
+  font-size: 14px;
+}
+.race-config-fields {
+  display: flex;
+  gap: 15px;
+}
+.race-config-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.race-config-field label {
+  font-size: 12px;
+  color: #898093;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.race-config-field input {
+  height: 60px;
+  background: #20003F;
+  border: 1px solid #301344;
+  border-radius: 12px;
+  color: #FFFFFF;
+  padding: 0 18px;
+  font-size: 15px;
+}
+.race-config-field input::placeholder { color: #898093; font-family: monospace; }
+.race-config-cards {
+  display: flex;
+  gap: 15px;
+}
+.race-config-card {
+  flex: 1;
+  background: #130020;
+  border: 1px solid #301344;
+  border-radius: 17px;
+  padding: 20px;
+  min-height: 169px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.race-config-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #B347FF;
+  text-transform: uppercase;
+}
+.cat-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.cat-dot.male { background: #35C4FF; }
+.cat-dot.female { background: #F13DD7; }
+.race-config-small-label {
+  font-size: 12px;
+  color: #898093;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.race-config-card-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.race-config-input {
+  flex: 1;
+  height: 60px;
+  background: #20003F;
+  border: 1px solid #301344;
+  border-radius: 12px;
+  color: #898093;
+  padding: 0 14px;
+  font-size: 14px;
+}
+.race-config-input.narrow { flex: 0 0 110px; }
+.race-config-add-btn {
+  height: 60px;
+  padding: 0 16px;
+  background: #20003F;
+  border: 1px solid #301344;
+  border-radius: 12px;
+  color: #898093;
+  font-size: 14px;
+  cursor: pointer;
+}
+.race-config-runner-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #FFFFFF;
+}
+.race-config-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #898093;
+  font-size: 14px;
+  margin: 0;
+}
+.race-config-info strong { color: #FFB900; font-weight: 600; }
+.race-config-start-btn {
+  width: 439px;
+  max-width: 100%;
+  height: 66px;
+  border: none;
+  border-radius: 17px;
+  background: linear-gradient(90deg, #8E20F7, #B047FF);
+  color: #FFFFFF;
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(142,32,247,0.35);
+}
+@media (max-width: 768px) {
+  .race-config-fields, .race-config-cards { flex-direction: column; width: 100%; }
+  .race-config-field, .race-config-card { width: 100%; box-sizing: border-box; }
+  .race-config-card-row { flex-wrap: wrap; }
+  .race-config-input { flex: 1 1 100%; box-sizing: border-box; }
+  .race-config-input.narrow { flex: 1 1 100%; }
+  .race-config-add-btn { flex: 1 1 100%; }
+  .race-config-start-btn { width: 100%; }
+}
+
+.race-config-main-wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+/* =====================================
+   CHRONOMETER PAGE (MOBILE)
+   ===================================== */
+.chrono-page { min-height: 100vh; width: 100%; background: #0B0013; color: #FFFFFF; overflow-x: hidden; box-sizing: border-box; }
+.chrono-header { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid #301344; }
+.chrono-brand { color: #B347FF; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.chrono-status { background: #20003F; border: 1px solid #301344; border-radius: 999px; padding: 6px 12px; color: #898093; font-size: 0.78rem; text-transform: uppercase; }
+.chrono-main { padding: 16px 12px; display: flex; flex-direction: column; gap: 16px; }
+.chrono-time { font-size: 40px; font-weight: 700; text-align: center; letter-spacing: 0.05em; }
+.chrono-start-btn { background: #22c55e; color: #fff; border: none; border-radius: 12px; height: 56px; font-size: 18px; font-weight: 700; width: 100%; cursor: pointer; }
+.chrono-panel { background: #130020; border: 1px solid #301344; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.chrono-tabs { display: flex; gap: 8px; }
+.chrono-tabs button { flex: 1; height: 44px; background: #20003F; border: 1px solid #301344; color: #898093; border-radius: 8px; cursor: pointer; }
+.chrono-tabs button.active { color: #FFFFFF; border-color: #B347FF; }
+.chrono-input-row { display: flex; gap: 8px; }
+.chrono-input-row input { flex: 1; height: 48px; background: #20003F; border: 1px solid #301344; border-radius: 8px; color: #FFFFFF; padding: 0 12px; }
+.chrono-check-btn { width: 48px; height: 48px; background: #20003F; border: 1px solid #301344; border-radius: 8px; color: #22c55e; font-size: 20px; cursor: pointer; }
+.chrono-table-wrap { overflow-x: auto; }
+.chrono-table { width: 100%; border-collapse: collapse; background: #130020; }
+.chrono-table th, .chrono-table td { padding: 10px; border-bottom: 1px solid #301344; text-align: left; white-space: nowrap; }
+.chrono-footer { display: flex; gap: 10px; }
+.chrono-btn { flex: 1; height: 52px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+.chrono-btn.end { background: #8E20F7; color: #FFFFFF; }
+.chrono-btn.reset { background: #ef4444; color: #FFFFFF; }

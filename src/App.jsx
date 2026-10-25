@@ -25,7 +25,9 @@ const TAB_TITLES = {
   races: 'Corridas',
   runners: 'Corredores',
   scanner: 'Scanner',
-  results: 'Ranking'
+  results: 'Ranking',
+  chronometer: 'Cronômetro'
+
 }
 
 function AppContent() {
@@ -92,7 +94,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      {tab !== 'home' && (
+      {tab !== 'home' && tab !== 'chronometer' && (
         <header className="app-header">
           <div className="app-header-inner">
             {canGoBack && (
@@ -113,20 +115,27 @@ function AppContent() {
         </header>
       )}
 
-      <main className={tab === 'home' ? 'no-header' : ''}>
+      <main className={tab === 'home' && activeRace ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'race-config-main-wrap' : (tab === 'home' ? 'no-header' : ''))}>
+
         {tab === 'home' && <RaceHomePage onNavigate={handleNavigate} onOpenScanner={() => handleNavigate('scanner')} />}
         {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={handleBack} />}
         {tab === 'results' && <ResultsPage />}
+        {tab === 'chronometer' && <iframe src="/chronometer.html" title="Cronômetro" style={{ width: '100%', height: '100vh', border: 'none' }}
+ />}
+
       </main>
 
+{tab !== 'chronometer' && (
       <BottomNav
         currentTab={tab}
         onNavigate={handleNavigate}
         hasActiveRace={true}
         isRaceStarted={Boolean(activeRace.startTime)}
       />
+    )}
+
     </div>
   )
 }
