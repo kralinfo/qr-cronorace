@@ -163,9 +163,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           <IconHome size={14} /> Corredores locais serão marcados <strong>após o encerramento</strong> da corrida.
         </p>
 
-        <button type="button" className="race-config-start-btn" onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}
-
->
+        <button type="button" className="race-config-start-btn mx-auto" onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}>
           <IconPlay size={20} /> INICIAR CRONÔMETRO
         </button>
       </main>

@@ -122,19 +122,19 @@ function AppContent() {
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={handleBack} />}
         {tab === 'results' && <ResultsPage />}
-        {tab === 'chronometer' && <iframe src="/chronometer.html" title="Cronômetro" style={{ width: '100%', height: '100vh', border: 'none' }}
+        {tab === 'chronometer' && <iframe src="/chronometer.html" title="Cronômetro" style={{ width: '100%', height: 'calc(100vh - var(--bottom-nav-h))', border: 'none' }}
+
  />}
 
       </main>
 
-{tab !== 'chronometer' && (
-      <BottomNav
+<BottomNav
         currentTab={tab}
         onNavigate={handleNavigate}
         hasActiveRace={true}
         isRaceStarted={Boolean(activeRace.startTime)}
       />
-    )}
+
 
     </div>
   )
