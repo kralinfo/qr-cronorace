@@ -225,8 +225,8 @@ function RegisterForm({ race }) {
               onChange={e => setCategory(e.target.value)}
             >
               <option value="">Categoria (opcional)</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Feminino">Feminino</option>
+              <option value="MASCULINO">MASCULINO</option>
+              <option value="FEMININO">FEMININO</option>
               <option value="PCD">PCD</option>
             </select>
             <button type="submit">Criar + Gerar QR</button>

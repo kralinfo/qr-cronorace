@@ -79,8 +79,8 @@ function AppContent() {
 
         <main>
           {tab === 'runners' && <RunnersPage />}
-          {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
-          {tab === 'home' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
+          {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
+          {tab === 'home' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
         </main>
 
         <BottomNav
@@ -118,7 +118,7 @@ function AppContent() {
       <main className={tab === 'home' && activeRace ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'race-config-main-wrap' : (tab === 'home' ? 'no-header' : ''))}>
 
         {tab === 'home' && <RaceHomePage onNavigate={handleNavigate} onOpenScanner={() => handleNavigate('scanner')} />}
-        {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} />}
+        {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={handleBack} />}
         {tab === 'results' && <ResultsPage />}

@@ -513,8 +513,8 @@ export default function RunnersPage() {
               onChange={e => setCategory(e.target.value)}
             >
               <option value="">Selecione (opcional)</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Feminino">Feminino</option>
+              <option value="MASCULINO">MASCULINO</option>
+              <option value="FEMININO">FEMININO</option>
               <option value="PCD">PCD</option>
             </select>
 

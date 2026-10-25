@@ -39,15 +39,18 @@
   --header-h: 56px;
 }
 
-html, body {
-  height: 100%;
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
+html, body, #root {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  background-color: #0b0213 !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Arial, sans-serif;
-  background: var(--bg);
   color: var(--text-primary);
   font-size: 16px;
   line-height: 1.5;
@@ -2644,10 +2647,10 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   width: 8px; height: 8px; border-radius: 50%; background: #898093;
 }
 .race-config-main {
-  padding: 16px 8px 40px;
+  padding: 12px 8px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 .race-config-title-row {
   display: flex;
@@ -2656,9 +2659,9 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 .race-config-title-row h1 {
   margin: 0;
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: #FFFFFF;
 }
 .race-config-desc {
@@ -2684,13 +2687,13 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   text-transform: uppercase;
 }
 .race-config-field input {
-  height: 60px;
+  height: 38px;
   background: #20003F;
   border: 1px solid #301344;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #FFFFFF;
-  padding: 0 18px;
-  font-size: 15px;
+  padding: 0 12px;
+  font-size: 14px;
 }
 .race-config-field input::placeholder { color: #898093; font-family: monospace; }
 .race-config-cards {
@@ -2701,9 +2704,9 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   flex: 1;
   background: #130020;
   border: 1px solid #301344;
-  border-radius: 17px;
-  padding: 20px;
-  min-height: 169px;
+  border-radius: 14px;
+  padding: 12px;
+  min-height: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2735,23 +2738,24 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 .race-config-input {
   flex: 1;
-  height: 60px;
+  height: 38px;
   background: #20003F;
   border: 1px solid #301344;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #898093;
-  padding: 0 14px;
+  padding: 0 12px;
   font-size: 14px;
 }
 .race-config-input.narrow { flex: 0 0 110px; }
 .race-config-add-btn {
-  height: 60px;
-  padding: 0 16px;
-  background: #20003F;
-  border: 1px solid #301344;
-  border-radius: 12px;
-  color: #898093;
+  height: 38px;
+  padding: 0 14px;
+  background: #16a34a;
+  border: 1px solid #15803d;
+  border-radius: 10px;
+  color: #FFFFFF;
   font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 .race-config-runner-list {
@@ -2763,6 +2767,8 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   gap: 4px;
   font-size: 13px;
   color: #FFFFFF;
+  max-height: 350px;
+  overflow-y: auto;
 }
 .race-config-info {
   display: flex;
@@ -2774,14 +2780,13 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 .race-config-info strong { color: #FFB900; font-weight: 600; }
 .race-config-start-btn {
-  width: 439px;
-  max-width: 100%;
-  height: 66px;
+  width: 100%;
+  height: 52px;
   border: none;
   border-radius: 17px;
   background: linear-gradient(90deg, #8E20F7, #B047FF);
   color: #FFFFFF;
-  font-size: 27px;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -2802,7 +2807,18 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   .race-config-start-btn { width: 100%; }
 }
 
-.race-config-main-wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+.race-config-runner-form .runner-name { flex: 0 1 40%; min-width: 0; max-width: 40%; }
+.race-config-runner-form .runner-number { flex: 0 0 90px; }
+.race-config-runner-form .runner-category { flex: 0 0 150px; }
+.race-config-runner-form .runner-btn { flex: 0 0 auto; padding: 0 16px; }
+
+@media (max-width: 768px) {
+  .race-config-runner-form { flex-direction: column; width: 100%; }
+  .race-config-runner-form .runner-name,
+  .race-config-runner-form .runner-number,
+  .race-config-runner-form .runner-category,
+  .race-config-runner-form .runner-btn { flex: 1 1 100%; width: 100%; box-sizing: border-box; }
+}
 
 /* =====================================
    CHRONOMETER PAGE (MOBILE)
@@ -2828,3 +2844,108 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 .chrono-btn { flex: 1; height: 52px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
 .chrono-btn.end { background: #8E20F7; color: #FFFFFF; }
 .chrono-btn.reset { background: #ef4444; color: #FFFFFF; }
+
+.registered-races-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.registered-races-pagination button {
+  height: 36px;
+  padding: 0 14px;
+  background: #20003F;
+  border: 1px solid #301344;
+  border-radius: 10px;
+  color: #FFFFFF;
+  cursor: pointer;
+}
+.registered-races-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.race-config-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+.race-config-left, .race-config-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+@media (max-width: 768px) {
+  .race-config-split { grid-template-columns: 1fr; }
+}
+.registered-races-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .registered-races-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .registered-races-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.registered-race-card {
+  background: #130020;
+  border: 1px solid #301344;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.registered-race-card.active {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 1px #22c55e;
+}
+.registered-race-title {
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 15px;
+}
+.registered-race-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.registered-race-badge {
+  background: #20003F;
+  border: 1px solid #301344;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #FFFFFF;
+}
+.registered-race-status {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.registered-race-status.pending { background: #20003F; color: #FFB900; }
+.registered-race-status.running { background: rgba(34,197,94,0.15); color: #22c55e; }
+.registered-race-status.finished { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.registered-race-active {
+  background: #22c55e;
+  color: #052e16;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.registered-race-select-btn {
+  height: 36px;
+  padding: 0 14px;
+  background: #7c3aed;
+  border: none;
+  border-radius: 10px;
+  color: #FFFFFF;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+}

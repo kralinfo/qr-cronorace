@@ -8,7 +8,8 @@ import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import ActionsMenu from '../../shared/ActionsMenu.jsx'
 
 /** @param {{ onRaceSelected?: () => void }} props */
-export default function RaceSetupPage({ onRaceSelected }) {
+export default function RaceSetupPage({ onRaceSelected, onNavigate }) {
+
   const { races, loading, error, createRace, editRace, removeRace } = useRaces()
   const { activeRace, selectRace } = useActiveRace()
   const [name, setName] = useState('')
@@ -57,7 +58,8 @@ export default function RaceSetupPage({ onRaceSelected }) {
     <div className="race-setup-page">
       <section className="existing-races-section">
         <div className="races-page-header">
-          <button type="button" className="create-race-toggle-btn" onClick={() => setShowCreateForm(prev => !prev)}>
+          <button type="button" className="create-race-toggle-btn" onClick={() => onNavigate?.('home')}>
+
             {showCreateForm ? 'Fechar cadastro de corrida' : 'Cadastrar nova corrida'}
           </button>
           <input

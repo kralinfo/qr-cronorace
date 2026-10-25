@@ -28,17 +28,23 @@ import {
 } from '../../shared/Icons.jsx'
 
 export default function RaceHomePage({ onNavigate, onOpenScanner }) {
-  const { activeRace, clearActiveRace } = useActiveRace()
-  const { setStartTime, finishRace, reopenRace, editRace, removeRace } = useRaces()
+  const { activeRace, clearActiveRace, selectRace } = useActiveRace()
+  const { races, setStartTime, finishRace, reopenRace, editRace, removeRace } = useRaces()
   const { runners } = useRunners(activeRace?.id)
+  const { runners: allRunners } = useRunners('ALL')
   const { placements } = useResults(activeRace?.id)
   const [panel, setPanel] = useState(null)
+const [raceTab, setRaceTab] = useState('current')
+  const [registeredPage, setRegisteredPage] = useState(0)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [confirmingFinish, setConfirmingFinish] = useState(false)
   const [reopenModalOpen, setReopenModalOpen] = useState(false)
   const [confirmingStartEmpty, setConfirmingStartEmpty] = useState(false)
   const [name, setName] = useState(activeRace?.name || '')
   const [distanceKm, setDistanceKm] = useState(activeRace?.distanceKm || '')
+  const [runnerName, setRunnerName] = useState('')
+  const [runnerNumber, setRunnerNumber] = useState('')
+  const [runnerCategory, setRunnerCategory] = useState('MASCULINO')
 
   useEffect(() => {
     setName(activeRace?.name || '')
@@ -50,6 +56,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const closePanel = () => setPanel(null)
   const maleRunners = runners.filter(r => (r.category || '').toLowerCase().includes('masc'))
   const femaleRunners = runners.filter(r => (r.category || '').toLowerCase().includes('fem'))
+  const pcdRunners = runners.filter(r => (r.category || '').toLowerCase().includes('pcd'))
 
   const handleConfirmDelete = async () => {
     await removeRace(activeRace.id)
@@ -78,7 +85,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
   return (
     <div className="race-config-page">
-      <header className="race-config-header">
+<header className="race-config-header">
         <div className="race-config-brand">
           <IconClock size={20} />
           <span>JANELAMARCA</span>
@@ -89,15 +96,23 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
         </div>
       </header>
 
+      <div className="race-config-tabs" style={{ display:'flex', gap:8, padding:'12px 16px' }}>
+        <button type="button" onClick={() => setRaceTab('current')} style={{ padding:'8px 16px', borderRadius:8, border:'none', background: raceTab==='current'?'#7c3aed':'#1f1633', color:'#fff', fontWeight:700, width:'auto', display:'inline-flex' }}>+ Cadastrar Nova Corrida</button>
+        <button type="button" onClick={() => setRaceTab('registered')} style={{ padding:'8px 16px', borderRadius:8, border:'none', background: raceTab==='registered'?'#7c3aed':'#1f1633', color:'#fff', fontWeight:700, width:'auto', display:'inline-flex' }}>📋 Corridas Cadastradas</button>
+      </div>
+
+      {raceTab === 'current' && (
       <main className="race-config-main">
-        <div className="race-config-title-row">
+        <div className="race-config-split">
+          <div className="race-config-left">
+            <div className="race-config-title-row">
           <IconMenu size={28} />
           <h1>CONFIGURAR CORRIDA</h1>
         </div>
         <p className="race-config-desc">Configure as categorias antes de iniciar. Posições gerais são opcionais.</p>
 
         <div className="race-config-fields">
-          <div className="race-config-field">
+          <div className="race-config-field" style={{ flex: "0 0 420px", maxWidth: "100%" }}>
             <label>NOME DA CORRIDA</label>
             <input
               value={name}
@@ -106,7 +121,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
               placeholder="Ex: Aliança Run 2025"
             />
           </div>
-          <div className="race-config-field">
+          <div className="race-config-field" style={{ flex: "0 0 120px", maxWidth: "100%" }}>
             <label>DISTÂNCIA</label>
             <input
               value={distanceKm}
@@ -117,56 +132,84 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           </div>
         </div>
 
-        <div className="race-config-cards">
-          <section className="race-config-card male">
-            <div className="race-config-card-title">
-              <span className="cat-dot male" />
-              MASCULINO
-            </div>
-            <label className="race-config-small-label">NÚMERO · POS. GERAL (OPCIONAL)</label>
-            <div className="race-config-card-row">
-              <input className="race-config-input" placeholder="Nº peito" />
-              <input className="race-config-input narrow" placeholder="Pos. geral" />
-              <button type="button" className="race-config-add-btn" onClick={() => onNavigate?.('runners')}>
-                + Add
-              </button>
-            </div>
-            <ul className="race-config-runner-list">
-              {maleRunners.map(r => (
-                <li key={r.id}>Nº {r.number ?? '—'} · {r.name}</li>
-              ))}
-            </ul>
-          </section>
+        <section className="race-config-card" style={{ marginBottom: 16 }}>
+          <div className="race-config-card-title">CADASTRAR CORREDOR</div>
+          <div className="race-config-card-row race-config-runner-form">
+            <input className="race-config-input runner-name" placeholder="Nome do corredor" value={runnerName} onChange={e => setRunnerName(e.target.value)} />
+            <input className="race-config-input runner-number" placeholder="Nº peito" value={runnerNumber} onChange={e => setRunnerNumber(e.target.value.replace(/\\D/g, ''))} />
+            <select className="race-config-input runner-category" value={runnerCategory} onChange={e => setRunnerCategory(e.target.value)}>
+              <option value="MASCULINO">MASCULINO</option>
+              <option value="FEMININO">FEMININO</option>
+              <option value="PCD">PCD</option>
+            </select>
+            <button type="button" className="race-config-add-btn runner-btn" onClick={() => onNavigate?.('runners')}>
+              Cadastrar Corredor
+            </button>
+          </div>
+        </section>
 
-          <section className="race-config-card female">
-            <div className="race-config-card-title">
-              <span className="cat-dot female" />
-              FEMININO
-            </div>
-            <label className="race-config-small-label">NÚMERO · POS. GERAL (OPCIONAL)</label>
-            <div className="race-config-card-row">
-              <input className="race-config-input" placeholder="Nº peito" />
-              <input className="race-config-input narrow" placeholder="Pos. geral" />
-              <button type="button" className="race-config-add-btn" onClick={() => onNavigate?.('runners')}>
-                + Add
-              </button>
-            </div>
-            <ul className="race-config-runner-list">
-              {femaleRunners.map(r => (
-                <li key={r.id}>Nº {r.number ?? '—'} · {r.name}</li>
-              ))}
-            </ul>
-          </section>
+          </div>
+          <div className="race-config-right">
+            <section className="race-config-card" style={{ marginBottom: 16 }}>
+              <div className="race-config-card-title">CORREDORES CADASTRADOS</div>
+              <ul className="race-config-runner-list">
+                {runners.map(r => (
+                  <li key={r.id}>Nº {r.number ?? '—'} · {r.name} · {r.category || '—'}</li>
+                ))}
+                {runners.length === 0 && <li>Nenhum corredor cadastrado.</li>}
+              </ul>
+            </section>
+          </div>
         </div>
 
         <p className="race-config-info">
           <IconHome size={14} /> Corredores locais serão marcados <strong>após o encerramento</strong> da corrida.
         </p>
 
-        <button type="button" className="race-config-start-btn mx-auto" onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}>
+        <button type="button" className="race-config-start-btn" onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}>
           <IconPlay size={20} /> INICIAR CRONÔMETRO
         </button>
       </main>
+      )}
+
+      {raceTab === 'registered' && (
+        <main className="race-config-main">
+          <div className="registered-races-grid">
+            {(() => {
+              const pageSize = 6
+              const pagedRaces = (races || []).slice(registeredPage * pageSize, (registeredPage + 1) * pageSize)
+              return pagedRaces.map(r => {
+                const isActive = r.id === activeRace?.id
+                const status = r.endTime ? 'Encerrada' : r.startTime ? 'Em andamento' : 'Aguardando'
+                return (
+                  <div key={r.id} className={`registered-race-card ${isActive ? 'active' : ''}`}>
+                    <div className="registered-race-title">{r.name}</div>
+                    <div className="registered-race-meta">
+                      {r.distanceKm && <span className="registered-race-badge">{r.distanceKm} km</span>}
+                      <span className="registered-race-badge">{(allRunners || []).filter(rr => rr.raceId === r.id).length} corredores</span>
+                      <span className={`registered-race-status ${r.endTime ? 'finished' : r.startTime ? 'running' : 'pending'}`}>{status}</span>
+                      {isActive && <span className="registered-race-active">Ativa</span>}
+                    </div>
+                    <div className="registered-race-actions">
+                      <button type="button" className="registered-race-select-btn" onClick={() => { selectRace(r); setRaceTab('current') }}>
+                        ▶ Selecionar
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+            })()}
+          </div>
+          {(races || []).length === 0 && <p className="race-config-info">Nenhuma corrida cadastrada.</p>}
+          {(races || []).length > 6 && (
+            <div className="registered-races-pagination">
+              <button type="button" disabled={registeredPage === 0} onClick={() => setRegisteredPage(p => Math.max(0, p - 1))}>Anterior</button>
+              <span>Página {registeredPage + 1} de {Math.ceil((races || []).length / 6)}</span>
+              <button type="button" disabled={registeredPage >= Math.ceil((races || []).length / 6) - 1} onClick={() => setRegisteredPage(p => p + 1)}>Próxima</button>
+            </div>
+          )}
+        </main>
+      )}
 
       {panel === 'start' && (
         <Modal title="Editar Largada" onClose={closePanel} maxWidth={480}>
