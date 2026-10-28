@@ -2949,3 +2949,539 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   cursor: pointer;
   width: fit-content;
 }
+
+/* ─── New Race Trigger Button ───────────────────────────────────────────────── */
+.new-race-trigger-btn {
+  display: none; /* hidden — creation is triggered by the tab button */
+}
+
+/* ─── New Race Form ──────────────────────────────────────────────────────────── */
+.new-race-form {
+  background: rgba(124, 58, 237, 0.08);
+  border: 1.5px solid rgba(124, 58, 237, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.new-race-form-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #c4b5fd;
+  letter-spacing: 0.02em;
+}
+
+.new-race-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.new-race-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 220px;
+}
+
+.new-race-field--short {
+  flex: 0 0 140px;
+}
+
+.new-race-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a78bfa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.new-race-field input {
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(167, 139, 250, 0.3);
+  border-radius: 10px;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.new-race-field input:focus {
+  border-color: #7c3aed;
+}
+
+.new-race-field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.6);
+}
+
+.new-race-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.confirm-race-btn {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.confirm-race-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.confirm-race-btn:active { transform: translateY(0); }
+.confirm-race-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancel-race-btn {
+  background: rgba(255,255,255,0.06);
+  color: #a78bfa;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancel-race-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* ─── Runner Inline Form ──────────────────────────────────────────────────────── */
+.runner-form-wrap {
+  margin-top: 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.runner-form-section-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #a78bfa;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.runner-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.runner-form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.runner-form-input {
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.runner-form-input:focus { border-color: #7c3aed; }
+
+.runner-form-name { flex: 1 1 180px; }
+.runner-form-number { flex: 0 0 90px; }
+
+/* ─── Category Toggles ─────────────────────────────────────────────────────── */
+.runner-form-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cat-toggle {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.55);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.cat-toggle:hover {
+  border-color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.08);
+}
+
+.cat-toggle--active {
+  font-weight: 700;
+}
+
+.cat-preview {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.45);
+  padding: 6px 0 2px;
+}
+
+.cat-preview strong {
+  color: rgba(255,255,255,0.75);
+}
+
+.runner-form-error {
+  background: rgba(255, 59, 48, 0.12);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  color: #ff7b6b;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.runner-submit-btn {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 22px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  align-self: flex-start;
+}
+
+.runner-submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.runner-submit-btn:active { transform: translateY(0); }
+.runner-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ─── QR Result Panel ──────────────────────────────────────────────────────── */
+.qr-result-panel {
+  background: rgba(22, 163, 74, 0.08);
+  border: 1.5px solid rgba(22, 163, 74, 0.3);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: qrPanelIn 0.3s ease;
+}
+
+@keyframes qrPanelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qr-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qr-result-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.qr-result-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.qr-result-dismiss:hover { color: rgba(255,255,255,0.7); }
+
+.qr-result-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.qr-result-img-wrap {
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.qr-result-img {
+  width: 110px;
+  height: 110px;
+  display: block;
+}
+
+.qr-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.qr-result-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.qr-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.qr-result-num {
+  background: rgba(124, 58, 237, 0.3);
+  color: #c4b5fd;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.qr-result-cat {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+}
+
+.qr-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.qr-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.qr-action-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.qr-action-btn:active { transform: translateY(0); }
+.qr-action-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.qr-action-thermal {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+}
+
+.qr-action-cupom {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.qr-action-download {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+/* ─── Registered Runners List ─────────────────────────────────────────────── */
+.registered-runners-section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.registered-runners-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #a78bfa;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.registered-runners-count {
+  background: rgba(124, 58, 237, 0.25);
+  color: #c4b5fd;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.registered-runners-empty {
+  padding: 20px 16px;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.registered-runners-list {
+  list-style: none;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.registered-runner-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.registered-runner-item:hover {
+  background: rgba(124, 58, 237, 0.14);
+}
+
+.registered-runner-item:hover .rri-name {
+  color: #a78bfa;
+}
+
+.registered-runner-item:last-child { border-bottom: none; }
+
+.rri-qr-icon {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #a78bfa;
+  background: rgba(124, 58, 237, 0.18);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 6px;
+  padding: 2px 7px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.registered-runner-item:hover .rri-qr-icon {
+  background: #7c3aed;
+  color: #fff;
+  border-color: #7c3aed;
+}
+
+.rri-number {
+  font-weight: 700;
+  color: #c4b5fd;
+  min-width: 46px;
+  font-size: 0.8rem;
+}
+
+.rri-name {
+  flex: 1;
+  color: #e2e8f0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rri-cat {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+}
+
+.runners-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.runners-pagination button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #c4b5fd;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.runners-pagination button:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+.runners-pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.runners-pagination span {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ─── Race Confirm Toggle Button ────────────────────────────────────────────── */
+.race-confirm-toggle-btn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1.5px solid rgba(124, 58, 237, 0.4);
+  background: rgba(124, 58, 237, 0.15);
+  color: #c4b5fd;
+  white-space: nowrap;
+}
+
+.race-confirm-toggle-btn:hover {
+  background: rgba(124, 58, 237, 0.28);
+  border-color: #7c3aed;
+  color: #fff;
+}
+
+.race-confirm-toggle-btn--confirmed {
+  background: #16a34a !important;
+  border-color: #22c55e !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.45);
+}
+

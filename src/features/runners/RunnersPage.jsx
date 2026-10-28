@@ -493,7 +493,7 @@ export default function RunnersPage() {
               required
             />
 
-            <label htmlFor="runner-cpf-input">CPF do corredor:</label>
+            <label htmlFor="runner-cpf-input">CPF do corredor (opcional):</label>
             <input
               id="runner-cpf-input"
               type="text"
@@ -503,7 +503,6 @@ export default function RunnersPage() {
               value={cpf}
               onChange={e => setCpf(maskCpf(e.target.value))}
               maxLength={14}
-              required
             />
 
             <label htmlFor="runner-category-input">Categoria do corredor:</label>

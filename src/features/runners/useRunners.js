@@ -77,11 +77,6 @@ export function useRunners(raceId) {
       setError('Informe o nome do corredor.')
       return null
     }
-    const cpfValidation = validateCpf(trimmedCpf)
-    if (!cpfValidation.valid) {
-      setError(cpfValidation.message || 'CPF inválido.')
-      return null
-    }
     if (!effectiveRaceId) {
       setError('Selecione uma corrida específica para realizar o cadastro.')
       return null
@@ -89,20 +84,27 @@ export function useRunners(raceId) {
 
     const formattedName = capitalizeName(trimmedName)
     const formattedNumber = formatRunnerNumber(trimmedNumber)
-    const formattedCpf = maskCpf(trimmedCpf)
-    const normalizedDigitsCpf = normalizeCpf(trimmedCpf)
+    const normalizedName = normalizeComparable(formattedName)
+    const normalizedNumber = normalizeComparable(formattedNumber)
 
     const currentRaceRunners = raceId === effectiveRaceId
       ? runners
       : runners.filter(r => r.raceId === effectiveRaceId)
 
-    const normalizedName = normalizeComparable(formattedName)
-    const normalizedNumber = normalizeComparable(formattedNumber)
-
-    const existingCpf = currentRaceRunners.find(r => normalizeCpf(r.cpf) === normalizedDigitsCpf)
-    if (existingCpf) {
-      setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida para o corredor "${existingCpf.name}" (Nº ${existingCpf.number || '—'}).`)
-      return null
+    let formattedCpf = ''
+    if (trimmedCpf) {
+      const cpfValidation = validateCpf(trimmedCpf)
+      if (!cpfValidation.valid) {
+        setError(cpfValidation.message || 'CPF inválido.')
+        return null
+      }
+      formattedCpf = maskCpf(trimmedCpf)
+      const normalizedDigitsCpf = normalizeCpf(trimmedCpf)
+      const existingCpf = currentRaceRunners.find(r => r.cpf && normalizeCpf(r.cpf) === normalizedDigitsCpf)
+      if (existingCpf) {
+        setError(`O CPF ${formattedCpf} já está cadastrado nesta corrida para o corredor "${existingCpf.name}" (Nº ${existingCpf.number || '—'}).`)
+        return null
+      }
     }
 
     const existingNumber = currentRaceRunners.find(r => normalizeComparable(r.number) === normalizedNumber)
@@ -118,16 +120,6 @@ export function useRunners(raceId) {
     }
 
     try {
-      const race = await getRaceById(effectiveRaceId)
-      if (race?.endTime) {
-        setError('Não é possível cadastrar: esta corrida já foi encerrada e não aceita mais inscrições.')
-        return null
-      }
-      if (race?.startTime && !race?.endTime) {
-        setError('Não é possível cadastrar: esta corrida está em andamento e novas inscrições foram bloqueadas.')
-        return null
-      }
-
       let sequenceNumber = currentRaceRunners.length + 1
       if (raceId !== effectiveRaceId && currentRaceRunners.length === 0) {
         const raceRunners = await getRunnersByRace(effectiveRaceId)

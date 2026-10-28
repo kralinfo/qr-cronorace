@@ -82,8 +82,10 @@ export default function ImportRunnersModal({ raceId, onClose }) {
       const categoryValidation = validateCategory(rawCategory)
       if (!categoryValidation.valid) errors.push(categoryValidation.message)
 
-      const cpfValidation = validateCpf(rawCpf)
-      if (!cpfValidation.valid) errors.push(cpfValidation.message || 'CPF inválido')
+      if (rawCpf) {
+        const cpfValidation = validateCpf(rawCpf)
+        if (!cpfValidation.valid) errors.push(cpfValidation.message || 'CPF inválido')
+      }
 
       const numberDigits = rawNumber.replace(/\D/g, '')
       if (!numberDigits) errors.push('Número de peito obrigatório')

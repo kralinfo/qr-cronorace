@@ -57,40 +57,6 @@ function AppContent() {
 
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
 
-  if (!activeRace) {
-    return (
-      <div className="app">
-        <header className="app-header">
-          {canGoBack && (
-            <button
-              type="button"
-              className="header-back-btn"
-              onClick={handleBack}
-              aria-label="Voltar"
-              title="Voltar à tela anterior"
-            >
-              <IconChevronLeft size={20} />
-            </button>
-          )}
-          <div className="app-header-title-wrap">
-            <h1>{TAB_TITLES[tab] || 'PWA QR Timing'}</h1>
-          </div>
-        </header>
-
-        <main>
-          {tab === 'runners' && <RunnersPage />}
-          {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
-          {tab === 'home' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
-        </main>
-
-        <BottomNav
-          currentTab={tab}
-          onNavigate={handleNavigate}
-          hasActiveRace={false}
-        />
-      </div>
-    )
-  }
 
   return (
     <div className="app">
@@ -115,7 +81,7 @@ function AppContent() {
         </header>
       )}
 
-      <main className={tab === 'home' && activeRace ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'race-config-main-wrap' : (tab === 'home' ? 'no-header' : ''))}>
+      <main className={tab === 'home' ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'race-config-main-wrap' : '')}>
 
         {tab === 'home' && <RaceHomePage onNavigate={handleNavigate} onOpenScanner={() => handleNavigate('scanner')} />}
         {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
@@ -128,11 +94,11 @@ function AppContent() {
 
       </main>
 
-<BottomNav
+      <BottomNav
         currentTab={tab}
         onNavigate={handleNavigate}
-        hasActiveRace={true}
-        isRaceStarted={Boolean(activeRace.startTime)}
+        hasActiveRace={Boolean(activeRace)}
+        isRaceStarted={Boolean(activeRace?.startTime)}
       />
 
 

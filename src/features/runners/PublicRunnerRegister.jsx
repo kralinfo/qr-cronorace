@@ -214,11 +214,10 @@ function RegisterForm({ race }) {
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              placeholder="CPF do corredor (000.000.000-00)"
+              placeholder="CPF do corredor (opcional)"
               value={cpf}
               onChange={e => setCpf(maskCpf(e.target.value))}
               maxLength={14}
-              required
             />
             <select
               value={category}
