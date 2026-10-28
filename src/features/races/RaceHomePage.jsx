@@ -125,14 +125,13 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [gender, setGender] = useState('MASCULINO')
   const [origin, setOrigin] = useState('LOCAL')   // 'LOCAL' | 'VISITANTE'
   const [isPcd, setIsPcd] = useState(false)
   const [is60Plus, setIs60Plus] = useState(false)
   const [localError, setLocalError] = useState(null)
 
   const buildCategory = () => {
-    const parts = [gender, origin]
+    const parts = [origin]
     if (isPcd) parts.push('PCD')
     if (is60Plus) parts.push('+60')
     return parts.join(' | ')
@@ -159,7 +158,6 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
       if (result) {
         setName('')
         setNumber('')
-        setGender('MASCULINO')
         setOrigin('LOCAL')
         setIsPcd(false)
         setIs60Plus(false)
@@ -202,21 +200,6 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
         </div>
 
         <div className="runner-form-cats">
-          <div className="cat-group">
-            <CategoryToggle
-              label="♂ Masculino"
-              active={gender === 'MASCULINO'}
-              onClick={() => setGender('MASCULINO')}
-              color="#3b82f6"
-            />
-            <CategoryToggle
-              label="♀ Feminino"
-              active={gender === 'FEMININO'}
-              onClick={() => setGender('FEMININO')}
-              color="#ec4899"
-            />
-          </div>
-
           <div className="cat-group">
             <CategoryToggle
               label="🏠 Local"
@@ -432,6 +415,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       setLastRace(activeRace)
     }
   }, [activeRace?.id, activeRace?.name, activeRace?.distanceKm])
+
+  useEffect(() => {
+    if (runners) {
+      try {
+        localStorage.setItem('pwa-qr-timing:runners-lookup', JSON.stringify(runners))
+      } catch (e) {}
+    }
+  }, [runners])
 
   const handleToggleConfirmRace = async () => {
     const trimmed = (name || '').trim()

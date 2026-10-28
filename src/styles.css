@@ -157,11 +157,72 @@ main.no-header {
   height: var(--bottom-nav-h);
   display: flex;
   align-items: stretch;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 0);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-nav-bar.is-collapsed {
+  transform: translateY(100%);
+}
+
+.bottom-nav-toggle-tab {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 18px;
+  background: #151026;
+  border: 1px solid #322452;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s, color 0.2s;
+  z-index: 50;
+  outline: none;
+  padding: 0;
+}
+
+.bottom-nav-toggle-tab:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #8b5cf6;
+}
+
+.bottom-nav-toggle-arrow {
+  font-size: 0.65rem;
+  line-height: 1;
+  display: block;
+  user-select: none;
+}
+
+.app--nav-minimized main {
+  padding-bottom: 0 !important;
+}
+
+.app--nav-minimized .race-config-main-wrap {
+  padding-bottom: 0 !important;
+}
+
+.chronometer-main-wrap {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: calc(100vh - var(--bottom-nav-h));
+  overflow: hidden !important;
+}
+
+.app--nav-minimized .chronometer-main-wrap {
+  height: 100vh !important;
 }
 
 .bottom-nav-item {
@@ -324,6 +385,7 @@ input[type="date"],
   border-radius: var(--radius-sm);
   min-height: 46px;
   -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
   outline: none;
 }
@@ -534,8 +596,6 @@ form label {
 /* =====================================
    QUICK ACTIONS GRID (Acesso Rápido)
    ===================================== */
-.race-dashboard-section { }
-
 .race-dashboard-title {
   font-size: 0.78rem;
   font-weight: 700;
@@ -3100,7 +3160,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 .runner-form-input:focus { border-color: #7c3aed; }
 
 .runner-form-name { flex: 1 1 180px; }
-.runner-form-number { flex: 0 0 90px; }
+.runner-form-number { flex: 0 0 120px; }
 
 /* ─── Category Toggles ─────────────────────────────────────────────────────── */
 .runner-form-cats {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import ResultsPage from './features/results/ResultsPage.jsx'
 import ScannerPage from './features/scanner/ScannerPage.jsx'
 import RunnersPage from './features/runners/RunnersPage.jsx'
@@ -34,6 +34,23 @@ function AppContent() {
   const { activeRace, loading, clearActiveRace } = useActiveRace()
   const [tab, setTabState] = useState('home')
   const [navHistory, setNavHistory] = useState(['home'])
+  const [isNavMinimized, setIsNavMinimized] = useState(() => {
+    try {
+      return localStorage.getItem('pwa-qr-timing:nav-minimized') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const handleToggleMinimize = () => {
+    setIsNavMinimized(prev => {
+      const next = !prev
+      try {
+        localStorage.setItem('pwa-qr-timing:nav-minimized', String(next))
+      } catch {}
+      return next
+    })
+  }
 
   const handleNavigate = (newTab) => {
     if (newTab === tab) return
@@ -53,13 +70,24 @@ function AppContent() {
     }
   }
 
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'BACK') {
+        handleBack()
+      } else if (event.data?.type === 'NAVIGATE') {
+        handleNavigate(event.data.tab || 'home')
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [navHistory, tab])
+
   const canGoBack = tab !== 'home'
 
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
 
-
   return (
-    <div className="app">
+    <div className={`app ${isNavMinimized ? 'app--nav-minimized' : ''}`}>
       {tab !== 'home' && tab !== 'chronometer' && (
         <header className="app-header">
           <div className="app-header-inner">
@@ -81,16 +109,27 @@ function AppContent() {
         </header>
       )}
 
-      <main className={tab === 'home' ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'race-config-main-wrap' : '')}>
+      <main className={tab === 'home' ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'chronometer-main-wrap' : '')}>
 
         {tab === 'home' && <RaceHomePage onNavigate={handleNavigate} onOpenScanner={() => handleNavigate('scanner')} />}
         {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={handleBack} />}
         {tab === 'results' && <ResultsPage />}
-        {tab === 'chronometer' && <iframe src="/chronometer.html" title="Cronômetro" style={{ width: '100%', height: 'calc(100vh - var(--bottom-nav-h))', border: 'none' }}
-
- />}
+        {tab === 'chronometer' && (
+          <iframe
+            src="/chronometer.html"
+            title="Cronômetro"
+            scrolling="no"
+            style={{
+              width: '100%',
+              height: isNavMinimized ? '100vh' : 'calc(100vh - var(--bottom-nav-h))',
+              border: 'none',
+              display: 'block',
+              overflow: 'hidden'
+            }}
+          />
+        )}
 
       </main>
 
@@ -99,8 +138,9 @@ function AppContent() {
         onNavigate={handleNavigate}
         hasActiveRace={Boolean(activeRace)}
         isRaceStarted={Boolean(activeRace?.startTime)}
+        isMinimized={isNavMinimized}
+        onToggleMinimize={handleToggleMinimize}
       />
-
 
     </div>
   )

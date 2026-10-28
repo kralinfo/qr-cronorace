@@ -13,10 +13,19 @@ import {
  *   currentTab: string,
  *   onNavigate: (tab: string) => void,
  *   hasActiveRace?: boolean,
- *   isRaceStarted?: boolean
+ *   isRaceStarted?: boolean,
+ *   isMinimized?: boolean,
+ *   onToggleMinimize?: () => void
  * }} props
  */
-export default function BottomNav({ currentTab, onNavigate, hasActiveRace = true, isRaceStarted = true }) {
+export default function BottomNav({
+  currentTab,
+  onNavigate,
+  hasActiveRace = true,
+  isRaceStarted = true,
+  isMinimized = false,
+  onToggleMinimize
+}) {
   const items = hasActiveRace
     ? [
       { id: 'home', label: 'Início', icon: <IconHome size={22} /> },
@@ -38,7 +47,18 @@ export default function BottomNav({ currentTab, onNavigate, hasActiveRace = true
     ]
 
   return (
-    <nav className="bottom-nav-bar" aria-label="Navegação principal inferior">
+    <nav className={`bottom-nav-bar ${isMinimized ? 'is-collapsed' : ''}`} aria-label="Navegação principal inferior">
+      {onToggleMinimize && (
+        <button
+          type="button"
+          className="bottom-nav-toggle-tab"
+          onClick={onToggleMinimize}
+          aria-label={isMinimized ? 'Expandir barra' : 'Ocultar barra'}
+          title={isMinimized ? 'Expandir barra' : 'Ocultar barra'}
+        >
+          <span className="bottom-nav-toggle-arrow">{isMinimized ? '▲' : '▼'}</span>
+        </button>
+      )}
       {items.map(item => {
         const isActive = currentTab === item.id
         return (
