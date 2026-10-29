@@ -368,6 +368,8 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const maleNumberRef = useRef(null)
   const femaleNameRef = useRef(null)
   const femaleNumberRef = useRef(null)
+  const maleAddBtnRef = useRef(null)
+  const femaleAddBtnRef = useRef(null)
 
   // Corredor selecionado para exibir o QR Code em baixo
   const [selectedRunner, setSelectedRunner] = useState(null)
@@ -854,7 +856,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     disabled={maleRunners.length === 0 || printingBtCat === 'male'}
                     title="Imprimir todos os cupons QR masculinos na Impressora Térmica Bluetooth"
                   >
-                    🖨 {printingBtCat === 'male' ? 'Enviando...' : 'Imprimir Térmica'}
+                    {printingBtCat === 'male' ? '⏳' : '🖨'}
                   </button>
                 </div>
               </div>
@@ -888,7 +890,10 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     value={maleNumber}
                     onChange={e => setMaleNumber(e.target.value.replace(/\D/g, ''))}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Tab' && !e.shiftKey) {
+                        e.preventDefault()
+                        maleAddBtnRef.current?.focus()
+                      } else if (e.key === 'Enter') {
                         e.preventDefault()
                         if (!maleName.trim()) {
                           maleNameRef.current?.focus()
@@ -905,6 +910,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                   <div className="card-toggles-group">
                     <button
                       type="button"
+                      tabIndex={-1}
                       className={`card-toggle-btn ${maleIsLocal ? 'active' : ''}`}
                       onClick={() => setMaleIsLocal(p => !p)}
                     >
@@ -912,6 +918,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     </button>
                     <button
                       type="button"
+                      tabIndex={-1}
                       className={`card-toggle-btn pcd ${maleSpecial === 'PCD' ? 'active' : ''}`}
                       onClick={() => setMaleSpecial(p => p === 'PCD' ? '' : 'PCD')}
                     >
@@ -919,13 +926,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     </button>
                     <button
                       type="button"
+                      tabIndex={-1}
                       className={`card-toggle-btn age ${maleSpecial === '+60' ? 'active' : ''}`}
                       onClick={() => setMaleSpecial(p => p === '+60' ? '' : '+60')}
                     >
                       {maleSpecial === '+60' ? '👴 +60 ✓' : '👴 +60'}
                     </button>
                   </div>
-                  <button type="submit" className="race-config-add-btn compact" disabled={submittingMale}>
+                  <button ref={maleAddBtnRef} type="submit" className="race-config-add-btn compact" disabled={submittingMale}>
                     {submittingMale ? '...' : '+ Adicionar'}
                   </button>
                 </div>
@@ -972,7 +980,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     disabled={femaleRunners.length === 0 || printingBtCat === 'female'}
                     title="Imprimir todos os cupons QR femininos na Impressora Térmica Bluetooth"
                   >
-                    🖨 {printingBtCat === 'female' ? 'Enviando...' : 'Imprimir Térmica'}
+                    {printingBtCat === 'female' ? '⏳' : '🖨'}
                   </button>
                 </div>
               </div>
@@ -1006,7 +1014,10 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     value={femaleNumber}
                     onChange={e => setFemaleNumber(e.target.value.replace(/\D/g, ''))}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Tab' && !e.shiftKey) {
+                        e.preventDefault()
+                        femaleAddBtnRef.current?.focus()
+                      } else if (e.key === 'Enter') {
                         e.preventDefault()
                         if (!femaleName.trim()) {
                           femaleNameRef.current?.focus()
@@ -1023,6 +1034,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                   <div className="card-toggles-group">
                     <button
                       type="button"
+                      tabIndex={-1}
                       className={`card-toggle-btn ${femaleIsLocal ? 'active' : ''}`}
                       onClick={() => setFemaleIsLocal(p => !p)}
                     >
@@ -1030,6 +1042,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     </button>
                     <button
                       type="button"
+                      tabIndex={-1}
                       className={`card-toggle-btn pcd ${femaleSpecial === 'PCD' ? 'active' : ''}`}
                       onClick={() => setFemaleSpecial(p => p === 'PCD' ? '' : 'PCD')}
                     >
@@ -1037,13 +1050,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                     </button>
                     <button
                       type="button"
+                      tabIndex={-1}
                       className={`card-toggle-btn age ${femaleSpecial === '+60' ? 'active' : ''}`}
                       onClick={() => setFemaleSpecial(p => p === '+60' ? '' : '+60')}
                     >
                       {femaleSpecial === '+60' ? '👴 +60 ✓' : '👴 +60'}
                     </button>
                   </div>
-                  <button type="submit" className="race-config-add-btn compact" disabled={submittingFemale}>
+                  <button ref={femaleAddBtnRef} type="submit" className="race-config-add-btn compact" disabled={submittingFemale}>
                     {submittingFemale ? '...' : '+ Adicionar'}
                   </button>
                 </div>

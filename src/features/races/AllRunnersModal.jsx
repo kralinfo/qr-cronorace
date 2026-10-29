@@ -11,6 +11,7 @@ export default function AllRunnersModal({
   onSelectRunner,
   onDeleteRunner
 }) {
+  const [searchTerm, setSearchTerm] = useState('')
   const [filterGender, setFilterGender] = useState('ALL') // 'ALL' | 'MALE' | 'FEMALE'
   const [viewingQrRunner, setViewingQrRunner] = useState(null)
 
@@ -41,13 +42,21 @@ export default function AllRunnersModal({
       list = list.filter(r => (r.category || '').toUpperCase().includes('FEM'))
     }
 
+    if (searchTerm.trim()) {
+      const term = searchTerm.trim().toLowerCase()
+      list = list.filter(r =>
+        (r.name || '').toLowerCase().includes(term) ||
+        String(r.number || '').includes(term)
+      )
+    }
+
     return [...list].sort((a, b) => {
       const na = parseInt(a.number, 10)
       const nb = parseInt(b.number, 10)
       if (!isNaN(na) && !isNaN(nb)) return na - nb
       return (a.name || '').localeCompare(b.name || '')
     })
-  }, [runners, filterGender])
+  }, [runners, filterGender, searchTerm])
 
   if (!isOpen) return null
 
@@ -94,8 +103,29 @@ export default function AllRunnersModal({
           </div>
         </div>
 
-        {/* Barra de Filtros: Apenas Todos, Masculino e Feminino */}
+        {/* Barra de Filtros: Campo de Busca + Abas Todos / Masculino / Feminino */}
         <div className="arm-search-row">
+          <div className="arm-input-wrapper">
+            <span className="arm-search-icon">🔍</span>
+            <input
+              type="text"
+              className="arm-text-input"
+              placeholder="Buscar por nome ou número de peito..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="arm-clear-search-btn"
+                onClick={() => setSearchTerm('')}
+                title="Limpar busca"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
           <div className="arm-tabs">
             <button
               type="button"
@@ -138,7 +168,21 @@ export default function AllRunnersModal({
                   <td colSpan={4}>
                     <div className="arm-empty">
                       <span className="arm-empty-icon">🏃</span>
-                      <p>Nenhum corredor cadastrado nesta categoria.</p>
+                      <p>
+                        {searchTerm
+                          ? `Nenhum corredor encontrado para "${searchTerm}".`
+                          : 'Nenhum corredor cadastrado nesta categoria.'}
+                      </p>
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          className="arm-cat-filter-clear"
+                          onClick={() => setSearchTerm('')}
+                          style={{ marginTop: 8 }}
+                        >
+                          Limpar busca
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

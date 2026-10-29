@@ -2884,12 +2884,14 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 .card-batch-btn {
   height: 28px;
-  padding: 0 10px;
+  min-width: 32px;
+  padding: 0 8px;
   border-radius: 7px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -4692,7 +4694,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 
 .th-num { width: 90px; text-align: center; }
 .th-name { text-align: left; }
-.th-cat { width: 220px; text-align: left; }
+.th-cat { min-width: 260px; text-align: left; }
 .th-actions { width: 160px; text-align: center; }
 
 .arm-tr {
@@ -4766,7 +4768,8 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .arm-cat-pill {
@@ -4774,6 +4777,8 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   font-weight: 700;
   padding: 2px 9px;
   border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .arm-cat-pill.male {
@@ -4793,6 +4798,8 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .arm-flag.local {
