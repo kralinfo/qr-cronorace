@@ -15,7 +15,7 @@ import ReopenRaceModal from './ReopenRaceModal.jsx'
 import Modal from '../../shared/Modal.jsx'
 import AllRunnersModal from './AllRunnersModal.jsx'
 import RunnerQRModal from '../runners/RunnerQRModal.jsx'
-import { IconPlay, IconMenu, IconClock, IconHome } from '../../shared/Icons.jsx'
+import { IconPlay, IconMenu, IconClock, IconHome, IconCheck } from '../../shared/Icons.jsx'
 
 // ─── Category Toggle Button ───────────────────────────────────────────────────
 function CategoryToggle({ label, active, onClick, color }) {
@@ -349,6 +349,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [confirmingStartEmpty, setConfirmingStartEmpty] = useState(false)
   const [lastRace, setLastRace] = useState(activeRace || null)
   const raceNameInputRef = React.useRef(null)
+  const raceDistInputRef = React.useRef(null)
 
   // Estados dos cards MASCULINO e FEMININO
   const [maleName, setMaleName] = useState('')
@@ -472,19 +473,31 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   }
 
   const handleEnsureActiveRace = async () => {
-    if (activeRace?.id) return activeRace
     const trimmed = (name || '').trim()
-    if (!trimmed) return null
     setSavingRace(true)
     try {
+      if (activeRace?.id) {
+        if (trimmed && (trimmed !== activeRace.name || (distanceKm || '').trim() !== (activeRace.distanceKm || ''))) {
+          await editRace(activeRace.id, {
+            name: trimmed,
+            distanceKm: (distanceKm || '').trim(),
+            eventDate: activeRace.eventDate || new Date().toISOString().split('T')[0]
+          })
+          setIsConfirmed(true)
+        }
+        return activeRace
+      }
+      const raceName = trimmed || `Corrida ${new Date().toLocaleDateString('pt-BR')}`
       const newRace = await createRace(
-        trimmed,
+        raceName,
         new Date().toISOString().split('T')[0],
         (distanceKm || '').trim()
       )
       if (newRace) {
+        if (!trimmed) setName(raceName)
         selectRace(newRace)
         setIsConfirmed(true)
+        setLastRace(newRace)
         return newRace
       }
       return null
@@ -818,24 +831,49 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           </div>
 
           <div className="race-config-fields">
-            <div className="race-config-field">
+            <div className="race-config-field race-config-field--name">
               <label>NOME DA CORRIDA</label>
               <input
                 ref={raceNameInputRef}
                 value={name}
                 onChange={e => { setName(e.target.value); setIsConfirmed(false) }}
                 onBlur={handleSaveField}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    raceDistInputRef.current?.focus()
+                  }
+                }}
                 placeholder="Ex: Aliança Run 2025"
               />
             </div>
-            <div className="race-config-field">
+            <div className="race-config-field race-config-field--dist">
               <label>DISTÂNCIA</label>
-              <input
-                value={distanceKm}
-                onChange={e => { setDistanceKm(e.target.value); setIsConfirmed(false) }}
-                onBlur={handleSaveField}
-                placeholder="Ex: 5km, 10km..."
-              />
+              <div className="race-config-dist-group">
+                <input
+                  ref={raceDistInputRef}
+                  value={distanceKm}
+                  onChange={e => { setDistanceKm(e.target.value); setIsConfirmed(false) }}
+                  onBlur={handleSaveField}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleToggleConfirmRace()
+                    }
+                  }}
+                  placeholder="Ex: 5km, 10km..."
+                />
+                <button
+                  type="button"
+                  className={`race-config-save-btn ${isConfirmed && activeRace?.id ? 'saved' : 'pending'}`}
+                  onClick={handleToggleConfirmRace}
+                  disabled={savingRace || !name.trim()}
+                  title={isConfirmed && activeRace?.id ? 'Corrida salva e configurada! Clique para salvar alterações.' : 'Salvar configurações da corrida'}
+                  aria-label="Salvar corrida"
+                >
+                  {savingRace ? '⏳' : <IconCheck size={22} strokeWidth={3.2} color="#ffffff" />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1090,14 +1128,24 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
             </section>
           </div>
 
-          {/* Botão Iniciar Cronômetro */}
-          <button
-            type="button"
-            className="race-config-start-btn"
-            onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}
-          >
-            <IconPlay size={20} /> INICIAR CRONÔMETRO
-          </button>
+          {/* Botão Iniciar Cronômetro / Ver Informações */}
+          {activeRace?.endTime ? (
+            <button
+              type="button"
+              className="race-config-start-btn race-config-start-btn--finished"
+              onClick={() => onNavigate?.('chronometer')}
+            >
+              <IconMenu size={20} /> VER INFORMAÇÕES
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="race-config-start-btn"
+              onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}
+            >
+              <IconPlay size={20} /> INICIAR CRONÔMETRO
+            </button>
+          )}
 
           {/* Link para abrir modal com todos os corredores */}
           <div className="race-config-view-all-row">

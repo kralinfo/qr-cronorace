@@ -92,9 +92,9 @@ table.rk-table{width:100%;border-collapse:collapse}
 
   <header class="w-full shrink-0 bg-[#120d24]/90 border-b border-[#2a1f45] px-4 py-2.5 flex items-center justify-between z-30">
     <div class="flex items-center gap-3">
-      <button onclick="goBack()" class="h-8 px-3 rounded-xl bg-[#151026] hover:bg-[#1f173b] border border-[#2a1f45] hover:border-purple-500/50 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm" title="Voltar para a tela de corridas">
+      <button onclick="goToHome()" class="h-8 px-3 rounded-xl bg-[#151026] hover:bg-[#1f173b] border border-[#2a1f45] hover:border-purple-500/50 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm" title="Voltar ao início">
         <i class="fa-solid fa-arrow-left text-[11px]"></i>
-        <span>Voltar</span>
+        <span>Início</span>
       </button>
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20"><i class="fa-solid fa-clock text-white text-base"></i></div>
@@ -197,9 +197,15 @@ table.rk-table{width:100%;border-collapse:collapse}
 
   <!-- Header -->
   <div class="rk-header">
-    <div class="rk-logo">
-      <i class="fa-solid fa-clock" style="-webkit-text-fill-color:#a78bfa;color:#a78bfa"></i>
-      JANELAMARCA
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="goToHome()" class="h-8 px-3 rounded-xl bg-[#151026] hover:bg-[#1f173b] border border-[#2a1f45] hover:border-purple-500/50 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm" title="Voltar ao início">
+        <i class="fa-solid fa-arrow-left text-[11px]"></i>
+        <span>Início</span>
+      </button>
+      <div class="rk-logo">
+        <i class="fa-solid fa-clock" style="-webkit-text-fill-color:#a78bfa;color:#a78bfa"></i>
+        JANELAMARCA
+      </div>
     </div>
     <div class="rk-status">
       <span class="rk-status-dot"></span>
@@ -277,9 +283,6 @@ table.rk-table{width:100%;border-collapse:collapse}
     <button class="rk-btn rk-btn-ghost" onclick="backToChrono()">
       <i class="fa-solid fa-arrow-left"></i> Cronômetro
     </button>
-    <button class="rk-btn rk-btn-danger" onclick="newRace()">
-      <i class="fa-solid fa-xmark"></i> Nova corrida
-    </button>
   </div>
 
 </div><!-- end rankingView -->
@@ -351,6 +354,16 @@ const countTotal=document.getElementById('countTotal');
 function goBack(){
   try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'BACK'},'*');return;}}catch(e){}
   if(window.history.length>1)window.history.back();else window.location.href='/';
+}
+
+function goToHome(){
+  try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'NAVIGATE',tab:'home'},'*');return;}}catch(e){}
+  window.location.href='/';
+}
+
+function goToResults(){
+  try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'NAVIGATE',tab:'results'},'*');return;}}catch(e){}
+  showRankingView();
 }
 
 function getRunnerByBib(bib){
@@ -462,15 +475,36 @@ function resetTimer(){
   deleteAllResultsForRace();
   showToast('Cronômetro e ranking reiniciados!');
 }
-function confirmFinish(){
+async function confirmFinish(){
   if(!confirm('Deseja realmente encerrar esta corrida?'))return;
   if(isRunning){clearInterval(timer);isRunning=false;}
+  const nowIso=new Date().toISOString();
   statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
-  statusText.textContent='Encerrada';
+  statusText.textContent='ENCERRADA';
   raceFinished=true;
+
+  try{
+    const raw=localStorage.getItem('pwa-qr-timing:active-race');
+    if(raw){
+      const race=JSON.parse(raw);
+      race.endTime=nowIso;
+      localStorage.setItem('pwa-qr-timing:active-race',JSON.stringify(race));
+      if(window.fbDb&&window.fbSetDoc&&window.fbDoc&&race.id){
+        await window.fbSetDoc(window.fbDoc(window.fbDb,'races',race.id),{endTime:nowIso},{merge:true});
+      }
+    }
+  }catch(e){
+    console.warn('Erro ao salvar término:',e);
+  }
+
+  lblStart.textContent='ENCERRADA';
+  iconStart.className='fa-solid fa-flag-checkered';
+  btnStart.disabled=true;
+  btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-purple-900/40 text-purple-300 border border-purple-500/30 cursor-not-allowed opacity-80';
+
   const btn=document.getElementById('btnFinish');
-  btn.innerHTML='📊 Ver Ranking';
-  btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/30 active:scale-95 transition-all';
+  btn.innerHTML='📊 Ver Classificação';
+  btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
   btn.onclick=showRankingView;
   showToast('Corrida finalizada!');
 }
@@ -846,6 +880,55 @@ function showToast(msg,isError=false){
   document.body.appendChild(toast);
   setTimeout(()=>toast.remove(),2500);
 }
+
+function initRaceState(){
+  try{
+    const raw=localStorage.getItem('pwa-qr-timing:active-race');
+    if(!raw)return;
+    const race=JSON.parse(raw);
+    if(race.endTime){
+      raceFinished=true;
+      const startMs=Date.parse(race.startTime)||0;
+      const endMs=Date.parse(race.endTime)||0;
+      elapsedTime=(startMs&&endMs&&endMs>=startMs)?(endMs-startMs):0;
+      formatTime(elapsedTime);
+      
+      statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
+      statusText.textContent='ENCERRADA';
+      
+      lblStart.textContent='ENCERRADA';
+      iconStart.className='fa-solid fa-flag-checkered';
+      btnStart.disabled=true;
+      btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-purple-900/40 text-purple-300 border border-purple-500/30 cursor-not-allowed opacity-80';
+      
+      const btn=document.getElementById('btnFinish');
+      if(btn){
+        btn.innerHTML='📊 Ver Classificação';
+  btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
+  btn.onclick=showRankingView;
+      }
+    }else if(race.startTime){
+      const startMs=Date.parse(race.startTime);
+      if(startMs){
+        elapsedTime=Math.max(0,Date.now()-startMs);
+        formatTime(elapsedTime);
+        startTime=Date.now()-elapsedTime;
+        timer=setInterval(updateTimer,10);
+        isRunning=true;
+        lblStart.textContent='PAUSAR';
+        iconStart.className='fa-solid fa-pause';
+        btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';
+        statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
+        statusText.textContent='Em Andamento';
+      }
+    }
+  }catch(e){
+    console.warn('Erro ao inicializar estado da corrida:',e);
+  }
+}
+
+initRaceState();
+
 </script>
 </body>
 </html>
