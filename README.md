@@ -1,4 +1,4 @@
-# PWA QR Timing (offline-first)
+pm run dev# PWA QR Timing (offline-first)
 
 Este é um esqueleto de PWA para registro de leituras de QR (dorsais). O app é offline-first: gera/ armazena leituras localmente no IndexedDB e permite exportar CSV.
 

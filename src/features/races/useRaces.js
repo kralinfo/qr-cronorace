@@ -9,6 +9,7 @@ import {
   updateRaceEndTime,
   updateRaceStartTime
 } from './races.repository.js'
+import { deleteAllResultsByRace } from '../results/results.repository.js'
 import { generateRaceId } from './race-id.service.js'
 
 export function useRaces() {
@@ -77,6 +78,10 @@ export function useRaces() {
   const reopenRace = useCallback(async (raceId, mode = 'resume') => {
     setError(null)
     try {
+      // No modo 'reset', apaga todos os resultados da corrida antes de relançar
+      if (mode === 'reset') {
+        await deleteAllResultsByRace(raceId)
+      }
       await repoReopenRace(raceId, mode)
       await loadRaces()
       return true

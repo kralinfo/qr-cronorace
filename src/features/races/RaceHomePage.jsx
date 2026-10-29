@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { useRaces } from './useRaces.js'
 import { useRunners } from '../runners/useRunners.js'
 import { useResults } from '../results/useResults.js'
-import { printRunnerQRCode } from '../runners/print.service.js'
+import { printRunnerQRCode, printRunnersQRCodeBatch } from '../runners/print.service.js'
 import { downloadDataUrl } from '../runners/download.service.js'
 import { buildQRFilename } from '../runners/qr-filename.service.js'
 import { isBluetoothSupported, printRunnerToBluetooth } from '../runners/bluetooth-printer.service.js'
@@ -13,6 +13,8 @@ import EditRaceForm from './EditRaceForm.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import ReopenRaceModal from './ReopenRaceModal.jsx'
 import Modal from '../../shared/Modal.jsx'
+import AllRunnersModal from './AllRunnersModal.jsx'
+import RunnerQRModal from '../runners/RunnerQRModal.jsx'
 import { IconPlay, IconMenu, IconClock, IconHome } from '../../shared/Icons.jsx'
 
 // ─── Category Toggle Button ───────────────────────────────────────────────────
@@ -71,9 +73,6 @@ function QRResultPanel({ lastQrCode, raceName, onDismiss }) {
             <button type="button" className="qr-action-btn qr-action-thermal" onClick={handlePrintBt} disabled={printingBt}>
               🖨 {printingBt ? 'Enviando...' : 'Imprimir Térmica'}
             </button>
-            <button type="button" className="qr-action-btn qr-action-cupom" onClick={() => printRunnerQRCode(lastQrCode.qrDataUrl, lastQrCode.runner, raceName)}>
-              🧾 Cupom Sistema
-            </button>
             <a className="qr-action-btn qr-action-download" href={lastQrCode.qrDataUrl} download={buildQRFilename(lastQrCode.runner)}>
               ⬇ Baixar PNG
             </a>
@@ -125,16 +124,16 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [origin, setOrigin] = useState('LOCAL')   // 'LOCAL' | 'VISITANTE'
-  const [isPcd, setIsPcd] = useState(false)
-  const [is60Plus, setIs60Plus] = useState(false)
+  const [sex, setSex] = useState('MASCULINO')             // 'MASCULINO' | 'FEMININO'
+  const [isLocal, setIsLocal] = useState(false)            // false = VISITANTE, true = LOCAL
+  const [specialCondition, setSpecialCondition] = useState('') // '' | 'PCD' | '+60'
   const [localError, setLocalError] = useState(null)
 
   const buildCategory = () => {
-    const parts = [origin]
-    if (isPcd) parts.push('PCD')
-    if (is60Plus) parts.push('+60')
-    return parts.join(' | ')
+    const base = isLocal
+      ? (sex === 'FEMININO' ? 'LOCAL FEM' : 'LOCAL MASC')
+      : (sex === 'FEMININO' ? 'FEMININO' : 'MASCULINO')
+    return specialCondition ? `${base} | ${specialCondition}` : base
   }
 
   const handleSubmit = async (e) => {
@@ -158,9 +157,8 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
       if (result) {
         setName('')
         setNumber('')
-        setOrigin('LOCAL')
-        setIsPcd(false)
-        setIs60Plus(false)
+        setIsLocal(false)
+        setSpecialCondition('')
         nameInputRef.current?.focus()
       }
     } catch (err) {
@@ -174,16 +172,40 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
   }
 
   const displayedError = localError || runnerError
+  const isMasc = sex === 'MASCULINO'
 
   return (
     <div className="runner-form-wrap">
-      <div className="runner-form-section-title">CADASTRAR CORREDOR</div>
+      {/* ── Abas de Sexo: Masculino / Feminino ── */}
+      <div className="runner-gender-tabs">
+        <button
+          type="button"
+          className={`runner-gender-tab runner-gender-tab--masc ${isMasc ? 'active' : ''}`}
+          onClick={() => setSex('MASCULINO')}
+        >
+          <span className="gender-icon">♂</span>
+          <span>CADASTRO MASCULINO</span>
+        </button>
+        <button
+          type="button"
+          className={`runner-gender-tab runner-gender-tab--fem ${!isMasc ? 'active' : ''}`}
+          onClick={() => setSex('FEMININO')}
+        >
+          <span className="gender-icon">♀</span>
+          <span>CADASTRO FEMININO</span>
+        </button>
+      </div>
+
+      <div className="runner-form-section-title" style={{ color: isMasc ? '#60a5fa' : '#f472b6' }}>
+        {isMasc ? '♂ CADASTRAR CORREDOR MASCULINO' : '♀ CADASTRAR CORREDORA FEMININA'}
+      </div>
+
       <form onSubmit={handleSubmit} className="runner-inline-form">
         <div className="runner-form-row">
           <input
             ref={nameInputRef}
             className="runner-form-input runner-form-name"
-            placeholder="Nome do corredor"
+            placeholder={isMasc ? 'Nome do corredor' : 'Nome da corredora'}
             value={name}
             onChange={e => setName(e.target.value)}
             required
@@ -199,44 +221,62 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
           />
         </div>
 
-        <div className="runner-form-cats">
-          <div className="cat-group">
+        <div className="runner-form-cats" style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
+          {/* Opção de Local (não clicou = visitante) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              ORIGEM:
+            </span>
             <CategoryToggle
-              label="🏠 Local"
-              active={origin === 'LOCAL'}
-              onClick={() => setOrigin('LOCAL')}
-              color="#22c55e"
-            />
-            <CategoryToggle
-              label="🚗 Visitante"
-              active={origin === 'VISITANTE'}
-              onClick={() => setOrigin('VISITANTE')}
-              color="#06b6d4"
+              label={isLocal ? '🏠 Local ✓' : '🏠 Local'}
+              active={isLocal}
+              onClick={() => setIsLocal(p => !p)}
+              color="#f59e0b"
             />
           </div>
 
-          <div className="cat-group">
-            <CategoryToggle
-              label="♿ PCD"
-              active={isPcd}
-              onClick={() => setIsPcd(p => !p)}
-              color="#a855f7"
-            />
-            <CategoryToggle
-              label="👴 +60"
-              active={is60Plus}
-              onClick={() => setIs60Plus(p => !p)}
-              color="#14b8a6"
-            />
+          {/* Opção de PCD ou +60 (não clicou = nenhum) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              CONDIÇÃO (OPCIONAL):
+            </span>
+            <div className="cat-group">
+              <CategoryToggle
+                label="♿ PCD"
+                active={specialCondition === 'PCD'}
+                onClick={() => setSpecialCondition(p => p === 'PCD' ? '' : 'PCD')}
+                color="#a855f7"
+              />
+              <CategoryToggle
+                label="👴 +60"
+                active={specialCondition === '+60'}
+                onClick={() => setSpecialCondition(p => p === '+60' ? '' : '+60')}
+                color="#14b8a6"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="cat-preview">Categoria: <strong>{buildCategory()}</strong></div>
+        <div className="cat-preview">
+          Categoria: <strong style={{ color: isMasc ? '#93c5fd' : '#f9a8d4' }}>{buildCategory()}</strong>
+          <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: 8 }}>
+            ({isLocal ? 'Local' : 'Visitante'}{specialCondition ? ` · ${specialCondition}` : ''})
+          </span>
+        </div>
 
         {displayedError && <div className="runner-form-error">{displayedError}</div>}
 
-        <button type="submit" className="runner-submit-btn" disabled={submitting}>
-          {submitting ? 'Cadastrando...' : '✓ Confirmar Corredor'}
+        <button
+          type="submit"
+          className="runner-submit-btn"
+          disabled={submitting}
+          style={!isMasc ? { background: 'linear-gradient(135deg, #db2777, #be185d)' } : {}}
+        >
+          {submitting
+            ? 'Cadastrando...'
+            : isMasc
+              ? '✓ Confirmar Corredor Masculino'
+              : '✓ Confirmar Corredora Feminina'}
         </button>
       </form>
 
@@ -244,102 +284,6 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
         <QRResultPanel lastQrCode={lastQrCode} raceName={activeRace?.name} onDismiss={clearLastQrCode} />
       )}
     </div>
-  )
-}
-
-// ─── Runner QR Code Modal (for clicking registered runners) ────────────────────
-function RunnerQRModal({ runner, raceName, onClose }) {
-  const [qrDataUrl, setQrDataUrl] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [printingBt, setPrintingBt] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    generateRunnerQRCode(runner).then(url => {
-      if (active) {
-        setQrDataUrl(url)
-        setLoading(false)
-      }
-    })
-    return () => { active = false }
-  }, [runner])
-
-  const handlePrintBt = async () => {
-    if (!qrDataUrl) return
-    if (!isBluetoothSupported()) {
-      printRunnerQRCode(qrDataUrl, runner, raceName)
-      return
-    }
-    setPrintingBt(true)
-    try {
-      await printRunnerToBluetooth(qrDataUrl, runner, raceName)
-    } catch (err) {
-      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
-        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
-      }
-    } finally {
-      setPrintingBt(false)
-    }
-  }
-
-  return (
-    <Modal title={`QR Code — ${runner.name}`} onClose={onClose} maxWidth={440}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '10px 0' }}>
-        {loading ? (
-          <p style={{ color: 'rgba(255,255,255,0.7)' }}>Gerando QR Code...</p>
-        ) : (
-          <>
-            <div style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-              <img src={qrDataUrl} alt={`QR de ${runner.name}`} style={{ width: 190, height: 190, display: 'block' }} />
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>{runner.name}</div>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
-                {runner.number && (
-                  <span style={{ background: 'rgba(124, 58, 237, 0.25)', color: '#c4b5fd', padding: '3px 12px', borderRadius: 12, fontSize: '0.88rem', fontWeight: 700 }}>
-                    Nº {runner.number}
-                  </span>
-                )}
-                {runner.category && (
-                  <span style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'rgba(255,255,255,0.75)', padding: '3px 12px', borderRadius: 12, fontSize: '0.85rem', fontWeight: 600 }}>
-                    {runner.category}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="qr-result-actions" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button
-                type="button"
-                className="qr-action-btn qr-action-thermal"
-                onClick={handlePrintBt}
-                disabled={printingBt}
-                style={{ width: '100%', justifyContent: 'center' }}
-              >
-                🖨 {printingBt ? 'Enviando...' : 'Imprimir Térmica'}
-              </button>
-              <button
-                type="button"
-                className="qr-action-btn qr-action-cupom"
-                onClick={() => printRunnerQRCode(qrDataUrl, runner, raceName)}
-                style={{ width: '100%', justifyContent: 'center' }}
-              >
-                🧾 Imprimir Cupom Sistema
-              </button>
-              <a
-                className="qr-action-btn qr-action-download"
-                href={qrDataUrl}
-                download={buildQRFilename(runner)}
-                style={{ width: '100%', textAlign: 'center', justifyContent: 'center' }}
-              >
-                ⬇ Baixar Imagem (PNG)
-              </a>
-            </div>
-          </>
-        )}
-      </div>
-    </Modal>
   )
 }
 
@@ -392,7 +336,7 @@ function RegisteredRunnersList({ runners, onSelectRunner }) {
 export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const { activeRace, clearActiveRace, selectRace } = useActiveRace()
   const { races, setStartTime, finishRace, reopenRace, editRace, removeRace, createRace } = useRaces()
-  const { runners } = useRunners(activeRace?.id)
+  const { runners, createRunner, removeRunner } = useRunners(activeRace?.id)
   const { runners: allRunners } = useRunners('ALL')
   const { placements } = useResults(activeRace?.id)
 
@@ -403,9 +347,51 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [isConfirmed, setIsConfirmed] = useState(Boolean(activeRace?.id))
   const [savingRace, setSavingRace] = useState(false)
   const [confirmingStartEmpty, setConfirmingStartEmpty] = useState(false)
-  const [selectedRunnerModal, setSelectedRunnerModal] = useState(null)
   const [lastRace, setLastRace] = useState(activeRace || null)
   const raceNameInputRef = React.useRef(null)
+
+  // Estados dos cards MASCULINO e FEMININO
+  const [maleName, setMaleName] = useState('')
+  const [maleNumber, setMaleNumber] = useState('')
+  const [maleIsLocal, setMaleIsLocal] = useState(false)
+  const [maleSpecial, setMaleSpecial] = useState('')
+  const [submittingMale, setSubmittingMale] = useState(false)
+
+  const [femaleName, setFemaleName] = useState('')
+  const [femaleNumber, setFemaleNumber] = useState('')
+  const [femaleIsLocal, setFemaleIsLocal] = useState(false)
+  const [femaleSpecial, setFemaleSpecial] = useState('')
+  const [submittingFemale, setSubmittingFemale] = useState(false)
+
+  // Input refs para navegação rápida com Enter
+  const maleNameRef = useRef(null)
+  const maleNumberRef = useRef(null)
+  const femaleNameRef = useRef(null)
+  const femaleNumberRef = useRef(null)
+
+  // Corredor selecionado para exibir o QR Code em baixo
+  const [selectedRunner, setSelectedRunner] = useState(null)
+  const [selectedQrUrl, setSelectedQrUrl] = useState(null)
+  const [printingBt, setPrintingBt] = useState(false)
+  const [printingBatchCat, setPrintingBatchCat] = useState(null)
+  const [printingBtCat, setPrintingBtCat] = useState(null)
+
+  // Modal de QR individual, todos os corredores e reabrir corrida
+  const [selectedRunnerModal, setSelectedRunnerModal] = useState(null)
+  const [allRunnersModalOpen, setAllRunnersModalOpen] = useState(false)
+  const [reopenModalOpen, setReopenModalOpen] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    if (selectedRunner) {
+      generateRunnerQRCode(selectedRunner).then(url => {
+        if (active) setSelectedQrUrl(url)
+      })
+    } else {
+      setSelectedQrUrl(null)
+    }
+    return () => { active = false }
+  }, [selectedRunner])
 
   useEffect(() => {
     if (activeRace) {
@@ -413,8 +399,12 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       setDistanceKm(activeRace.distanceKm || '')
       setIsConfirmed(true)
       setLastRace(activeRace)
+      try {
+        localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(activeRace))
+        localStorage.setItem('pwa-qr-timing:active-race-id', activeRace.id)
+      } catch (e) {}
     }
-  }, [activeRace?.id, activeRace?.name, activeRace?.distanceKm])
+  }, [activeRace?.id, activeRace?.name, activeRace?.distanceKm, activeRace?.startTime, activeRace?.endTime])
 
   useEffect(() => {
     if (runners) {
@@ -513,6 +503,238 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
     await setStartTime(activeRace.id, new Date().toISOString())
   }
 
+  const handlePrintBt = async () => {
+    if (!selectedQrUrl || !selectedRunner) return
+    if (!isBluetoothSupported()) {
+      printRunnerQRCode(selectedQrUrl, selectedRunner, activeRace?.name)
+      return
+    }
+    setPrintingBt(true)
+    try {
+      await printRunnerToBluetooth(selectedQrUrl, selectedRunner, activeRace?.name)
+    } catch (err) {
+      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
+        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+      }
+    } finally {
+      setPrintingBt(false)
+    }
+  }
+
+  const handlePrintBatchSystem = async (runnersList, catKey) => {
+    if (!runnersList || runnersList.length === 0) return
+    setPrintingBatchCat(catKey)
+    try {
+      await printRunnersQRCodeBatch(runnersList, activeRace?.name)
+    } catch (err) {
+      console.error(err)
+      alert('Erro ao imprimir lote de QR Codes.')
+    } finally {
+      setPrintingBatchCat(null)
+    }
+  }
+
+  const handlePrintBatchBt = async (runnersList, catKey) => {
+    if (!runnersList || runnersList.length === 0) return
+    if (!isBluetoothSupported()) {
+      await handlePrintBatchSystem(runnersList, catKey)
+      return
+    }
+    setPrintingBtCat(catKey)
+    try {
+      for (const runner of runnersList) {
+        const dataUrl = await generateRunnerQRCode(runner)
+        await printRunnerToBluetooth(dataUrl, runner, activeRace?.name)
+      }
+    } catch (err) {
+      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
+        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+      }
+    } finally {
+      setPrintingBtCat(null)
+    }
+  }
+
+  const handleSaveField = async () => {
+    if (activeRace?.id) {
+      await editRace(activeRace.id, {
+        name: (name || '').trim() || activeRace.name,
+        distanceKm: (distanceKm || '').trim()
+      })
+    }
+  }
+
+  const checkNumberInUse = useCallback((num) => {
+    if (!num) return null
+    const clean = String(num).replace(/\D/g, '')
+    if (!clean) return null
+    const intVal = parseInt(clean, 10)
+    const padded = clean.padStart(4, '0')
+    return (runners || []).find(r => {
+      if (!r.number) return false
+      const rClean = String(r.number).replace(/\D/g, '')
+      return rClean === clean || rClean === padded || parseInt(rClean, 10) === intVal
+    })
+  }, [runners])
+
+  const checkNameInUse = useCallback((runnerName) => {
+    if (!runnerName) return null
+    const norm = String(runnerName).trim().toLowerCase().replace(/\s+/g, ' ')
+    if (!norm) return null
+    return (runners || []).find(r => {
+      const rNorm = String(r.name || '').trim().toLowerCase().replace(/\s+/g, ' ')
+      return rNorm === norm
+    })
+  }, [runners])
+
+  const handleAddMale = async (e) => {
+    if (e?.preventDefault) e.preventDefault()
+    let targetRace = activeRace
+    if (!targetRace?.id && handleEnsureActiveRace) {
+      targetRace = await handleEnsureActiveRace()
+    }
+    if (!targetRace?.id) {
+      alert('Informe o nome da corrida antes de cadastrar corredores.')
+      return
+    }
+
+    const trimmedName = (maleName || '').trim()
+    const trimmedNumber = (maleNumber || '').trim()
+
+    if (!trimmedName) {
+      alert('Informe o nome do corredor.')
+      maleNameRef.current?.focus()
+      return
+    }
+    if (!trimmedNumber) {
+      alert('Informe o número de peito do corredor.')
+      maleNumberRef.current?.focus()
+      return
+    }
+
+    const existingRunner = checkNumberInUse(trimmedNumber)
+    if (existingRunner) {
+      alert(`⚠️ O número ${trimmedNumber} já está sendo usado pelo corredor "${existingRunner.name}" nesta corrida! Escolha outro número.`)
+      maleNumberRef.current?.focus()
+      maleNumberRef.current?.select?.()
+      return
+    }
+
+    const existingName = checkNameInUse(trimmedName)
+    if (existingName) {
+      alert(`⚠️ O corredor "${existingName.name}" já está cadastrado nesta corrida com o Nº ${existingName.number || '—'}.`)
+      maleNameRef.current?.focus()
+      return
+    }
+
+    setSubmittingMale(true)
+    try {
+      const base = maleIsLocal ? 'LOCAL MASC' : 'MASCULINO'
+      const cat = maleSpecial ? `${base} | ${maleSpecial}` : base
+      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, cat)
+      if (created) {
+        setMaleName('')
+        setMaleNumber('')
+        setMaleIsLocal(false)
+        setMaleSpecial('')
+        setSelectedRunner(created.runner || created)
+        maleNameRef.current?.focus()
+      } else {
+        alert('Não foi possível cadastrar o corredor. Verifique se o número já está em uso.')
+      }
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Erro ao cadastrar corredor.')
+    } finally {
+      setSubmittingMale(false)
+    }
+  }
+
+  const handleAddFemale = async (e) => {
+    if (e?.preventDefault) e.preventDefault()
+    let targetRace = activeRace
+    if (!targetRace?.id && handleEnsureActiveRace) {
+      targetRace = await handleEnsureActiveRace()
+    }
+    if (!targetRace?.id) {
+      alert('Informe o nome da corrida antes de cadastrar corredores.')
+      return
+    }
+
+    const trimmedName = (femaleName || '').trim()
+    const trimmedNumber = (femaleNumber || '').trim()
+
+    if (!trimmedName) {
+      alert('Informe o nome da corredora.')
+      femaleNameRef.current?.focus()
+      return
+    }
+    if (!trimmedNumber) {
+      alert('Informe o número de peito da corredora.')
+      femaleNumberRef.current?.focus()
+      return
+    }
+
+    const existingRunner = checkNumberInUse(trimmedNumber)
+    if (existingRunner) {
+      alert(`⚠️ O número ${trimmedNumber} já está sendo usado pela corredora "${existingRunner.name}" nesta corrida! Escolha outro número.`)
+      femaleNumberRef.current?.focus()
+      femaleNumberRef.current?.select?.()
+      return
+    }
+
+    const existingName = checkNameInUse(trimmedName)
+    if (existingName) {
+      alert(`⚠️ A corredora "${existingName.name}" já está cadastrada nesta corrida com o Nº ${existingName.number || '—'}.`)
+      femaleNameRef.current?.focus()
+      return
+    }
+
+    setSubmittingFemale(true)
+    try {
+      const base = femaleIsLocal ? 'LOCAL FEM' : 'FEMININO'
+      const cat = femaleSpecial ? `${base} | ${femaleSpecial}` : base
+      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, cat)
+      if (created) {
+        setFemaleName('')
+        setFemaleNumber('')
+        setFemaleIsLocal(false)
+        setFemaleSpecial('')
+        setSelectedRunner(created.runner || created)
+        femaleNameRef.current?.focus()
+      } else {
+        alert('Não foi possível cadastrar a corredora. Verifique se o número já está em uso.')
+      }
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Erro ao cadastrar corredora.')
+    } finally {
+      setSubmittingFemale(false)
+    }
+  }
+
+  const maleRunners = useMemo(() => {
+    return (runners || [])
+      .filter(r => (r.category || '').toUpperCase().includes('MASC') || !(r.category || '').toUpperCase().includes('FEM'))
+      .sort((a, b) => {
+        const na = parseInt(a.number, 10)
+        const nb = parseInt(b.number, 10)
+        if (!isNaN(na) && !isNaN(nb)) return na - nb
+        return (a.name || '').localeCompare(b.name || '')
+      })
+  }, [runners])
+
+  const femaleRunners = useMemo(() => {
+    return (runners || [])
+      .filter(r => (r.category || '').toUpperCase().includes('FEM'))
+      .sort((a, b) => {
+        const na = parseInt(a.number, 10)
+        const nb = parseInt(b.number, 10)
+        if (!isNaN(na) && !isNaN(nb)) return na - nb
+        return (a.name || '').localeCompare(b.name || '')
+      })
+  }, [runners])
+
   const handleConfirmStartEmpty = async () => {
     if (!activeRace?.id) return
     await setStartTime(activeRace.id, new Date().toISOString())
@@ -523,9 +745,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
     ? 'EM ANDAMENTO'
     : activeRace?.endTime
       ? 'ENCERRADA'
-      : isConfirmed
-        ? 'CONFIRMADA'
-        : 'NOVA CORRIDA'
+      : 'AGUARDANDO'
 
   return (
     <div className="race-config-page">
@@ -536,45 +756,25 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           <span>JANELAMARCA</span>
         </div>
         <div className="race-config-status">
-          <span className="status-dot" style={{ background: isConfirmed ? '#22c55e' : '#eab308' }} />
+          <span className="status-dot" style={{ background: activeRace?.startTime ? '#22c55e' : '#a78bfa' }} />
           {raceStatus}
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="race-config-tabs" style={{ display: 'flex', gap: 8, padding: '12px 16px' }}>
+      <div className="race-config-tabs">
         <button
           type="button"
           onClick={handleStartNewRace}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 8,
-            border: 'none',
-            background: !isConfirmed && raceTab === 'current' ? '#7c3aed' : '#1f1633',
-            color: '#fff',
-            fontWeight: 700,
-            width: 'auto',
-            display: 'inline-flex',
-            cursor: 'pointer'
-          }}
+          className={`race-config-tab-btn ${!isConfirmed && raceTab === 'current' ? 'active' : ''}`}
         >
-          + Cadastrar Nova Corrida
+          + Nova Corrida
         </button>
         {isConfirmed ? (
           <button
             type="button"
             onClick={() => setRaceTab('current')}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: 'none',
-              background: raceTab === 'current' ? '#7c3aed' : '#1f1633',
-              color: '#fff',
-              fontWeight: 700,
-              width: 'auto',
-              display: 'inline-flex',
-              cursor: 'pointer'
-            }}
+            className={`race-config-tab-btn ${raceTab === 'current' ? 'active' : ''}`}
           >
             🏁 Corrida Atual
           </button>
@@ -582,17 +782,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           <button
             type="button"
             onClick={handleRestoreLastRace}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(167, 139, 250, 0.35)',
-              background: '#1f1633',
-              color: '#c4b5fd',
-              fontWeight: 700,
-              width: 'auto',
-              display: 'inline-flex',
-              cursor: 'pointer'
-            }}
+            className="race-config-tab-btn"
             title="Voltar para a última corrida"
           >
             ↩ Última Corrida
@@ -601,80 +791,292 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
         <button
           type="button"
           onClick={() => setRaceTab('registered')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 8,
-            border: 'none',
-            background: raceTab === 'registered' ? '#7c3aed' : '#1f1633',
-            color: '#fff',
-            fontWeight: 700,
-            width: 'auto',
-            display: 'inline-flex',
-            cursor: 'pointer'
-          }}
+          className={`race-config-tab-btn ${raceTab === 'registered' ? 'active' : ''}`}
         >
-          📋 Corridas Cadastradas
+          📋 Corridas ({races?.length || 0})
         </button>
       </div>
 
       {/* ── Tab: Current ── */}
       {raceTab === 'current' && (
         <main className="race-config-main">
-          <div className="race-config-split">
-            <div className="race-config-left">
-              <div className="race-config-title-row">
-                <IconMenu size={28} />
-                <h1>{isConfirmed ? 'CONFIGURAR CORRIDA' : 'CADASTRAR CORRIDA'}</h1>
-              </div>
-              <p className="race-config-desc">
-                {isConfirmed
-                  ? 'Corrida salva. Cadastre os corredores abaixo para gerar os QR Codes.'
-                  : 'Preencha os dados da corrida e clique em confirmar.'}
-              </p>
-
-              <div className="race-config-fields" style={{ alignItems: 'flex-end', flexWrap: 'wrap', gap: 10 }}>
-                <div className="race-config-field" style={{ flex: '1 1 260px', maxWidth: '100%' }}>
-                  <label>NOME DA CORRIDA</label>
-                  <input
-                    ref={raceNameInputRef}
-                    value={name}
-                    onChange={e => { setName(e.target.value); setIsConfirmed(false) }}
-                    placeholder="Ex: Corrida Aliança 2025"
-                  />
-                </div>
-                <div className="race-config-field" style={{ flex: '0 0 120px', maxWidth: '100%' }}>
-                  <label>DISTÂNCIA</label>
-                  <input
-                    value={distanceKm}
-                    onChange={e => { setDistanceKm(e.target.value); setIsConfirmed(false) }}
-                    placeholder="Ex: 5km, 10km..."
-                  />
-                </div>
-                <div className="race-config-field" style={{ flex: '0 0 auto', justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    className={`race-confirm-toggle-btn ${isConfirmed ? 'race-confirm-toggle-btn--confirmed' : ''}`}
-                    onClick={handleToggleConfirmRace}
-                    disabled={savingRace}
-                    title={isConfirmed ? 'Corrida confirmada e salva' : 'Confirmar e salvar corrida'}
-                  >
-                    {savingRace ? 'Salvando...' : isConfirmed ? '✓ Corrida Ativada' : '✓ Confirmar Corrida'}
-                  </button>
-                </div>
-              </div>
-
-              <RunnerForm activeRace={activeRace} onEnsureActiveRace={handleEnsureActiveRace} />
+          <div className="race-config-title-row">
+            <div className="race-config-title-left">
+              <span style={{ fontSize: '20px', display: 'inline-flex' }}>⚙</span>
+              <h1>CONFIGURAR CORRIDA</h1>
             </div>
+            <button
+              type="button"
+              className="race-config-telao-btn"
+              onClick={() => window.open(`/?ranking=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`, '_blank')}
+              title="Abrir tela de acompanhamento ao vivo para TV ou Telão"
+            >
+              📺 ABRIR TELÃO / TV
+            </button>
+          </div>
 
-            <div className="race-config-right">
-              <RegisteredRunnersList runners={runners} onSelectRunner={setSelectedRunnerModal} />
+          <div className="race-config-fields">
+            <div className="race-config-field">
+              <label>NOME DA CORRIDA</label>
+              <input
+                ref={raceNameInputRef}
+                value={name}
+                onChange={e => { setName(e.target.value); setIsConfirmed(false) }}
+                onBlur={handleSaveField}
+                placeholder="Ex: Aliança Run 2025"
+              />
+            </div>
+            <div className="race-config-field">
+              <label>DISTÂNCIA</label>
+              <input
+                value={distanceKm}
+                onChange={e => { setDistanceKm(e.target.value); setIsConfirmed(false) }}
+                onBlur={handleSaveField}
+                placeholder="Ex: 5km, 10km..."
+              />
             </div>
           </div>
 
-          <p className="race-config-info">
-            <IconHome size={14} /> Corredores locais serão marcados <strong>após o encerramento</strong> da corrida.
-          </p>
+          {/* ── Cards MASCULINO e FEMININO lado a lado ── */}
+          <div className="race-config-cards">
+            {/* CARD MASCULINO */}
+            <section className="race-config-card male">
+              <div className="race-config-card-header">
+                <div className="race-config-card-title">
+                  <span className="cat-dot male" />
+                  MASCULINO {maleRunners.length > 0 && <span className="cat-count">({maleRunners.length})</span>}
+                </div>
+                <div className="card-batch-actions">
+                  <button
+                    type="button"
+                    className="card-batch-btn bt"
+                    onClick={() => handlePrintBatchBt(maleRunners, 'male')}
+                    disabled={maleRunners.length === 0 || printingBtCat === 'male'}
+                    title="Imprimir todos os cupons QR masculinos na Impressora Térmica Bluetooth"
+                  >
+                    🖨 {printingBtCat === 'male' ? 'Enviando...' : 'Imprimir Térmica'}
+                  </button>
+                </div>
+              </div>
+              <div className="race-config-small-label">NOME DO CORREDOR · Nº PEITO</div>
+              <form onSubmit={handleAddMale} className="card-runner-form">
+                {/* Linha 1: Nome (amplo) + Nº */}
+                <div className="race-config-card-row">
+                  <input
+                    ref={maleNameRef}
+                    className="race-config-input race-config-input--name"
+                    placeholder="Nome do corredor"
+                    value={maleName}
+                    onChange={e => setMaleName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (maleNumber.trim()) {
+                          handleAddMale()
+                        } else {
+                          maleNumberRef.current?.focus()
+                        }
+                      }
+                    }}
+                    required
+                  />
+                  <input
+                    ref={maleNumberRef}
+                    className="race-config-input narrow"
+                    placeholder="Nº"
+                    inputMode="numeric"
+                    value={maleNumber}
+                    onChange={e => setMaleNumber(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (!maleName.trim()) {
+                          maleNameRef.current?.focus()
+                        } else {
+                          handleAddMale()
+                        }
+                      }
+                    }}
+                    required
+                  />
+                </div>
+                {/* Linha 2: Opções de Categoria + Botão Adicionar menor no final */}
+                <div className="race-config-card-toggles">
+                  <div className="card-toggles-group">
+                    <button
+                      type="button"
+                      className={`card-toggle-btn ${maleIsLocal ? 'active' : ''}`}
+                      onClick={() => setMaleIsLocal(p => !p)}
+                    >
+                      {maleIsLocal ? '🏠 Local ✓' : '🏠 Local'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`card-toggle-btn pcd ${maleSpecial === 'PCD' ? 'active' : ''}`}
+                      onClick={() => setMaleSpecial(p => p === 'PCD' ? '' : 'PCD')}
+                    >
+                      {maleSpecial === 'PCD' ? '♿ PCD ✓' : '♿ PCD'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`card-toggle-btn age ${maleSpecial === '+60' ? 'active' : ''}`}
+                      onClick={() => setMaleSpecial(p => p === '+60' ? '' : '+60')}
+                    >
+                      {maleSpecial === '+60' ? '👴 +60 ✓' : '👴 +60'}
+                    </button>
+                  </div>
+                  <button type="submit" className="race-config-add-btn compact" disabled={submittingMale}>
+                    {submittingMale ? '...' : '+ Adicionar'}
+                  </button>
+                </div>
+              </form>
 
+              {/* Chips dos corredores cadastrados (apenas números para economizar espaço) */}
+              <div className="race-config-runner-chips">
+                {maleRunners.length === 0 ? (
+                  <span style={{ fontSize: '0.78rem', color: '#898093', fontStyle: 'italic', padding: '6px 0' }}>
+                    Nenhum corredor cadastrado ainda.
+                  </span>
+                ) : (
+                  maleRunners.map(r => {
+                    const isSelected = selectedRunner?.id === r.id
+                    const isLocal = (r.category || '').toUpperCase().includes('LOCAL')
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        className={`runner-chip male ${isSelected ? 'active' : ''}`}
+                        onClick={() => setSelectedRunner(prev => prev?.id === r.id ? null : r)}
+                        title={`${r.name} (Nº ${r.number || '—'})${r.category ? ' · ' + r.category : ''} — Clique para ${isSelected ? 'fechar' : 'ver dados e QR'}`}
+                      >
+                        <span>{r.number || '—'}</span>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </section>
+
+            {/* CARD FEMININO */}
+            <section className="race-config-card female">
+              <div className="race-config-card-header">
+                <div className="race-config-card-title">
+                  <span className="cat-dot female" />
+                  FEMININO {femaleRunners.length > 0 && <span className="cat-count">({femaleRunners.length})</span>}
+                </div>
+                <div className="card-batch-actions">
+                  <button
+                    type="button"
+                    className="card-batch-btn bt"
+                    onClick={() => handlePrintBatchBt(femaleRunners, 'female')}
+                    disabled={femaleRunners.length === 0 || printingBtCat === 'female'}
+                    title="Imprimir todos os cupons QR femininos na Impressora Térmica Bluetooth"
+                  >
+                    🖨 {printingBtCat === 'female' ? 'Enviando...' : 'Imprimir Térmica'}
+                  </button>
+                </div>
+              </div>
+              <div className="race-config-small-label">NOME DA CORREDORA · Nº PEITO</div>
+              <form onSubmit={handleAddFemale} className="card-runner-form">
+                {/* Linha 1: Nome (amplo) + Nº */}
+                <div className="race-config-card-row">
+                  <input
+                    ref={femaleNameRef}
+                    className="race-config-input race-config-input--name"
+                    placeholder="Nome da corredora"
+                    value={femaleName}
+                    onChange={e => setFemaleName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (femaleNumber.trim()) {
+                          handleAddFemale()
+                        } else {
+                          femaleNumberRef.current?.focus()
+                        }
+                      }
+                    }}
+                    required
+                  />
+                  <input
+                    ref={femaleNumberRef}
+                    className="race-config-input narrow"
+                    placeholder="Nº"
+                    inputMode="numeric"
+                    value={femaleNumber}
+                    onChange={e => setFemaleNumber(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (!femaleName.trim()) {
+                          femaleNameRef.current?.focus()
+                        } else {
+                          handleAddFemale()
+                        }
+                      }
+                    }}
+                    required
+                  />
+                </div>
+                {/* Linha 2: Opções de Categoria + Botão Adicionar menor no final */}
+                <div className="race-config-card-toggles">
+                  <div className="card-toggles-group">
+                    <button
+                      type="button"
+                      className={`card-toggle-btn ${femaleIsLocal ? 'active' : ''}`}
+                      onClick={() => setFemaleIsLocal(p => !p)}
+                    >
+                      {femaleIsLocal ? '🏠 Local ✓' : '🏠 Local'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`card-toggle-btn pcd ${femaleSpecial === 'PCD' ? 'active' : ''}`}
+                      onClick={() => setFemaleSpecial(p => p === 'PCD' ? '' : 'PCD')}
+                    >
+                      {femaleSpecial === 'PCD' ? '♿ PCD ✓' : '♿ PCD'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`card-toggle-btn age ${femaleSpecial === '+60' ? 'active' : ''}`}
+                      onClick={() => setFemaleSpecial(p => p === '+60' ? '' : '+60')}
+                    >
+                      {femaleSpecial === '+60' ? '👴 +60 ✓' : '👴 +60'}
+                    </button>
+                  </div>
+                  <button type="submit" className="race-config-add-btn compact" disabled={submittingFemale}>
+                    {submittingFemale ? '...' : '+ Adicionar'}
+                  </button>
+                </div>
+              </form>
+
+              {/* Chips das corredoras cadastradas (apenas números para economizar espaço) */}
+              <div className="race-config-runner-chips">
+                {femaleRunners.length === 0 ? (
+                  <span style={{ fontSize: '0.78rem', color: '#898093', fontStyle: 'italic', padding: '6px 0' }}>
+                    Nenhuma corredora cadastrada ainda.
+                  </span>
+                ) : (
+                  femaleRunners.map(r => {
+                    const isSelected = selectedRunner?.id === r.id
+                    const isLocal = (r.category || '').toUpperCase().includes('LOCAL')
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        className={`runner-chip female ${isSelected ? 'active' : ''}`}
+                        onClick={() => setSelectedRunner(prev => prev?.id === r.id ? null : r)}
+                        title={`${r.name} (Nº ${r.number || '—'})${r.category ? ' · ' + r.category : ''} — Clique para ${isSelected ? 'fechar' : 'ver dados e QR'}`}
+                      >
+                        <span>{r.number || '—'}</span>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* Botão Iniciar Cronômetro */}
           <button
             type="button"
             className="race-config-start-btn"
@@ -682,6 +1084,88 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           >
             <IconPlay size={20} /> INICIAR CRONÔMETRO
           </button>
+
+          {/* Link para abrir modal com todos os corredores */}
+          <div className="race-config-view-all-row">
+            <button
+              type="button"
+              className="race-config-view-all-btn"
+              onClick={() => setAllRunnersModalOpen(true)}
+              title="Abrir tabela com todos os corredores cadastrados"
+            >
+              👥 Ver todos os corredores ({runners.length}) →
+            </button>
+          </div>
+
+          {/* QR Code Centralizado Abaixo do Botão Iniciar Cronômetro */}
+          {selectedRunner && (
+            <div className="centered-qr-panel">
+              <button
+                type="button"
+                className="cqr-close"
+                onClick={() => setSelectedRunner(null)}
+                title="Fechar QR Code"
+              >
+                ✕
+              </button>
+
+              <div className="cqr-card">
+                {selectedRunner.number && (
+                  <span className="cqr-num">Nº {selectedRunner.number}</span>
+                )}
+                {selectedQrUrl ? (
+                  <img src={selectedQrUrl} alt={`QR de ${selectedRunner.name}`} className="cqr-img" />
+                ) : (
+                  <span className="cqr-loading">...</span>
+                )}
+              </div>
+
+              <div className="cqr-details">
+                <div className="cqr-name-group">
+                  <span className="cqr-name" title={selectedRunner.name}>{selectedRunner.name}</span>
+                  {selectedRunner.category && <span className="cqr-cat">{selectedRunner.category}</span>}
+                </div>
+
+                <div className="cqr-actions">
+                  <button
+                    type="button"
+                    className="cqr-btn cqr-btn-bt"
+                    onClick={handlePrintBt}
+                    disabled={printingBt}
+                    title="Imprimir na Impressora Térmica Bluetooth"
+                  >
+                    🖨 {printingBt ? 'Enviando...' : 'Imprimir Térmica'}
+                  </button>
+                  {selectedQrUrl && (
+                    <a
+                      className="cqr-btn cqr-btn-dl"
+                      href={selectedQrUrl}
+                      download={buildQRFilename(selectedRunner)}
+                      title="Baixar imagem PNG do QR Code"
+                    >
+                      ⬇ Baixar PNG
+                    </a>
+                  )}
+                </div>
+
+                <div className="cqr-footer-actions">
+                  <button
+                    type="button"
+                    className="cqr-btn-del"
+                    onClick={() => {
+                      if (confirm(`Excluir ${selectedRunner.name} (Nº ${selectedRunner.number})?`)) {
+                        removeRunner(selectedRunner.id)
+                        setSelectedRunner(null)
+                      }
+                    }}
+                    title="Excluir este participante"
+                  >
+                    🗑 Excluir participante
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       )}
 
@@ -760,6 +1244,24 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           onClose={() => setSelectedRunnerModal(null)}
         />
       )}
+
+      {/* Modal de Todos os Corredores com Tabela e Exportação em PDF */}
+      <AllRunnersModal
+        isOpen={allRunnersModalOpen}
+        runners={runners}
+        raceName={activeRace?.name}
+        distanceKm={activeRace?.distanceKm}
+        onClose={() => setAllRunnersModalOpen(false)}
+        onSelectRunner={(runner) => {
+          setSelectedRunner(runner)
+        }}
+        onDeleteRunner={(runnerId) => {
+          removeRunner(runnerId)
+          if (selectedRunner?.id === runnerId) {
+            setSelectedRunner(null)
+          }
+        }}
+      />
     </div>
   )
 }

@@ -7,6 +7,9 @@ import PublicRankingPage from './features/results/PublicRankingPage.jsx'
 import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
+import { useRunners } from './features/runners/useRunners.js'
+import { addResult } from './features/results/results.repository.js'
+import { getStoredActiveRaceId } from './features/races/active-race.storage.js'
 import BottomNav from './shared/BottomNav.jsx'
 import { IconChevronLeft } from './shared/Icons.jsx'
 
@@ -32,6 +35,7 @@ const TAB_TITLES = {
 
 function AppContent() {
   const { activeRace, loading, clearActiveRace } = useActiveRace()
+  const { runners } = useRunners(activeRace?.id)
   const [tab, setTabState] = useState('home')
   const [navHistory, setNavHistory] = useState(['home'])
   const [isNavMinimized, setIsNavMinimized] = useState(() => {
@@ -71,16 +75,64 @@ function AppContent() {
   }
 
   useEffect(() => {
+    const handleRecordArrival = async (data) => {
+      const bib = String(data?.bib || '').trim()
+      const targetRaceId = data?.raceId || activeRace?.id || getStoredActiveRaceId()
+      if (!targetRaceId || !bib) return
+
+      let runner = (runners || []).find(r => String(parseInt(r.number, 10)) === String(parseInt(bib, 10)))
+      if (!runner) {
+        try {
+          const raw = localStorage.getItem('pwa-qr-timing:runners-lookup')
+          if (raw) {
+            const list = JSON.parse(raw)
+            runner = list.find(r => String(parseInt(r.number, 10)) === String(parseInt(bib, 10)))
+          }
+        } catch (e) {}
+      }
+
+      const readAt = new Date()
+      const result = {
+        barcode: runner?.id || `bib_${bib}`,
+        runnerNumber: runner?.number || bib,
+        dateTime: readAt.toISOString(),
+        timestamp: String(readAt.getTime()),
+        raceId: targetRaceId,
+        runnerName: runner?.name || data?.runnerName || `Nº ${bib}`
+      }
+      try {
+        await addResult(result)
+      } catch (err) {
+        console.error('Erro ao adicionar resultado Firestore:', err)
+      }
+    }
+
     const handleMessage = (event) => {
       if (event.data?.type === 'BACK') {
         handleBack()
       } else if (event.data?.type === 'NAVIGATE') {
         handleNavigate(event.data.tab || 'home')
+      } else if (event.data?.type === 'RECORD_ARRIVAL') {
+        handleRecordArrival(event.data)
       }
     }
     window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [navHistory, tab])
+
+    let bc = null
+    try {
+      bc = new BroadcastChannel('qr-cronorace-channel')
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'RECORD_ARRIVAL') {
+          handleRecordArrival(event.data)
+        }
+      }
+    } catch (e) {}
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      if (bc) bc.close()
+    }
+  }, [navHistory, tab, activeRace?.id, runners])
 
   const canGoBack = tab !== 'home'
 
@@ -109,7 +161,7 @@ function AppContent() {
         </header>
       )}
 
-      <main className={tab === 'home' ? 'no-header race-config-main-wrap' : (tab === 'chronometer' ? 'chronometer-main-wrap' : '')}>
+      <main className={tab === 'home' ? 'no-header race-config-main-wrap' : tab === 'chronometer' ? 'chronometer-main-wrap' : tab === 'results' ? 'results-main-wrap' : ''}>
 
         {tab === 'home' && <RaceHomePage onNavigate={handleNavigate} onOpenScanner={() => handleNavigate('scanner')} />}
         {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}

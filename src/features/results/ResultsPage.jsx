@@ -5,142 +5,202 @@ import { formatDuration } from './duration.formatter.js'
 import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
 import { useActiveRace } from '../races/ActiveRaceContext.jsx'
-import { buildRankingLink } from '../races/share-link.service.js'
-import { buildRankingText, buildEmailShareLink, buildWhatsAppShareLink } from './ranking-share.service.js'
-import CopyableField from '../races/CopyableField.jsx'
-import { IconClock, IconRunner } from '../../shared/Icons.jsx'
 
 export default function ResultsPage() {
   const { activeRace } = useActiveRace()
   const { placements: rawPlacements, loading, error } = useResults(activeRace?.id)
   const { runners } = useRunners(activeRace?.id)
-  const [showShare, setShowShare] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
 
   const placements = withElapsedTime(rawPlacements, activeRace?.startTime)
   const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
   const arrivedCount = arrivedBarcodes.size
-  const runnersStillRunning = runners.filter(r => !arrivedBarcodes.has(r.id))
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
   const runnersById = Object.fromEntries(runners.map(r => [r.id, r]))
-  const rankedArrivals = []
-  const seenArrivalIds = new Set()
+  const runnersStillRunning = runners.filter(r => !arrivedBarcodes.has(r.id))
+
+  // Build full ranked list first (ALL)
+  const allRanked = []
+  const seenIds = new Set()
   placements.forEach((p) => {
-    if (!p.barcode || seenArrivalIds.has(p.barcode)) return
-    const runner = runnersById[p.barcode]
-    if (categoryFilter !== 'ALL' && (runner?.category ?? '') !== categoryFilter) return
-    seenArrivalIds.add(p.barcode)
-    const displayTime = p.elapsedMs != null
-      ? formatDuration(p.elapsedMs)
-      : '—'
+    if (!p.barcode || seenIds.has(p.barcode)) return
+    const runner = runnersById[p.barcode] ?? null
+    seenIds.add(p.barcode)
+    const displayTime = p.elapsedMs != null ? formatDuration(p.elapsedMs) : '—'
     const arrivalTime = formatTimeOnlyBR(p.dateTime)
-    rankedArrivals.push({
-      position: rankedArrivals.length + 1,
-      runner: runnersById[p.barcode] ?? null,
+    allRanked.push({
+      posGeral: allRanked.length + 1,
+      runner,
       barcode: p.barcode,
+      bib: runner?.number ?? '—',
       name: p.runnerName ?? runnerNameById[p.barcode] ?? '—',
+      category: runner?.category ?? 'GERAL',
       displayTime,
-      arrivalTime
+      arrivalTime,
     })
   })
-  const getRunnerNumber = (barcode) => runnersById[barcode]?.number ?? null
-  const getRunnerName = (barcode) => runnerNameById[barcode] ?? null
 
-  const rankingText = activeRace
-    ? buildRankingText(activeRace.name, placements, getRunnerName, getRunnerNumber)
-    : ''
+  // Assign category positions
+  const catPositions = {}
+  allRanked.forEach(item => {
+    const cat = item.category
+    catPositions[cat] = (catPositions[cat] ?? 0) + 1
+    item.posCat = catPositions[cat]
+  })
+
+  // Filter
+  const rankedArrivals = categoryFilter === 'ALL'
+    ? allRanked
+    : allRanked.filter(item =>
+        String(item.category ?? '').toUpperCase().includes(categoryFilter.toUpperCase())
+      )
+
+  const isFinished = Boolean(activeRace?.endTime)
+  const raceName = activeRace?.name ?? 'Corrida'
+  const localCount = allRanked.filter(i => String(i.category ?? '').toUpperCase().includes('LOCAL')).length
+  const distanceKm = activeRace?.distanceKm
+
+  function exportCSV() {
+    const header = 'POS.GERAL,N\u00ba,NOME,CATEGORIA,POS.CAT,TEMPO,CHEGADA'
+    const rows = allRanked.map(i =>
+      `${i.posGeral},"${i.bib}","${i.name}","${i.category}",${i.posCat},"${i.displayTime}","${i.arrivalTime}"`
+    )
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ranking-${raceName.replace(/\s+/g, '-')}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const CATEGORY_TABS = [
+    { key: 'ALL', label: 'GERAL' },
+    { key: 'LOCAL', label: 'LOCAL' },
+    { key: 'VISITANTE', label: 'VISITANTE' },
+    { key: 'PCD', label: 'PCD' },
+  ]
 
   return (
-    <div className="results-page">
-      <section className="results-status-card">
-        <div className="results-status-row">
-          <div className="results-filter-row">
-            <label className="results-filter-label" htmlFor="category-filter">Categoria:</label>
-            <select
-              id="category-filter"
-              className="results-category-select"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="ALL">Todas</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Feminino">Feminino</option>
-              <option value="PCD">PCD</option>
-            </select>
+    <div className="rp-root">
+      {/* Header */}
+      <header className="rp-header">
+        <div className="rp-header-left">
+          <div className="rp-logo-wrap">
+            <div className="rp-logo-icon">&#127942;</div>
+            <span className="rp-logo-text">JANELAMARCA</span>
           </div>
-          <button className="secondary-btn" onClick={() => setShowShare(prev => !prev)}>
-            {showShare ? 'Fechar' : 'Compartilhar'}
+          <div className="rp-race-info">
+            <h1 className="rp-race-name">{raceName}</h1>
+            {activeRace?.startTime && (
+              <p className="rp-race-meta">
+                Largada &agrave;s {new Date(activeRace.startTime).toLocaleString('pt-BR')}
+                {' \u00b7 '}
+                {arrivedCount} de {runners.length} chegaram
+                {runners.length !== 0 && ` \u00b7 ${runners.length} corredor${runners.length === 1 ? '' : 'es'}`}
+                {distanceKm ? ` \u00b7 ${distanceKm} km` : ''}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className={`rp-status-badge ${isFinished ? 'finished' : 'live'}`}>
+          {isFinished ? 'ENCERRADA' : 'AO VIVO'}
+        </div>
+      </header>
+
+      {/* Title bar */}
+      <div className="rp-title-bar">
+        <h2 className="rp-title">
+          {isFinished ? '\uD83C\uDFC6 CLASSIFICA\u00c7\u00c3O FINAL' : '\uD83D\uDCCA RANKING AO VIVO'}
+        </h2>
+        <div className="rp-stats">
+          <span className="rp-stat-pill">
+            <span className="rp-stat-num">{arrivedCount}</span> chegadas
+          </span>
+          {localCount > 0 && (
+            <span className="rp-stat-pill local">
+              <span className="rp-stat-num">{localCount}</span> locais
+            </span>
+          )}
+          {runnersStillRunning.length > 0 && (
+            <span className="rp-stat-pill pending">
+              <span className="rp-stat-num">{runnersStillRunning.length}</span> em prova
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Category filter tabs */}
+      <div className="rp-tabs">
+        {CATEGORY_TABS.map(t => (
+          <button
+            key={t.key}
+            className={`rp-tab ${categoryFilter === t.key ? 'active' : ''}`}
+            onClick={() => setCategoryFilter(t.key)}
+          >
+            {t.label}
           </button>
-        </div>
+        ))}
+      </div>
 
-        <div className="results-status-info">
-          <span className="results-status-item running">
-            <IconClock size={16} /> Corrida em andamento
-          </span>
-          <span className="results-status-item">
-            <IconRunner size={16} /> {arrivedCount} de {runners.length} chegaram
-          </span>
-        </div>
-      </section>
-
-      <section className="ranking-arrived-section">
-        <h3>Ranking de chegada</h3>
-        {rankedArrivals.length === 0 ? (
-          <p>Ainda sem chegadas.</p>
-        ) : (
-          <div className="ranking-cards">
-            {rankedArrivals.map(item => (
-              <div key={`arrived-${item.barcode}`} className="ranking-card">
-                <div className="ranking-card-pos">{item.position}º</div>
-                <div className="ranking-card-info">
-                  <strong className="ranking-card-name">{item.name}</strong>
-                  <span className="ranking-card-number">Nº {item.runner?.number ?? '—'}</span>
-                </div>
-                <div className="ranking-card-times">
-                  <span className="ranking-card-time">{item.arrivalTime}</span>
-                  <span className="ranking-card-duration">{item.displayTime}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Table */}
+      <div className="rp-table-wrap">
+        {loading && <div className="rp-empty">Carregando resultados...</div>}
+        {!loading && error && <div className="rp-empty rp-error">{error}</div>}
+        {!loading && !error && rankedArrivals.length === 0 && (
+          <div className="rp-empty">Nenhuma chegada registrada ainda.</div>
         )}
-      </section>
-
-      <section className="ranking-running-section">
-        <h3>Corredores na prova</h3>
-        {runnersStillRunning.length === 0 ? (
-          <p>Todos os corredores já chegaram!</p>
-        ) : (
-          <ul className="ranking-running-list">
-            {runnersStillRunning.map(r => (
-              <li key={`running-${r.id}`}>
-                <span className="ranking-running-number">Nº {r.number ?? '—'}</span>
-                <span className="ranking-running-name">{r.name}</span>
-              </li>
-            ))}
-          </ul>
+        {!loading && rankedArrivals.length > 0 && (
+          <table className="rp-table">
+            <thead>
+              <tr>
+                <th className="rp-th rp-th-center">POS.</th>
+                <th className="rp-th">N&ordm;</th>
+                <th className="rp-th">NOME</th>
+                <th className="rp-th">CAT.</th>
+                <th className="rp-th rp-th-center">POS. CAT.</th>
+                <th className="rp-th rp-th-center">CHEGADA</th>
+                <th className="rp-th rp-th-right">TEMPO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rankedArrivals.map((item) => (
+                <tr key={item.barcode} className={`rp-tr ${item.posGeral <= 3 ? 'rp-tr-top' : ''}`}>
+                  <td className="rp-td rp-td-center">
+                    <span className={`rp-pos rp-pos-${item.posGeral <= 3 ? item.posGeral : 'n'}`}>
+                      {item.posGeral}&ordm;
+                    </span>
+                  </td>
+                  <td className="rp-td rp-bib">N&ordm;&nbsp;{item.bib}</td>
+                  <td className="rp-td rp-name">{item.name}</td>
+                  <td className="rp-td">
+                    <span className="rp-cat-badge">{item.category}</span>
+                  </td>
+                  <td className="rp-td rp-td-center rp-pos-cat">{item.posCat}&ordm;</td>
+                  <td className="rp-td rp-td-center rp-arrival-time">{item.arrivalTime}</td>
+                  <td className="rp-td rp-td-right rp-time">{item.displayTime}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-      </section>
+      </div>
 
-      {showShare && activeRace && (
-        <div className="share-panel">
-          <p>Compartilhe este link para acompanhar a classificação em tempo real (ex: numa TV/telão):</p>
-          <CopyableField label="Link do ranking" value={buildRankingLink(activeRace.id)} />
-
-          <p>Ou envie a classificação atual por:</p>
-          <div className="share-buttons-row">
-            <a className="share-btn whatsapp" href={buildWhatsAppShareLink(rankingText)} target="_blank" rel="noreferrer">
-              WhatsApp
-            </a>
-            <a className="share-btn email" href={buildEmailShareLink(rankingText)}>
-              E-mail
-            </a>
-          </div>
-        </div>
-      )}
-
-      {loading && <p>Carregando...</p>}
-      {error && <p className="error">{error}</p>}
+      {/* Footer actions */}
+      <footer className="rp-footer" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="rp-action-btn"
+          onClick={() => window.open(`/?ranking=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`, '_blank')}
+          style={{ background: '#7c3aed', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          📺 Abrir no Telão / TV (Tempo Real)
+        </button>
+        <button className="rp-action-btn" onClick={exportCSV}>
+          &#8595; Exportar CSV
+        </button>
+      </footer>
     </div>
   )
 }

@@ -12,114 +12,329 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 </script>
 <style>
 *{-webkit-tap-highlight-color:transparent;user-select:none}
-input{user-select:auto}
+input,select{user-select:auto}
 html,body{height:100%;margin:0;overflow:hidden}
 .grid-bg{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px}
+
+/* ── Ranking View ── */
+#rankingView{display:none;flex-direction:column;height:100%}
+#rankingView.active{display:flex}
+#chronoView{display:flex;flex-direction:column;height:100%}
+#chronoView.hidden-view{display:none}
+
+.rk-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(18,13,36,0.95);border-bottom:1px solid #2a1f45}
+.rk-logo{display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:900;letter-spacing:.12em;background:linear-gradient(to right,#c084fc,#f472b6,#e2e8f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.rk-status{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:0.68rem;font-weight:800;letter-spacing:.1em;background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.35)}
+.rk-status-dot{width:7px;height:7px;border-radius:50%;background:#c084fc;box-shadow:0 0 6px #c084fc}
+
+.rk-hero{flex-shrink:0;text-align:center;padding:20px 16px 10px}
+.rk-hero-title{font-size:1.8rem;font-weight:900;letter-spacing:.04em;color:#fff;margin:0 0 6px}
+.rk-hero-subtitle{font-size:0.82rem;color:#94a3b8;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.rk-hero-dot{opacity:.4}
+
+.rk-tabs{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 16px 12px;flex-wrap:wrap}
+.rk-tab{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:999px;font-size:0.72rem;font-weight:700;letter-spacing:.05em;cursor:pointer;border:1px solid #2a1f45;background:#0B0813;color:#64748b;transition:all .15s;white-space:nowrap}
+.rk-tab:hover{color:#fff;border-color:#4b3680}
+.rk-tab.rk-active{background:#7c3aed;border-color:#7c3aed;color:#fff;box-shadow:0 0 16px rgba(124,58,237,0.4)}
+.rk-tab-icon{font-size:0.75rem}
+
+.rk-body{flex:1;min-height:0;overflow-y:auto;overflow-x:auto;margin:0 12px 12px;border-radius:14px;border:1px solid #2a1f45;background:#151026}
+
+.rk-section-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0d0920;border-bottom:1px solid #2a1f45;font-size:0.72rem;font-weight:800;letter-spacing:.08em;color:#a78bfa;text-transform:uppercase;position:sticky;top:0;z-index:10}
+
+table.rk-table{width:100%;border-collapse:collapse}
+.rk-table th{padding:9px 12px;font-size:0.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#4b5563;background:#0d0920;border-bottom:1px solid #2a1f45;white-space:nowrap;position:sticky;top:34px}
+.rk-table td{padding:10px 12px;border-bottom:1px solid rgba(42,31,69,.4);font-size:0.8rem;white-space:nowrap;transition:background .1s}
+.rk-table tr:hover td{background:rgba(124,58,237,.06)}
+.rk-table tr.rk-top td{background:rgba(251,191,36,.03)}
+.rk-table tr.rk-top:hover td{background:rgba(251,191,36,.07)}
+
+.rk-pos{font-family:'JetBrains Mono',monospace;font-weight:900;font-size:.85rem}
+.rk-pos-1{color:#fbbf24;text-shadow:0 0 12px rgba(251,191,36,.5)}
+.rk-pos-2{color:#94a3b8}
+.rk-pos-3{color:#c2690c}
+.rk-pos-n{color:#6b7280}
+
+.rk-cat-badge{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 5px;border-radius:12px;font-size:.65rem;font-weight:800}
+.rk-cat-LOCAL{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.rk-cat-VISITANTE{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.rk-cat-PCD{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.rk-cat-GERAL{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+.rk-cat-MASCULINO{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.rk-cat-FEMININO{background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.3)}
+.rk-cat-60{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+
+.rk-bib{font-family:'JetBrains Mono',monospace;font-weight:800;color:#fff;font-size:.85rem}
+.rk-name{color:#e2e8f0;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.rk-poscat{color:#64748b;font-weight:600}
+.rk-time{font-family:'JetBrains Mono',monospace;font-weight:800;color:#c084fc;text-align:right}
+
+.rk-empty{padding:48px;text-align:center;color:#374151;font-style:italic;font-size:.85rem}
+
+.rk-footer{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:10px 16px;background:rgba(18,13,36,.95);border-top:1px solid #2a1f45}
+.rk-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;transition:all .15s;border:1px solid transparent;white-space:nowrap;letter-spacing:.03em}
+.rk-btn-primary{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.rk-btn-primary:hover{background:#6d28d9}
+.rk-btn-success{background:#15803d;color:#fff;border-color:#15803d}
+.rk-btn-success:hover{background:#166534}
+.rk-btn-ghost{background:rgba(255,255,255,.06);color:#94a3b8;border-color:#2a1f45}
+.rk-btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+.rk-btn-danger{background:#991b1b;color:#fff;border-color:#991b1b}
+.rk-btn-danger:hover{background:#7f1d1d}
+.rk-btn-amber{background:#92400e;color:#fde68a;border-color:#92400e}
+.rk-btn-amber:hover{background:#78350f}
 </style>
 </head>
 <body class="h-full w-full bg-[#0B0813] text-slate-100 font-sans overflow-hidden grid-bg flex flex-col box-border">
-<header class="w-full shrink-0 bg-[#120d24]/90 border-b border-[#2a1f45] px-4 py-2.5 flex items-center justify-between z-30">
-  <div class="flex items-center gap-3">
-    <button onclick="goBack()" class="h-8 px-3 rounded-xl bg-[#151026] hover:bg-[#1f173b] border border-[#2a1f45] hover:border-purple-500/50 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm" title="Voltar para a tela de corridas">
-      <i class="fa-solid fa-arrow-left text-[11px]"></i>
-      <span>Voltar</span>
-    </button>
-    <div class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20"><i class="fa-solid fa-clock text-white text-base"></i></div>
-      <span class="font-extrabold tracking-wider text-base bg-gradient-to-r from-purple-400 via-pink-400 to-purple-200 bg-clip-text text-transparent">JANELAMARCA</span>
-    </div>
-  </div>
-  <div id="statusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase">
-    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-    <span id="statusText">AGUARDANDO</span>
-  </div>
-</header>
 
-<main class="w-full flex-1 min-h-0 box-border px-3 py-2.5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-3 overflow-hidden">
-  <!-- LEFT -->
-  <section class="flex flex-col gap-3 min-h-0">
-    <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col items-center shrink-0">
-      <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Tempo Decorrido</span>
-      <div class="font-mono text-5xl font-black text-white tracking-tight my-2 drop-shadow-[0_0_15px_rgba(168,85,247,.3)]">
-        <span id="timerDisplay">00:00:00</span><span id="millisDisplay" class="text-purple-400 text-3xl">.000</span>
-      </div>
-      <button id="btnStart" onclick="toggleTimer()" class="w-full py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-        <i class="fa-solid fa-play" id="iconStart"></i><span id="lblStart">INICIAR</span>
+<!-- ══════════════════════ CHRONO VIEW ══════════════════════ -->
+<div id="chronoView" class="flex flex-col h-full">
+
+  <header class="w-full shrink-0 bg-[#120d24]/90 border-b border-[#2a1f45] px-4 py-2.5 flex items-center justify-between z-30">
+    <div class="flex items-center gap-3">
+      <button onclick="goBack()" class="h-8 px-3 rounded-xl bg-[#151026] hover:bg-[#1f173b] border border-[#2a1f45] hover:border-purple-500/50 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm" title="Voltar para a tela de corridas">
+        <i class="fa-solid fa-arrow-left text-[11px]"></i>
+        <span>Voltar</span>
       </button>
-    </div>
-
-    <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 shrink-0">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xs font-extrabold uppercase tracking-wider text-purple-400">REGISTRAR CHEGADA</h2>
-        <span class="text-[10px] text-slate-400 font-mono">Pressione ENTER</span>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20"><i class="fa-solid fa-clock text-white text-base"></i></div>
+        <span class="font-extrabold tracking-wider text-base bg-gradient-to-r from-purple-400 via-pink-400 to-purple-200 bg-clip-text text-transparent">JANELAMARCA</span>
       </div>
-      <div class="flex items-center gap-2 w-full">
-        <input 
-          type="number" 
-          id="bibInput" 
-          placeholder="Nº Peito" 
-          inputmode="numeric" 
-          class="flex-1 min-w-0 w-full bg-[#0B0813] border-2 border-purple-500/40 focus:border-purple-500 rounded-xl px-3 py-2.5 text-xl font-mono font-bold text-center text-white placeholder-slate-600 outline-none transition-colors" 
-          oninput="handleBibInputChange()" 
-          onkeydown="if(event.key==='Enter') registerArrival()" 
-        />
-        <button 
-          onclick="registerArrival()" 
-          title="Confirmar Chegada"
-          class="h-[48px] w-[50px] shrink-0 bg-gradient-to-tr from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl flex items-center justify-center text-lg shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
-        >
-          <i class="fa-solid fa-check"></i>
+    </div>
+    <div id="statusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase">
+      <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+      <span id="statusText">AGUARDANDO</span>
+    </div>
+  </header>
+
+  <main class="w-full flex-1 min-h-0 box-border px-3 py-2.5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-3 overflow-hidden">
+    <!-- LEFT -->
+    <section class="flex flex-col gap-3 min-h-0">
+      <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col items-center shrink-0">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Tempo Decorrido</span>
+        <div class="font-mono text-5xl font-black text-white tracking-tight my-2 drop-shadow-[0_0_15px_rgba(168,85,247,.3)]">
+          <span id="timerDisplay">00:00:00</span><span id="millisDisplay" class="text-purple-400 text-3xl">.000</span>
+        </div>
+        <button id="btnStart" onclick="toggleTimer()" class="w-full py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+          <i class="fa-solid fa-play" id="iconStart"></i><span id="lblStart">INICIAR</span>
         </button>
       </div>
-      <div id="runnerPreview" class="text-xs px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-200 hidden font-semibold flex items-center gap-2">
-        <i class="fa-solid fa-user text-purple-400"></i>
-        <span id="runnerPreviewText">—</span>
-      </div>
-    </div>
-  </section>
 
-  <!-- RIGHT -->
-  <section class="flex flex-col gap-3 h-full min-h-0 overflow-hidden">
-    <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
-      <div class="flex items-center justify-between flex-wrap gap-2 shrink-0">
-        <div class="flex items-center gap-2">
-          <span class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono text-xs font-bold">TOTAL CHEGADAS: <span id="countTotal" class="text-white">0</span></span>
+      <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 shrink-0">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-extrabold uppercase tracking-wider text-purple-400">REGISTRAR CHEGADA</h2>
+          <span class="text-[10px] text-slate-400 font-mono">Pressione ENTER</span>
         </div>
-        <div class="flex items-center gap-1.5" id="categoryFilterButtons">
-          <button onclick="filterCategory('ALL')" id="filterAll" class="px-3 py-1 rounded-lg bg-purple-600 text-white text-xs font-bold transition-all">TODOS</button>
-          <button onclick="filterCategory('LOCAL')" id="filterLocal" class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 hover:text-white text-xs font-bold transition-all">LOCAL</button>
-          <button onclick="filterCategory('VISITANTE')" id="filterVisitante" class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 hover:text-white text-xs font-bold transition-all">VISITANTE</button>
+        <div class="flex items-center gap-2 w-full">
+          <input
+            type="number"
+            id="bibInput"
+            placeholder="Nº Peito"
+            inputmode="numeric"
+            class="flex-1 min-w-0 w-full bg-[#0B0813] border-2 border-purple-500/40 focus:border-purple-500 rounded-xl px-3 py-2.5 text-xl font-mono font-bold text-center text-white placeholder-slate-600 outline-none transition-colors"
+            oninput="handleBibInputChange()"
+            onkeydown="if(event.key==='Enter') registerArrival()"
+          />
+          <button
+            onclick="registerArrival()"
+            title="Confirmar Chegada"
+            class="h-[48px] w-[50px] shrink-0 bg-gradient-to-tr from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl flex items-center justify-center text-lg shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
+          >
+            <i class="fa-solid fa-check"></i>
+          </button>
+        </div>
+        <div id="runnerPreview" class="text-xs px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-200 hidden font-semibold flex items-center gap-2">
+          <i class="fa-solid fa-user text-purple-400"></i>
+          <span id="runnerPreviewText">—</span>
         </div>
       </div>
-      <!-- Arrivals table: Only this inner container has scrollbar -->
-      <div class="w-full overflow-x-auto rounded-xl border border-[#2a1f45] flex-1 min-h-0 overflow-y-auto">
-        <table class="w-full text-left border-collapse">
-          <thead class="sticky top-0 z-10">
-            <tr class="bg-[#0B0813] text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-[#2a1f45]">
-              <th class="py-2.5 px-3 text-center">GERAL</th>
-              <th class="py-2.5 px-2">Nº</th>
-              <th class="py-2.5 px-3">NOME</th>
-              <th class="py-2.5 px-2">CAT.</th>
-              <th class="py-2.5 px-2 text-center">POS. CAT.</th>
-              <th class="py-2.5 px-3 text-right">TEMPO</th>
-            </tr>
-          </thead>
-          <tbody id="arrivalsList" class="divide-y divide-[#2a1f45]/50 text-xs font-medium">
-            <tr><td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-</main>
+    </section>
 
-<footer class="w-full shrink-0 bg-[#120d24]/95 border-t border-[#2a1f45] px-4 py-2.5 flex items-center justify-between gap-3 z-30 box-border">
-  <button onclick="confirmFinish()" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all">🏁 ENCERRAR</button>
-  <button onclick="resetTimer()" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 active:scale-95 transition-all">× Reiniciar</button>
-</footer>
+    <!-- RIGHT -->
+    <section class="flex flex-col gap-3 h-full min-h-0 overflow-hidden">
+      <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
+        <div class="flex items-center justify-between flex-wrap gap-2 shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono text-xs font-bold">TOTAL CHEGADAS: <span id="countTotal" class="text-white">0</span></span>
+          </div>
+          <div class="flex items-center gap-1.5" id="categoryFilterButtons">
+            <button onclick="filterCategory('ALL')" id="filterAll" class="px-3 py-1 rounded-lg bg-purple-600 text-white text-xs font-bold transition-all">TODOS</button>
+            <button onclick="filterCategory('LOCAL')" id="filterLocal" class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 hover:text-white text-xs font-bold transition-all">LOCAL</button>
+            <button onclick="filterCategory('VISITANTE')" id="filterVisitante" class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 hover:text-white text-xs font-bold transition-all">VISITANTE</button>
+          </div>
+        </div>
+        <div class="w-full overflow-x-auto rounded-xl border border-[#2a1f45] flex-1 min-h-0 overflow-y-auto">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 z-10">
+              <tr class="bg-[#0B0813] text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-[#2a1f45]">
+                <th class="py-2.5 px-3 text-center">GERAL</th>
+                <th class="py-2.5 px-2">Nº</th>
+                <th class="py-2.5 px-3">NOME</th>
+                <th class="py-2.5 px-2">CAT.</th>
+                <th class="py-2.5 px-2 text-center">POS. CAT.</th>
+                <th class="py-2.5 px-3 text-right">TEMPO</th>
+              </tr>
+            </thead>
+            <tbody id="arrivalsList" class="divide-y divide-[#2a1f45]/50 text-xs font-medium">
+              <tr><td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="w-full shrink-0 bg-[#120d24]/95 border-t border-[#2a1f45] px-4 py-2.5 flex items-center justify-between gap-3 z-30 box-border">
+    <button id="btnFinish" onclick="confirmFinish()" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all">🏁 ENCERRAR</button>
+    <button onclick="resetTimer()" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 active:scale-95 transition-all">× Reiniciar</button>
+  </footer>
+
+</div><!-- end chronoView -->
+
+
+<!-- ══════════════════════ RANKING VIEW ══════════════════════ -->
+<div id="rankingView" class="flex flex-col h-full">
+
+  <!-- Header -->
+  <div class="rk-header">
+    <div class="rk-logo">
+      <i class="fa-solid fa-clock" style="-webkit-text-fill-color:#a78bfa;color:#a78bfa"></i>
+      JANELAMARCA
+    </div>
+    <div class="rk-status">
+      <span class="rk-status-dot"></span>
+      ENCERRADO
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="rk-hero">
+    <h1 class="rk-hero-title">🏆 CLASSIFICAÇÃO FINAL</h1>
+    <div class="rk-hero-subtitle" id="rkSubtitle">
+      <span id="rkRaceName">—</span>
+      <span class="rk-hero-dot">·</span>
+      <span id="rkTotalCount">0 corredores</span>
+      <span class="rk-hero-dot">·</span>
+      <span id="rkLocalCount">0 locais</span>
+      <span class="rk-hero-dot">·</span>
+      <span id="rkTotalTime">00:00:00</span>
+    </div>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="rk-tabs" id="rkTabs">
+    <button class="rk-tab rk-active" onclick="rkFilter('ALL')" id="rkTab-ALL">
+      <i class="fa-solid fa-globe rk-tab-icon"></i> GERAL
+    </button>
+    <button class="rk-tab" onclick="rkFilter('MASCULINO')" id="rkTab-MASCULINO">
+      <i class="fa-solid fa-mars rk-tab-icon"></i> MASCULINO
+    </button>
+    <button class="rk-tab" onclick="rkFilter('FEMININO')" id="rkTab-FEMININO">
+      <i class="fa-solid fa-venus rk-tab-icon"></i> FEMININO
+    </button>
+    <button class="rk-tab" onclick="rkFilter('LOCAL MASC')" id="rkTab-LOCAL MASC">
+      <i class="fa-solid fa-house rk-tab-icon"></i><i class="fa-solid fa-mars rk-tab-icon"></i> LOCAL MASC
+    </button>
+    <button class="rk-tab" onclick="rkFilter('LOCAL FEM')" id="rkTab-LOCAL FEM">
+      <i class="fa-solid fa-house rk-tab-icon"></i><i class="fa-solid fa-venus rk-tab-icon"></i> LOCAL FEM
+    </button>
+    <button class="rk-tab" onclick="rkFilter('PCD_60')" id="rkTab-PCD_60">
+      <i class="fa-solid fa-wheelchair rk-tab-icon"></i> PCD / +60
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="rk-body">
+    <div class="rk-section-header">
+      <i class="fa-solid fa-circle-dot" style="color:#7c3aed"></i>
+      <span id="rkSectionLabel">CLASSIFICAÇÃO GERAL</span>
+    </div>
+    <table class="rk-table">
+      <thead>
+        <tr>
+          <th style="text-align:center;width:60px">POS.</th>
+          <th style="width:50px">CAT.</th>
+          <th style="width:90px">Nº</th>
+          <th>NOME</th>
+          <th style="text-align:center;width:80px">POS.CAT.</th>
+          <th style="text-align:right;width:110px">TEMPO</th>
+        </tr>
+      </thead>
+      <tbody id="rkTableBody">
+        <tr><td colspan="6" class="rk-empty">Nenhum resultado registrado.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer actions -->
+  <div class="rk-footer">
+    <button class="rk-btn rk-btn-amber" onclick="openEditLocais()">
+      <i class="fa-solid fa-house"></i> Editar Locais
+    </button>
+    <button class="rk-btn rk-btn-success" onclick="exportCSV()">
+      <i class="fa-solid fa-download"></i> Exportar CSV
+    </button>
+    <button class="rk-btn rk-btn-ghost" onclick="backToChrono()">
+      <i class="fa-solid fa-arrow-left"></i> Cronômetro
+    </button>
+    <button class="rk-btn rk-btn-danger" onclick="newRace()">
+      <i class="fa-solid fa-xmark"></i> Nova corrida
+    </button>
+  </div>
+
+</div><!-- end rankingView -->
+
+
+<!-- Edit Locais Modal -->
+<div id="editLocaisModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center">
+  <div style="background:#151026;border:1px solid #2a1f45;border-radius:16px;padding:20px;max-width:480px;width:90%;max-height:80vh;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h3 style="margin:0;font-size:.9rem;font-weight:800;color:#a78bfa">🏠 Definir Corredores Locais</h3>
+      <button onclick="closeEditLocais()" style="background:rgba(255,255,255,.06);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;padding:4px 10px;cursor:pointer;font-size:.75rem">✕</button>
+    </div>
+    <p style="margin:0;font-size:.75rem;color:#64748b">Clique para alternar cada corredor entre <strong>Local</strong> e <strong>Não Local (Visitante)</strong>.</p>
+    <div id="editLocaisList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px"></div>
+    <button onclick="closeEditLocais()" style="padding:8px;border-radius:10px;background:#7c3aed;color:#fff;font-weight:800;font-size:.8rem;cursor:pointer;border:none">Concluir</button>
+  </div>
+</div>
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, deleteDoc, getDocs, collection, query, where, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAjgZ5vd1054PPZrPAUwQ1ENcC9j6SQ-78",
+    authDomain: "qr-cronorace.firebaseapp.com",
+    projectId: "qr-cronorace",
+    storageBucket: "qr-cronorace.firebasestorage.app",
+    messagingSenderId: "637865302300",
+    appId: "1:637865302300:web:2b2ff838b5478f756b42d9",
+    measurementId: "G-GZGH545R8W"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.fbDb = getFirestore(app);
+  window.fbDoc = doc;
+  window.fbSetDoc = setDoc;
+  window.fbDeleteDoc = deleteDoc;
+  window.fbGetDocs = getDocs;
+  window.fbWriteBatch = writeBatch;
+  window.fbCollection = collection;
+  window.fbQuery = query;
+  window.fbWhere = where;
+  window.fbOnSnapshot = onSnapshot;
+
+  if (typeof window.startFirebaseListening === 'function') {
+    window.startFirebaseListening();
+  }
+</script>
 
 <script>
 let timer=null,startTime=0,elapsedTime=0,isRunning=false,activeCategoryFilter='ALL',arrivals=[];
+let rkActiveFilter='ALL';
+let raceFinished=false;
+
 const timerDisplay=document.getElementById('timerDisplay');
 const millisDisplay=document.getElementById('millisDisplay');
 const btnStart=document.getElementById('btnStart');
@@ -134,17 +349,8 @@ const arrivalsList=document.getElementById('arrivalsList');
 const countTotal=document.getElementById('countTotal');
 
 function goBack(){
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'BACK' }, '*');
-      return;
-    }
-  } catch (e) {}
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.location.href = '/';
-  }
+  try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'BACK'},'*');return;}}catch(e){}
+  if(window.history.length>1)window.history.back();else window.location.href='/';
 }
 
 function getRunnerByBib(bib){
@@ -157,17 +363,23 @@ function getRunnerByBib(bib){
   }catch(e){return null;}
 }
 
+function getRaceName(){
+  try{
+    const raw=localStorage.getItem('pwa-qr-timing:active-race');
+    if(!raw)return null;
+    const race=JSON.parse(raw);
+    return race?.name||null;
+  }catch(e){return null;}
+}
+
 function handleBibInputChange(){
   const val=bibInput.value.trim();
-  if(!val){
-    runnerPreview.classList.add('hidden');
-    return;
-  }
+  if(!val){runnerPreview.classList.add('hidden');return;}
   const runner=getRunnerByBib(val);
   if(runner){
-    runnerPreviewText.textContent=`${runner.name} ${runner.category ? '• '+runner.category : ''}`;
+    runnerPreviewText.textContent=`${runner.name}${runner.category?' • '+runner.category:''}`;
     runnerPreview.classList.remove('hidden');
-  } else {
+  }else{
     runnerPreviewText.textContent=`Corredor Nº ${val} (não pré-cadastrado)`;
     runnerPreview.classList.remove('hidden');
   }
@@ -184,8 +396,7 @@ function toggleTimer(){
     statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
     statusText.textContent='Em Andamento';
   }else{
-    clearInterval(timer);
-    isRunning=false;
+    clearInterval(timer);isRunning=false;
     lblStart.textContent='CONTINUAR';
     iconStart.className='fa-solid fa-play';
     btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
@@ -195,45 +406,192 @@ function toggleTimer(){
 }
 function updateTimer(){elapsedTime=Date.now()-startTime;formatTime(elapsedTime);}
 function formatTime(ms){
-  const totalSeconds=Math.floor(ms/1000);
-  const hours=Math.floor(totalSeconds/3600);
-  const minutes=Math.floor((totalSeconds%3600)/60);
-  const seconds=totalSeconds%60;
-  const milliseconds=ms%1000;
+  const s=Math.floor(ms/1000);
   const pad=n=>n.toString().padStart(2,'0');
-  const padMs=n=>n.toString().padStart(3,'0');
-  timerDisplay.textContent=`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-  millisDisplay.textContent=`.${padMs(milliseconds)}`;
+  timerDisplay.textContent=`${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+  millisDisplay.textContent=`.${String(ms%1000).padStart(3,'0')}`;
 }
-function resetTimer(){
-  if(arrivals.length > 0){
-    if(!confirm('Deseja realmente reiniciar o cronômetro e zerar todo o ranking de chegadas?')){
-      return;
-    }
+async function deleteAllResultsForRace() {
+  try {
+    const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') ||
+                   (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+    if (!raceId || !window.fbDb) return;
+
+    const q = window.fbQuery(
+      window.fbCollection(window.fbDb, 'results'),
+      window.fbWhere('raceId', '==', raceId)
+    );
+    const snap = await window.fbGetDocs(q);
+    if (snap.empty) return;
+
+    // Firestore writeBatch suporta até 500 operações por lote
+    const batchSize = 400;
+    let ops = [];
+    const batch = window.fbWriteBatch(window.fbDb);
+    snap.docs.forEach((d, i) => {
+      batch.delete(d.ref);
+      ops.push(i);
+    });
+    await batch.commit();
+  } catch(err) {
+    console.warn('Erro ao limpar resultados no Firestore:', err);
   }
+}
+
+function resetTimer(){
+  if(arrivals.length>0){
+    if(!confirm('Deseja realmente reiniciar o cronômetro e zerar todo o ranking de chegadas?'))return;
+  }
+  if(raceFinished){backToChrono();}
   if(isRunning){clearInterval(timer);isRunning=false;}
-  elapsedTime=0;
-  formatTime(0);
-  arrivals=[];
-  renderArrivals();
+  elapsedTime=0;formatTime(0);
+  arrivals=[];renderArrivals();
   bibInput.value='';
-  if(runnerPreview) runnerPreview.classList.add('hidden');
+  if(runnerPreview)runnerPreview.classList.add('hidden');
   lblStart.textContent='INICIAR';
   iconStart.className='fa-solid fa-play';
   btnStart.className='w-full py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
   statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
   statusText.textContent='AGUARDANDO';
+  raceFinished=false;
+  const btn=document.getElementById('btnFinish');
+  btn.textContent='🏁 ENCERRAR';
+  btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+  btn.onclick=confirmFinish;
+  // Apaga todos os resultados desta corrida no Firestore
+  deleteAllResultsForRace();
   showToast('Cronômetro e ranking reiniciados!');
 }
 function confirmFinish(){
-  if(confirm('Deseja realmente encerrar esta corrida?')){
-    if(isRunning){clearInterval(timer);isRunning=false;}
-    statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
-    statusText.textContent='Encerrada';
-    showToast('Corrida finalizada!');
-  }
+  if(!confirm('Deseja realmente encerrar esta corrida?'))return;
+  if(isRunning){clearInterval(timer);isRunning=false;}
+  statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
+  statusText.textContent='Encerrada';
+  raceFinished=true;
+  const btn=document.getElementById('btnFinish');
+  btn.innerHTML='📊 Ver Ranking';
+  btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/30 active:scale-95 transition-all';
+  btn.onclick=showRankingView;
+  showToast('Corrida finalizada!');
 }
 
+function showRankingView(){
+  // Populate ranking header
+  const name=getRaceName()||'Corrida';
+  document.getElementById('rkRaceName').textContent=name;
+  document.getElementById('rkTotalCount').textContent=`${arrivals.length} corredor${arrivals.length!==1?'es':''}`;
+  const locals=arrivals.filter(a=>String(a.category||'').toUpperCase().includes('LOCAL')).length;
+  document.getElementById('rkLocalCount').textContent=`${locals} local${locals!==1?'is':''}`;
+  document.getElementById('rkTotalTime').textContent=timerDisplay.textContent;
+
+  // Switch views
+  document.getElementById('chronoView').classList.add('hidden-view');
+  document.getElementById('rankingView').classList.add('active');
+
+  rkFilter('ALL');
+}
+
+function backToChrono(){
+  document.getElementById('rankingView').classList.remove('active');
+  document.getElementById('chronoView').classList.remove('hidden-view');
+}
+
+function newRace(){
+  if(!confirm('Iniciar uma nova corrida? Os dados atuais serão perdidos.'))return;
+  try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'BACK'},'*');return;}}catch(e){}
+  window.location.href='/';
+}
+
+// ── Ranking Table ──
+function getCatLabel(cat){
+  const c=String(cat||'').toUpperCase();
+  if(c.includes('LOCAL'))return{label:'L',cls:'rk-cat-LOCAL'};
+  if(c.includes('VISITANTE'))return{label:'V',cls:'rk-cat-VISITANTE'};
+  if(c.includes('PCD'))return{label:'P',cls:'rk-cat-PCD'};
+  return{label:'G',cls:'rk-cat-GERAL'};
+}
+
+function rkFilter(cat){
+  rkActiveFilter=cat;
+  const allKeys=['ALL','MASCULINO','FEMININO','LOCAL MASC','LOCAL FEM','PCD_60'];
+  allKeys.forEach(k=>{
+    const btn=document.getElementById('rkTab-'+k);
+    if(!btn)return;
+    if(k===cat)btn.classList.add('rk-active');
+    else btn.classList.remove('rk-active');
+  });
+  const labels={
+    'ALL':'CLASSIFICAÇÃO GERAL',
+    'MASCULINO':'CLASSIFICAÇÃO MASCULINO',
+    'FEMININO':'CLASSIFICAÇÃO FEMININO',
+    'LOCAL MASC':'CLASSIFICAÇÃO LOCAL MASCULINO',
+    'LOCAL FEM':'CLASSIFICAÇÃO LOCAL FEMININO',
+    'PCD_60':'CLASSIFICAÇÃO PCD / +60'
+  };
+  document.getElementById('rkSectionLabel').textContent=labels[cat]||'CLASSIFICAÇÃO';
+  renderRankingTable();
+}
+
+function renderRankingTable(){
+  const sorted=[...arrivals].sort((a,b)=>a.posGeral-b.posGeral);
+
+  function matchFilter(a){
+    const cat=String(a.category||'').toUpperCase();
+    // Helper: check base category (first segment before " | ")
+    const base=cat.split(' | ')[0].trim();
+    const isMasc=base==='MASCULINO'||base==='LOCAL MASC';
+    const isFem=base==='FEMININO'||base==='LOCAL FEM';
+    const isLocal=base==='LOCAL MASC'||base==='LOCAL FEM';
+    const hasSpecial=(c)=>cat.includes(c);
+
+    if(rkActiveFilter==='ALL')return true;
+    if(rkActiveFilter==='MASCULINO')return isMasc;
+    if(rkActiveFilter==='FEMININO')return isFem;
+    if(rkActiveFilter==='LOCAL MASC')return isLocal&&isMasc;
+    if(rkActiveFilter==='LOCAL FEM')return isLocal&&isFem;
+    if(rkActiveFilter==='PCD_60')return hasSpecial('PCD')||hasSpecial('+60');
+    return false;
+  }
+
+  const filtered=sorted.filter(matchFilter);
+  const tbody=document.getElementById('rkTableBody');
+  if(filtered.length===0){
+    tbody.innerHTML='<tr><td colspan="6" class="rk-empty">Nenhuma chegada nesta categoria.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=filtered.map((a,i)=>{
+    const pos=rkActiveFilter==='ALL'?a.posGeral:(i+1);
+    const top3=pos<=3;
+    const posClass=pos===1?'rk-pos-1':pos===2?'rk-pos-2':pos===3?'rk-pos-3':'rk-pos-n';
+    const cat=getCatLabel(a.category);
+    return `
+    <tr class="${top3?'rk-top':''}">
+      <td style="text-align:center"><span class="rk-pos ${posClass}">${pos}º</span></td>
+      <td><span class="rk-cat-badge ${cat.cls}">${cat.label}</span></td>
+      <td><span class="rk-bib">#${a.bib}</span></td>
+      <td><span class="rk-name">${a.name||'—'}</span></td>
+      <td style="text-align:center"><span class="rk-poscat">${i+1}ª</span></td>
+      <td style="text-align:right"><span class="rk-time">${a.time}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Category label helper ──
+function getCatLabel(cat){
+  const raw=String(cat||'').toUpperCase();
+  const base=raw.split(' | ')[0].trim();
+  if(base==='LOCAL MASC')return{label:'LM',cls:'rk-cat-MASCULINO'};
+  if(base==='LOCAL FEM')return{label:'LF',cls:'rk-cat-FEMININO'};
+  if(base==='MASCULINO')return{label:'M',cls:'rk-cat-MASCULINO'};
+  if(base==='FEMININO')return{label:'F',cls:'rk-cat-FEMININO'};
+  if(base==='LOCAL')return{label:'L',cls:'rk-cat-LOCAL'};
+  if(base==='VISITANTE')return{label:'V',cls:'rk-cat-VISITANTE'};
+  if(raw.includes('PCD'))return{label:'P',cls:'rk-cat-PCD'};
+  if(raw.includes('+60'))return{label:'60',cls:'rk-cat-60'};
+  return{label:'G',cls:'rk-cat-GERAL'};
+}
+
+// ── Chrono Table ──
 function filterCategory(cat){
   activeCategoryFilter=cat;
   ['All','Local','Visitante'].forEach(k=>{
@@ -241,7 +599,7 @@ function filterCategory(cat){
     if(!btn)return;
     if((k==='All'&&cat==='ALL')||k.toUpperCase()===cat){
       btn.className='px-3 py-1 rounded-lg bg-purple-600 text-white text-xs font-bold transition-all';
-    } else {
+    }else{
       btn.className='px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 hover:text-white text-xs font-bold transition-all';
     }
   });
@@ -252,42 +610,138 @@ function registerArrival(){
   const bibNumber=bibInput.value.trim();
   if(!bibNumber){showToast('Digite o número de peito!',true);return;}
   const cleanBib=String(parseInt(bibNumber,10));
-  
-  // Prevent duplicate bib arrivals
   const existing=arrivals.find(a=>String(parseInt(a.bib,10))===cleanBib);
-  if(existing){
-    showToast(`O Nº ${existing.bib} (${existing.name}) já cruzou a chegada! (${existing.time})`,true);
-    return;
-  }
-
+  if(existing){showToast(`O Nº ${existing.bib} (${existing.name}) já cruzou a chegada! (${existing.time})`,true);return;}
   const runner=getRunnerByBib(bibNumber);
   const runnerName=runner?runner.name:'—';
   const runnerCat=runner?.category?runner.category:'GERAL';
   const currentTime=`${timerDisplay.textContent}${millisDisplay.textContent}`;
   const totalGeral=arrivals.length+1;
   const posCat=arrivals.filter(a=>a.category===runnerCat).length+1;
-  const newArrival={
-    id:Date.now(),
-    posGeral:totalGeral,
-    category:runnerCat,
-    bib:bibNumber.padStart(3,'0'),
-    name:runnerName,
-    posCat:posCat,
-    time:currentTime
-  };
+  const newArrival={id:Date.now(),posGeral:totalGeral,category:runnerCat,bib:bibNumber.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
   arrivals.unshift(newArrival);
   renderArrivals();
   bibInput.value='';
   runnerPreview.classList.add('hidden');
   bibInput.focus();
-  showToast(`Nº ${newArrival.bib} ${runnerName!=='—'?'- '+runnerName:''} registrado!`);
+  showToast(`Nº ${newArrival.bib}${runnerName!=='—'?' - '+runnerName:''} registrado!`);
+
+  // Sincroniza em tempo real com o Telão/TV e Firebase
+  syncArrival(bibNumber, runnerName, runner);
+}
+
+async function syncArrival(bibNumber, runnerName, runner) {
+  const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
+                 (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+  const runnerId = runner?.id || `bib_${bibNumber}`;
+  const now = new Date();
+
+  // 1. Post to parent window (se estiver dentro do iframe)
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'RECORD_ARRIVAL',
+        bib: bibNumber,
+        barcode: runnerId,
+        runnerName: runnerName,
+        raceId: raceId
+      }, '*');
+    }
+  } catch(e) {}
+
+  // 2. BroadcastChannel para outras abas abertas no mesmo navegador (ex: aba do Telão)
+  try {
+    const bc = new BroadcastChannel('qr-cronorace-channel');
+    bc.postMessage({
+      type: 'RECORD_ARRIVAL',
+      bib: bibNumber,
+      barcode: runnerId,
+      runnerName: runnerName,
+      raceId: raceId
+    });
+    bc.close();
+  } catch(e) {}
+
+  // 3. Salva diretamente no Firestore (sincroniza com todos os outros dispositivos/telões)
+  try {
+    if (window.fbDb && window.fbSetDoc && window.fbDoc && raceId) {
+      const docId = `${runnerId}_${now.getTime()}_${Math.random().toString(36).slice(2,8)}`;
+      await window.fbSetDoc(window.fbDoc(window.fbDb, 'results', docId), {
+        id: docId,
+        barcode: runnerId,
+        runnerNumber: runner?.number || bibNumber,
+        dateTime: now.toISOString(),
+        timestamp: String(now.getTime()),
+        raceId: raceId,
+        runnerName: runnerName || runner?.name || `Nº ${bibNumber}`
+      });
+    }
+  } catch(err) {
+    console.warn('Erro ao salvar no Firestore de chronometer.html:', err);
+  }
+}
+
+window.startFirebaseListening = function() {
+  const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
+                 (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+  if (!raceId || !window.fbDb || !window.fbOnSnapshot) return;
+
+  const q = window.fbQuery(
+    window.fbCollection(window.fbDb, 'results'),
+    window.fbWhere('raceId', '==', raceId)
+  );
+
+  window.fbOnSnapshot(q, (snap) => {
+    const docs = snap.docs.map(d => d.data());
+    docs.sort((a,b) => (Date.parse(a.dateTime)||0) - (Date.parse(b.dateTime)||0));
+    
+    let changed = false;
+    docs.forEach(res => {
+      const bib = String(res.runnerNumber || '').replace(/^0+/, '');
+      if (!bib) return;
+      const cleanBib = String(parseInt(bib, 10));
+      const existing = arrivals.find(a => String(parseInt(a.bib, 10)) === cleanBib);
+      if (!existing) {
+        const runner = getRunnerByBib(bib);
+        const runnerCat = runner?.category || 'GERAL';
+        const runnerName = res.runnerName || runner?.name || '—';
+        const dateArrival = res.dateTime ? new Date(res.dateTime) : new Date();
+        const pad = n => n.toString().padStart(2, '0');
+        const formattedArrival = `${pad(dateArrival.getHours())}:${pad(dateArrival.getMinutes())}:${pad(dateArrival.getSeconds())}`;
+        
+        const totalGeral = arrivals.length + 1;
+        const posCat = arrivals.filter(a => a.category === runnerCat).length + 1;
+        arrivals.unshift({
+          id: res.id || Date.now(),
+          posGeral: totalGeral,
+          category: runnerCat,
+          bib: bib.padStart(3, '0'),
+          name: runnerName,
+          posCat,
+          time: formattedArrival
+        });
+        changed = true;
+      }
+    });
+    if (changed) {
+      renderArrivals();
+    }
+  });
+};
+
+if (window.fbDb) {
+  window.startFirebaseListening();
 }
 
 function renderArrivals(){
   countTotal.textContent=arrivals.length;
-  const filtered = activeCategoryFilter === 'ALL'
-    ? arrivals
-    : arrivals.filter(a => String(a.category || '').toUpperCase().includes(activeCategoryFilter));
+  const filtered=activeCategoryFilter==='ALL'
+    ?arrivals
+    :activeCategoryFilter==='LOCAL'
+      ?arrivals.filter(a=>String(a.category||'').toUpperCase().includes('LOCAL'))
+      :activeCategoryFilter==='VISITANTE'
+        ?arrivals.filter(a=>!String(a.category||'').toUpperCase().includes('LOCAL'))
+        :arrivals.filter(a=>String(a.category||'').toUpperCase().includes(activeCategoryFilter));
 
   if(filtered.length===0){
     arrivalsList.innerHTML='<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>';
@@ -304,6 +758,87 @@ function renderArrivals(){
     </tr>
   `).join('');
 }
+
+// ── Edit Locais ──
+function openEditLocais(){
+  const modal=document.getElementById('editLocaisModal');
+  const list=document.getElementById('editLocaisList');
+  const sorted=[...arrivals].sort((a,b)=>a.posGeral-b.posGeral);
+  list.innerHTML=sorted.map(a=>{
+    const cat=String(a.category||'').toUpperCase();
+    const isLocal=cat.includes('LOCAL');
+    const isFem=cat.includes('FEM');
+    const genderLabel=isFem?'♀ Fem':'♂ Masc';
+    const special=cat.includes('PCD')?' · PCD':cat.includes('+60')?' · +60':'';
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;background:#0d0920;border:1px solid #2a1f45;border-radius:12px">
+      <span style="font-family:monospace;font-weight:800;color:#fff;font-size:.85rem;min-width:44px">#${a.bib}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.82rem;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</div>
+        <div style="font-size:.7rem;color:#94a3b8;font-weight:600">${genderLabel}${special}</div>
+      </div>
+      <button type="button" onclick="toggleRunnerLocal('${a.id}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:800;cursor:pointer;transition:all .15s;border:1.5px solid ${isLocal?'#22c55e':'#2a1f45'};background:${isLocal?'rgba(34,197,94,0.18)':'rgba(255,255,255,0.03)'};color:${isLocal?'#4ade80':'#94a3b8'}">
+        <i class="fa-solid fa-house" style="font-size:.7rem"></i>
+        <span>${isLocal?'LOCAL':'NÃO LOCAL'}</span>
+        ${isLocal?'<i class="fa-solid fa-check" style="font-size:.65rem"></i>':''}
+      </button>
+    </div>`;
+  }).join('');
+  modal.style.display='flex';
+}
+
+function toggleRunnerLocal(id){
+  const orig=arrivals.find(a=>String(a.id)===String(id));
+  if(!orig)return;
+  const currentCat=String(orig.category||'').toUpperCase().trim();
+  const isCurrentlyLocal=currentCat.includes('LOCAL');
+  const makeLocal=!isCurrentlyLocal;
+  
+  // Parse base and extras (preserving gender and PCD/+60)
+  const parts=currentCat.split(' | ');
+  let base=parts[0].trim();
+  const extras=parts.slice(1);
+  
+  if(makeLocal){
+    if(base.includes('FEM')) base='LOCAL FEM';
+    else if(base.includes('MASC')) base='LOCAL MASC';
+    else base='LOCAL';
+  } else {
+    if(base.includes('FEM')) base='FEMININO';
+    else if(base.includes('MASC')) base='MASCULINO';
+    else base='GERAL';
+  }
+  
+  orig.category=extras.length>0?`${base} | ${extras.join(' | ')}`:base;
+
+  // Recalculate posCat for all
+  const catPositions={};
+  [...arrivals].sort((a,b)=>a.posGeral-b.posGeral).forEach(a=>{
+    catPositions[a.category]=(catPositions[a.category]||0)+1;
+    a.posCat=catPositions[a.category];
+  });
+  // Update ranking table live
+  const locals=arrivals.filter(a=>String(a.category||'').toUpperCase().includes('LOCAL')).length;
+  document.getElementById('rkLocalCount').textContent=`${locals} local${locals!==1?'is':''}`;
+  renderRankingTable();
+  openEditLocais();
+}
+
+function closeEditLocais(){document.getElementById('editLocaisModal').style.display='none';}
+
+// ── Export CSV ──
+function exportCSV(){
+  const sorted=[...arrivals].sort((a,b)=>a.posGeral-b.posGeral);
+  const header='POS.GERAL,N\u00ba,NOME,CATEGORIA,POS.CAT,TEMPO';
+  const rows=sorted.map(a=>`${a.posGeral},"${a.bib}","${a.name}","${a.category}",${a.posCat},"${a.time}"`);
+  const csv=[header,...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const el=document.createElement('a');
+  el.href=url;el.download='ranking-classificacao.csv';el.click();
+  URL.revokeObjectURL(url);
+}
+
 function showToast(msg,isError=false){
   const toast=document.createElement('div');
   toast.textContent=msg;

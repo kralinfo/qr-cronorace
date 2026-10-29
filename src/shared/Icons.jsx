@@ -125,6 +125,14 @@ export function IconSearch({ size = 20, className = '' }) {
   )
 }
 
+export function IconFilter({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" />
+    </svg>
+  )
+}
+
 export function IconRefresh({ size = 20, className = '' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
