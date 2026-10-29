@@ -34,7 +34,7 @@ const TAB_TITLES = {
 }
 
 function AppContent() {
-  const { activeRace, loading, clearActiveRace } = useActiveRace()
+  const { activeRace, loading, clearActiveRace, selectRace } = useActiveRace()
   const { runners } = useRunners(activeRace?.id)
   const [tab, setTabState] = useState('home')
   const [navHistory, setNavHistory] = useState(['home'])
@@ -114,6 +114,10 @@ function AppContent() {
         handleNavigate(event.data.tab || 'home')
       } else if (event.data?.type === 'RECORD_ARRIVAL') {
         handleRecordArrival(event.data)
+      } else if (event.data?.type === 'RACE_RESET') {
+        if (activeRace) {
+          selectRace({ ...activeRace, startTime: null, endTime: null })
+        }
       }
     }
     window.addEventListener('message', handleMessage)
@@ -124,6 +128,10 @@ function AppContent() {
       bc.onmessage = (event) => {
         if (event.data?.type === 'RECORD_ARRIVAL') {
           handleRecordArrival(event.data)
+        } else if (event.data?.type === 'RACE_RESET') {
+          if (activeRace) {
+            selectRace({ ...activeRace, startTime: null, endTime: null })
+          }
         }
       }
     } catch (e) {}

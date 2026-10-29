@@ -14,6 +14,7 @@ import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
 import ReopenRaceModal from './ReopenRaceModal.jsx'
 import Modal from '../../shared/Modal.jsx'
 import AllRunnersModal from './AllRunnersModal.jsx'
+import ImportRunnersModal from '../runners/ImportRunnersModal.jsx'
 import RunnerQRModal from '../runners/RunnerQRModal.jsx'
 import { IconPlay, IconMenu, IconClock, IconHome, IconCheck } from '../../shared/Icons.jsx'
 
@@ -79,6 +80,8 @@ function QRResultPanel({ lastQrCode, raceName, onDismiss }) {
           </div>
         </div>
       </div>
+
+
     </div>
   )
 }
@@ -382,6 +385,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   // Modal de QR individual, todos os corredores e reabrir corrida
   const [selectedRunnerModal, setSelectedRunnerModal] = useState(null)
   const [allRunnersModalOpen, setAllRunnersModalOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const [reopenModalOpen, setReopenModalOpen] = useState(false)
 
   useEffect(() => {
@@ -750,6 +754,19 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
       })
   }, [runners])
 
+
+  const handleOpenImportModal = async () => {
+    if (!activeRace?.id) {
+      const race = await handleEnsureActiveRace()
+      if (!race?.id) {
+        alert('Informe o nome da corrida antes de importar a planilha de corredores.')
+        raceNameInputRef.current?.focus()
+        return
+      }
+    }
+    setImportModalOpen(true)
+  }
+
   const handleConfirmStartEmpty = async () => {
     if (!activeRace?.id) return
     await setStartTime(activeRace.id, new Date().toISOString())
@@ -820,14 +837,24 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
               <span style={{ fontSize: '20px', display: 'inline-flex' }}>⚙</span>
               <h1>CONFIGURAR CORRIDA</h1>
             </div>
-            <button
-              type="button"
-              className="race-config-telao-btn"
-              onClick={() => window.open(`/?ranking=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`, '_blank')}
-              title="Abrir tela de acompanhamento ao vivo para TV ou Telão"
-            >
-              📺 ABRIR TELÃO / TV
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="race-config-batch-btn"
+                onClick={handleOpenImportModal}
+                title="Cadastrar múltiplos corredores via planilha Excel (.xlsx) ou CSV"
+              >
+                📋 Inscrição em lote
+              </button>
+              <button
+                type="button"
+                className="race-config-telao-btn"
+                onClick={() => window.open(`/?ranking=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`, '_blank')}
+                title="Abrir tela de acompanhamento ao vivo para TV ou Telão"
+              >
+                📺 ABRIR TELÃO / TV
+              </button>
+            </div>
           </div>
 
           <div className="race-config-fields">
@@ -1324,6 +1351,14 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
           }
         }}
       />
+
+      {/* Modal de Inscrição em Lote de Corredores via Planilha */}
+      {importModalOpen && (
+        <ImportRunnersModal
+          raceId={activeRace?.id}
+          onClose={() => setImportModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

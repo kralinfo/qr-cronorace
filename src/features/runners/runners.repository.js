@@ -1,5 +1,5 @@
 // Responsabilidade única: persistência dos corredores cadastrados (Cloud Firestore).
-import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
 import { normalizeCpf } from './runner-formatter.service.js'
 import { getRaceById } from '../races/races.repository.js'
@@ -196,6 +196,23 @@ export function normalizeComparable(value) {
   return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
-
-
-
+/**
+ * Adiciona múltiplos corredores em lote usando writeBatch do Firestore.
+ * Divide em lotes de até 450 para segurança (limite do Firestore é 500).
+ * @param {Array<import('./runners.types.js').Runner>} runnersList
+ * @returns {Promise<Array<import('./runners.types.js').Runner>>}
+ */
+export async function addRunnersBatch(runnersList) {
+  if (!runnersList || runnersList.length === 0) return []
+  const BATCH_SIZE = 450
+  for (let i = 0; i < runnersList.length; i += BATCH_SIZE) {
+    const chunk = runnersList.slice(i, i + BATCH_SIZE)
+    const batch = writeBatch(db)
+    for (const runner of chunk) {
+      const ref = doc(db, COLLECTIONS.runners, runner.id)
+      batch.set(ref, runner)
+    }
+    await batch.commit()
+  }
+  return runnersList
+}

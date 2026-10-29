@@ -283,6 +283,9 @@ table.rk-table{width:100%;border-collapse:collapse}
     <button class="rk-btn rk-btn-ghost" onclick="backToChrono()">
       <i class="fa-solid fa-arrow-left"></i> Cronômetro
     </button>
+    <button class="rk-btn rk-btn-danger" onclick="resetTimer()" title="Zerar chegadas e reabrir a corrida para nova largada">
+      <i class="fa-solid fa-rotate-left"></i> Reiniciar
+    </button>
   </div>
 
 </div><!-- end rankingView -->
@@ -451,29 +454,68 @@ async function deleteAllResultsForRace() {
   }
 }
 
-function resetTimer(){
-  if(arrivals.length>0){
-    if(!confirm('Deseja realmente reiniciar o cronômetro e zerar todo o ranking de chegadas?'))return;
+async function resetTimer(){
+  if(arrivals.length > 0 || raceFinished){
+    if(!confirm('Deseja realmente reiniciar o cronômetro e zerar todo o ranking de chegadas? A corrida ficará aberta para uma nova largada.'))return;
   }
-  if(raceFinished){backToChrono();}
   if(isRunning){clearInterval(timer);isRunning=false;}
+  if(raceFinished){backToChrono();}
+
   elapsedTime=0;formatTime(0);
   arrivals=[];renderArrivals();
   bibInput.value='';
   if(runnerPreview)runnerPreview.classList.add('hidden');
+
   lblStart.textContent='INICIAR';
   iconStart.className='fa-solid fa-play';
-  btnStart.className='w-full py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+  btnStart.disabled=false;
+  btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
   statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
   statusText.textContent='AGUARDANDO';
   raceFinished=false;
+
   const btn=document.getElementById('btnFinish');
   btn.textContent='🏁 ENCERRAR';
   btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
   btn.onclick=confirmFinish;
-  // Apaga todos os resultados desta corrida no Firestore
-  deleteAllResultsForRace();
-  showToast('Cronômetro e ranking reiniciados!');
+
+  // 1. Apaga todos os resultados desta corrida no Firestore
+  await deleteAllResultsForRace();
+
+  // 2. Reabre a corrida no Firestore e no localStorage (limpando startTime e endTime)
+  try {
+    const raw = localStorage.getItem('pwa-qr-timing:active-race');
+    if (raw) {
+      const race = JSON.parse(raw);
+      race.startTime = null;
+      race.endTime = null;
+      localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+
+      if (window.fbDb && window.fbSetDoc && window.fbDoc && race.id) {
+        await window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), {
+          startTime: null,
+          endTime: null
+        }, { merge: true });
+      }
+
+      // Notifica React parent
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'RACE_RESET', raceId: race.id }, '*');
+      }
+
+      // BroadcastChannel
+      try {
+        const bc = new BroadcastChannel('qr-cronorace-channel');
+        bc.postMessage({ type: 'RACE_RESET', raceId: race.id });
+        bc.close();
+      } catch(e) {}
+    }
+  } catch(err) {
+    console.warn('Erro ao atualizar status da corrida no reset:', err);
+  }
+
+  showToast('Corrida reiniciada! Pronta para uma nova largada.');
 }
 async function confirmFinish(){
   if(!confirm('Deseja realmente encerrar esta corrida?'))return;
@@ -583,7 +625,7 @@ function renderRankingTable(){
     if(rkActiveFilter==='FEMININO')return isFem;
     if(rkActiveFilter==='LOCAL MASC')return isLocal&&isMasc;
     if(rkActiveFilter==='LOCAL FEM')return isLocal&&isFem;
-    if(rkActiveFilter==='PCD_60')return hasSpecial('PCD')||hasSpecial('+60');
+    if(rkActiveFilter==='PCD_60')return hasSpecial('PCD')||hasSpecial('+60')||hasSpecial('60');
     return false;
   }
 
@@ -803,7 +845,7 @@ function openEditLocais(){
     const isLocal=cat.includes('LOCAL');
     const isFem=cat.includes('FEM');
     const genderLabel=isFem?'♀ Fem':'♂ Masc';
-    const special=cat.includes('PCD')?' · PCD':cat.includes('+60')?' · +60':'';
+    const special=cat.includes('PCD')?' · PCD':(cat.includes('+60')||cat.includes('60'))?' · +60':'';
     return `
     <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;background:#0d0920;border:1px solid #2a1f45;border-radius:12px">
       <span style="font-family:monospace;font-weight:800;color:#fff;font-size:.85rem;min-width:44px">#${a.bib}</span>

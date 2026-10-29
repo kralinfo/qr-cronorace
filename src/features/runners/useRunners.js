@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   addRunner,
+  addRunnersBatch,
   deleteRunner,
   getRunnersByRace,
   normalizeComparable,
@@ -239,6 +240,51 @@ export function useRunners(raceId) {
   }, [])
 
 
+
+  const createRunnersBatch = useCallback(async (runnersList, targetRaceId) => {
+    setError(null)
+    const effectiveRaceId = targetRaceId || (raceId !== 'ALL' ? raceId : null)
+    if (!effectiveRaceId) {
+      setError('Selecione uma corrida específica para realizar o cadastro em lote.')
+      return { success: false, count: 0 }
+    }
+    if (!runnersList || runnersList.length === 0) {
+      return { success: true, count: 0 }
+    }
+
+    try {
+      const currentRaceRunners = raceId === effectiveRaceId
+        ? runners
+        : runners.filter(r => r.raceId === effectiveRaceId)
+      let sequenceNumber = currentRaceRunners.length + 1
+      if (raceId !== effectiveRaceId && currentRaceRunners.length === 0) {
+        const raceRunners = await getRunnersByRace(effectiveRaceId)
+        sequenceNumber = raceRunners.length + 1
+      }
+
+      const runnerDocs = runnersList.map((item, idx) => {
+        const seq = sequenceNumber + idx
+        const id = generateRunnerId(effectiveRaceId, seq)
+        return {
+          id,
+          number: formatRunnerNumber(item.number),
+          name: capitalizeName(item.name),
+          cpf: item.cpf ? maskCpf(item.cpf) : '',
+          category: item.category,
+          raceId: effectiveRaceId,
+          createdAt: new Date().toISOString()
+        }
+      })
+
+      await addRunnersBatch(runnerDocs)
+      return { success: true, count: runnerDocs.length }
+    } catch (err) {
+      console.error('Erro ao cadastrar corredores em lote:', err)
+      setError(err?.message || 'Erro ao importar corredores.')
+      return { success: false, count: 0, error: err }
+    }
+  }, [raceId, runners])
+
   const removeRunner = useCallback(async (id) => {
     setError(null)
     try {
@@ -257,6 +303,7 @@ export function useRunners(raceId) {
     error,
     lastQrCode,
     createRunner,
+    createRunnersBatch,
     editRunner,
     removeRunner,
     clearError,

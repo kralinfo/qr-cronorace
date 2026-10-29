@@ -190,7 +190,7 @@ export default function AllRunnersModal({
                 const isMale = (runner.category || '').toUpperCase().includes('MASC')
                 const isLocal = (runner.category || '').toUpperCase().includes('LOCAL')
                 const isPcd = (runner.category || '').toUpperCase().includes('PCD')
-                const is60 = (runner.category || '').toUpperCase().includes('+60')
+                const is60 = (runner.category || '').toUpperCase().includes('+60') || (runner.category || '').toUpperCase().includes('60')
 
                 return (
                   <tr key={runner.id} className="arm-tr">

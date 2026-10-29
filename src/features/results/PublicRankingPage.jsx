@@ -51,7 +51,7 @@ export default function PublicRankingPage() {
       if (categoryFilter === 'FEMININO' && !cat.includes('FEM')) return
       if (categoryFilter === 'LOCAL' && !cat.includes('LOCAL')) return
       if (categoryFilter === 'VISITANTE' && cat.includes('LOCAL')) return
-      if (categoryFilter === 'PCD_60' && !cat.includes('PCD') && !cat.includes('+60')) return
+      if (categoryFilter === 'PCD_60' && !cat.includes('PCD') && !cat.includes('+60') && !cat.includes('60')) return
     }
     seenArrivalIds.add(p.barcode)
     const displayTime = p.elapsedMs != null
