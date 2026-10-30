@@ -8,7 +8,7 @@ import EditRunnerModal from './EditRunnerModal.jsx'
 import ImportRunnersModal from './ImportRunnersModal.jsx'
 import BluetoothPrinterModal from './BluetoothPrinterModal.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
-import { generateRunnerQRCode } from './qrcode.service.js'
+import { generateRunnerBarcode } from './barcode.service.js'
 import { buildQRFilename } from './qr-filename.service.js'
 import { printRunnerQRCode, printRunnersQRCodeBatch } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
@@ -256,7 +256,7 @@ export default function RunnersPage() {
     setPrintingBt(true)
     try {
       for (const runner of selectedRunners) {
-        const dataUrl = await generateRunnerQRCode(runner) // need import
+        const dataUrl = await generateRunnerBarcode(runner) // need import
         await printRunnerToBluetooth(dataUrl, runner, selectedRace?.name || racesMap[runner.raceId]?.name)
       }
     } catch (err) {
@@ -559,8 +559,8 @@ export default function RunnersPage() {
               </p>
               <img
                 src={lastQrCode.qrDataUrl}
-                alt={`QR de ${lastQrCode.runner.name}`}
-                style={{ width: 180, height: 180 }}
+                alt={`Código de barras de ${lastQrCode.runner.name}`}
+                style={{ width: '100%', maxWidth: 320, height: 'auto' }}
               />
               <div className="created-qr-actions">
                 <button

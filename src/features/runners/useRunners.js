@@ -10,7 +10,7 @@ import {
   updateRunner
 } from './runners.repository.js'
 import { generateRunnerId } from './runner-id.service.js'
-import { generateRunnerQRCode } from './qrcode.service.js'
+import { generateRunnerBarcode } from './barcode.service.js'
 import {
   capitalizeName,
   formatRunnerNumber,
@@ -137,7 +137,7 @@ export function useRunners(raceId) {
       }
 
       await addRunner(runner)
-      const qrDataUrl = await generateRunnerQRCode(runner)
+      const qrDataUrl = await generateRunnerBarcode(runner)
       const result = { runner, qrDataUrl }
       setLastQrCode(result)
       return result

@@ -225,9 +225,9 @@ export default function AllRunnersModal({
                             setViewingQrRunner(runner)
                             onSelectRunner?.(runner)
                           }}
-                          title="Ver e Imprimir QR Code"
+                          title="Ver e Imprimir Código de Barras"
                         >
-                          📷 QR Code
+                          📷 Código de barras
                         </button>
                         {onDeleteRunner && (
                           <button

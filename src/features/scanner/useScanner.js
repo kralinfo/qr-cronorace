@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BrowserQRCodeReader } from '@zxing/browser'
+import { BrowserMultiFormatReader } from '@zxing/browser'
 import { addResult } from '../results/results.repository.js'
 import { getRaceById } from '../races/races.repository.js'
 import { getRunnerById } from '../runners/runners.repository.js'
-import { decodeRunnerPayload } from '../runners/qrcode.service.js'
+import { decodeRunnerPayload } from '../runners/barcode.service.js'
 import { buildArrivalResult, validateArrivalScan } from './scanner.rules.js'
 
 /** @typedef {'idle'|'scanning'|'recorded'|'invalid-race'|'race-not-started'|'race-finished'|'error'} ScanStatus */
@@ -82,7 +82,7 @@ export function useScanner(activeRaceOrId) {
     setStatus('scanning')
     setMessage('Aponte a câmera para o QR code')
 
-    const reader = new BrowserQRCodeReader(undefined, {
+    const reader = new BrowserMultiFormatReader(undefined, {
       delayBetweenScanAttempts: 300
     })
 
@@ -189,6 +189,6 @@ export function useScanner(activeRaceOrId) {
     }, RESULT_DISPLAY_MS)
   }, [raceId])
 
-  return { videoRef, status, message, lastArrival, rejectedScan, isRaceActive }
+  return { videoRef, status, message, lastArrival, rejectedScan, isRaceActive, processBarcode: handleDecodedText }
 }
 

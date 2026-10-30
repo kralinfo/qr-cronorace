@@ -1,4 +1,4 @@
-// UI only: item da lista de corredores com menu de três pontinhos (⋮) para visualizar/baixar/imprimir seu QR code.
+﻿// UI only: item da lista de corredores com menu de três pontinhos (⋮) para visualizar/baixar/imprimir seu QR code.
 import React, { useState } from 'react'
 import { useRunnerQRCode } from './useRunnerQRCode.js'
 import { printRunnerQRCode } from './print.service.js'
@@ -77,7 +77,7 @@ export default function RunnerQRItem({
 
   const menuItems = [
     {
-      label: showPreview ? 'Ocultar QR Code' : 'Ver QR Code',
+      label: showPreview ? 'Ocultar código de barras' : 'Ver código de barras',
       onClick: handleToggleView
     },
     {
@@ -117,7 +117,7 @@ export default function RunnerQRItem({
     <li
       className={`runner-qr-item ${showPreview ? 'preview-open' : ''}`}
       onClick={handleCardClick}
-      title="Clique para ver o QR Code deste corredor"
+      title="Clique para ver o código de barras deste corredor"
     >
       <div className="runner-item-header">
         {onToggleSelect && (
@@ -171,7 +171,7 @@ export default function RunnerQRItem({
               <IconClose size={14} />
             </button>
           </div>
-          <img src={qrDataUrl} alt={`QR de ${runner.name}`} style={{ width: 160, height: 'auto', maxHeight: 210 }} />
+          <img src={qrDataUrl} alt={`Código de barras de ${runner.name}`} style={{ width: '100%', maxWidth: 320, height: 'auto' }} />
           <div className="runner-qr-preview-caption">
             <span className="runner-qr-preview-name">{runner.name}</span>
             <span className="runner-qr-preview-number">Nº {runner.number || '—'}</span>

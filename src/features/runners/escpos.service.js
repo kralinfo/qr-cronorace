@@ -1,5 +1,5 @@
-// Responsabilidade única: gerar comandos ESC/POS e converter imagens (QR code) em bitmaps monocromáticos para impressoras térmicas (58mm/80mm).
-import { generateRunnerQRCode } from './qrcode.service.js'
+// Responsabilidade única: gerar comandos ESC/POS e converter imagens (Barcode / Etiqueta) em bitmaps monocromáticos para impressoras térmicas (58mm/80mm).
+import { generateRunnerThermalLabel } from './barcode.service.js'
 
 /**
  * Normaliza textos removendo acentos para evitar caracteres corrompidos em impressoras térmicas ESC/POS.
@@ -16,12 +16,12 @@ export function sanitizeTextForThermal(text) {
 
 /**
  * Converte uma imagem (dataURL ou Image) em bytes ESC/POS raster bit image (GS v 0).
- * Compatível com 100% das impressoras térmicas de cupom 58mm e 80mm.
- * @param {string} dataUrl - Data URL da imagem do QR Code.
- * @param {number} [targetWidth=256] - Largura alvo em pixels (múltiplo de 8).
+ * Compatível com 100% das impressoras térmicas de cupom e etiquetas 58mm e 80mm.
+ * @param {string} dataUrl - Data URL da imagem.
+ * @param {number} [targetWidth=380] - Largura alvo em pixels (múltiplo de 8).
  * @returns {Promise<Uint8Array>}
  */
-export function convertImageToEscPosBitmap(dataUrl, targetWidth = 256) {
+export function convertImageToEscPosBitmap(dataUrl, targetWidth = 380) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
@@ -89,7 +89,7 @@ export function convertImageToEscPosBitmap(dataUrl, targetWidth = 256) {
         reject(err)
       }
     }
-    img.onerror = () => reject(new Error('Erro ao carregar a imagem do QR Code'))
+    img.onerror = () => reject(new Error('Erro ao carregar a imagem da etiqueta térmica'))
     img.src = dataUrl
   })
 }
@@ -125,13 +125,17 @@ export function concatByteArrays(arrays) {
 }
 
 /**
- * Constrói o buffer binário completo ESC/POS para impressão do cupom térmico do corredor.
- * @param {string} qrDataUrl - Data URL do QR code do corredor.
- * @param {{ id: string, name: string, number?: string }} runner - Dados do atleta.
+ * Constrói o buffer binário completo ESC/POS para impressão da etiqueta adesiva térmica ampliada (~8.8 cm).
+ * - TODAS as informações (Número, Nome destacado, Categoria e Código de Barras) estão 100% no mesmo sentido horizontal.
+ * - MÁXIMA ÊNFASE AO NOME DO ATLETA (destaque central gigante).
+ * - CÓDIGO DE BARRAS BEM GRANDE E ROBUSTO (ocupando a base com barras grossas e altas).
+ * - Comprimento ampliado para ~8.8 cm (700 dots) para que o corte caia perfeitamente no picote do adesivo.
+ * @param {string} [qrDataUrl] - Data URL (opcional).
+ * @param {{ id: string, name: string, number?: string, category?: string }} runner - Dados do atleta.
  * @param {string} [raceName] - Nome da corrida.
  * @returns {Promise<Uint8Array>}
  */
-export async function buildRunnerEscPosReceipt(qrDataUrl, runner) {
+export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName = '') {
   const commands = []
 
   // 1. Inicializar impressora (ESC @)
@@ -140,32 +144,17 @@ export async function buildRunnerEscPosReceipt(qrDataUrl, runner) {
   // 2. Alinhamento central (ESC a 1)
   commands.push(new Uint8Array([0x1B, 0x61, 0x01]))
 
-  // 3. Número de peito em destaque grande acima do QR code (ESC ! 0x30 - Altura e Largura dupla)
-  if (runner.number) {
-    commands.push(new Uint8Array([0x1B, 0x21, 0x30, 0x1B, 0x45, 0x01])) // Altura/largura dupla + Negrito
-    commands.push(textToBytes(`N. ${runner.number}\n`))
-    commands.push(new Uint8Array([0x1B, 0x21, 0x00, 0x1B, 0x45, 0x00])) // Normal
-  }
+  // 3. Gera a etiqueta adesiva completa de ~8.8 cm (700 dots) rotacionada 90° para a fita de 58mm
+  const labelDataUrl = runner
+    ? await generateRunnerThermalLabel(runner, { rotatedForThermal: true })
+    : qrDataUrl
 
-  // 4. Espaçamento sutil antes do QR
-  commands.push(textToBytes('\n'))
+  // Largura de 380 dots (ocupa toda a largura útil do rolo de 58mm)
+  const labelBitmapBytes = await convertImageToEscPosBitmap(labelDataUrl, 360)
+  commands.push(labelBitmapBytes)
 
-  // 5. QR Code puro como Bitmap ESC/POS (largura de 256px - ideal para papel de 58mm/80mm)
-  const pureQrDataUrl = runner ? await generateRunnerQRCode(runner) : qrDataUrl
-  const qrBitmapBytes = await convertImageToEscPosBitmap(pureQrDataUrl, 256)
-  commands.push(qrBitmapBytes)
-
-  // 6. Nome do atleta abaixo do QR code - Negrito com altura dupla (ESC ! 0x10)
-  commands.push(new Uint8Array([0x1B, 0x21, 0x10, 0x1B, 0x45, 0x01]))
-  commands.push(textToBytes(`\n${runner.name}\n`))
-  commands.push(new Uint8Array([0x1B, 0x21, 0x00, 0x1B, 0x45, 0x00]))
-
-  // 7. Avanço de linhas para corte do papel
-  commands.push(new Uint8Array([0x1B, 0x64, 0x03]))
-  commands.push(textToBytes('\n\n'))
-
-  // 8. Comando de corte parcial de papel (GS V 65 0) - para impressoras com guilhotina
-  commands.push(new Uint8Array([0x1D, 0x56, 0x41, 0x00]))
+  // 4. Avanco exato de 15 mm (120 dots em 203 DPI) para alcancar a navalha de corte\n  commands.push(new Uint8Array([0x1B, 0x4A, 120]))\n\n  // 5. Corte parcial (GS V 66 0) exatamente no picote do adesivo
+  commands.push(new Uint8Array([0x1D, 0x56, 0x42, 0x00]))
 
   return concatByteArrays(commands)
 }
@@ -186,7 +175,7 @@ export function buildTestEscPosReceipt(printerName = 'Impressora Termica') {
   commands.push(textToBytes('Bluetooth Conectado\n'))
   commands.push(textToBytes('--------------------------------\n'))
   commands.push(textToBytes(new Date().toLocaleString('pt-BR') + '\n'))
-  commands.push(textToBytes('PWA QR Timing\n\n\n\n\n'))
-  commands.push(new Uint8Array([0x1D, 0x56, 0x41, 0x00]))
+  commands.push(textToBytes('PWA QR Timing\n\n'))
+  commands.push(new Uint8Array([0x1D, 0x56, 0x42, 0x00]))
   return concatByteArrays(commands)
 }

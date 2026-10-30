@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR" class="h-full overflow-hidden">
 <head>
 <meta charset="UTF-8" />
@@ -682,28 +682,39 @@ function filterCategory(cat){
   renderArrivals();
 }
 
-function registerArrival(){
-  const bibNumber=bibInput.value.trim();
-  if(!bibNumber){showToast('Digite o número de peito!',true);return;}
-  const cleanBib=String(parseInt(bibNumber,10));
+function registerArrival(directBib){
+  const rawBib = (typeof directBib === 'string' && directBib.trim())
+    ? directBib.trim()
+    : bibInput.value.trim();
+
+  // SEMPRE limpa o campo e a prévia imediatamente para nunca concatenar leituras
+  bibInput.value = '';
+  if (runnerPreview) runnerPreview.classList.add('hidden');
+  if (typeof clearScanBuffer === 'function') clearScanBuffer();
+
+  if(!rawBib){showToast('Digite o número de peito!',true);return;}
+  const digitsOnly = rawBib.replace(/\D/g, '');
+  if(!digitsOnly){showToast('Número inválido: "' + rawBib + '"',true);return;}
+
+  const cleanBib=String(parseInt(digitsOnly,10));
   const existing=arrivals.find(a=>String(parseInt(a.bib,10))===cleanBib);
-  if(existing){showToast(`O Nº ${existing.bib} (${existing.name}) já cruzou a chegada! (${existing.time})`,true);return;}
-  const runner=getRunnerByBib(bibNumber);
-  const runnerName=runner?runner.name:'—';
+  if(existing){
+    showToast('O Nº ' + existing.bib + ' (' + existing.name + ') já cruzou a chegada! (' + existing.time + ')',true);
+    return;
+  }
+  const runner=getRunnerByBib(digitsOnly);
+  const runnerName=runner?runner.name:'-';
   const runnerCat=runner?.category?runner.category:'GERAL';
-  const currentTime=`${timerDisplay.textContent}${millisDisplay.textContent}`;
+  const currentTime=timerDisplay.textContent + millisDisplay.textContent;
   const totalGeral=arrivals.length+1;
   const posCat=arrivals.filter(a=>a.category===runnerCat).length+1;
-  const newArrival={id:Date.now(),posGeral:totalGeral,category:runnerCat,bib:bibNumber.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
+  const newArrival={id:Date.now(),posGeral:totalGeral,category:runnerCat,bib:digitsOnly.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
   arrivals.unshift(newArrival);
   renderArrivals();
-  bibInput.value='';
-  runnerPreview.classList.add('hidden');
-  bibInput.focus();
-  showToast(`Nº ${newArrival.bib}${runnerName!=='—'?' - '+runnerName:''} registrado!`);
+  showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
 
   // Sincroniza em tempo real com o Telão/TV e Firebase
-  syncArrival(bibNumber, runnerName, runner);
+  syncArrival(digitsOnly, runnerName, runner);
 }
 
 async function syncArrival(bibNumber, runnerName, runner) {
@@ -968,6 +979,114 @@ function initRaceState(){
     console.warn('Erro ao inicializar estado da corrida:',e);
   }
 }
+
+
+// ─── Global Barcode Scanner (wedge de teclado USB / Bluetooth) ────────────────
+let clearScanBuffer = null;
+
+(function setupGlobalBarcodeScanner() {
+  let scanBuffer = '';
+  let scanTimer = null;
+  let lastKeyTime = 0;
+  let lastProcessedCode = '';
+  let lastProcessedTime = 0;
+  const BURST_TIMEOUT_MS = 60; // tempo maximo entre caracteres do leitor
+
+  clearScanBuffer = function() {
+    scanBuffer = '';
+    lastKeyTime = 0;
+    if (scanTimer) {
+      clearTimeout(scanTimer);
+      scanTimer = null;
+    }
+  };
+
+  function processScan() {
+    const code = scanBuffer.trim();
+    clearScanBuffer();
+    if (!code) return;
+
+    const now = Date.now();
+    // Previne disparo duplo do mesmo codigo (ex: leitor enviando CR + LF em < 300ms)
+    if (code === lastProcessedCode && (now - lastProcessedTime) < 300) {
+      return;
+    }
+    lastProcessedCode = code;
+    lastProcessedTime = now;
+
+    if (raceFinished) {
+      showToast('A corrida já está encerrada!', true);
+      return;
+    }
+
+    bibInput.value = '';
+    registerArrival(code);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    const now = Date.now();
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    const isBibFocused = (document.activeElement === bibInput);
+
+    // Se estiver digitando em outro campo (ex: modal de locais), nao interfere
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) && !isBibFocused) {
+      clearScanBuffer();
+      return;
+    }
+
+    // Se passou mais de 60ms desde a ultima tecla, qualquer tecla que chegar
+    // e inicio de uma NOVA leitura -> ZERA imediatamente o buffer anterior!
+    // Isso impede categoricamente a concatenacao de dois codigos.
+    if (now - lastKeyTime > BURST_TIMEOUT_MS) {
+      scanBuffer = '';
+      if (isBibFocused && /^\d$/.test(e.key)) {
+        bibInput.value = '';
+      }
+    }
+    lastKeyTime = now;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (scanBuffer.trim()) {
+        processScan();
+      } else if (bibInput.value.trim()) {
+        const val = bibInput.value.trim();
+        bibInput.value = '';
+        clearScanBuffer();
+        registerArrival(val);
+      }
+      return;
+    }
+
+    // Se for digito, acumula
+    if (/^\d$/.test(e.key)) {
+      scanBuffer += e.key;
+
+      if (!isBibFocused) {
+        e.preventDefault();
+      }
+
+      // Fallback: se o leitor nao enviar Enter ao final, processa apos 60ms sem teclas
+      if (scanTimer) clearTimeout(scanTimer);
+      scanTimer = setTimeout(function() {
+        if (scanBuffer.trim().length >= 1) {
+          processScan();
+        } else {
+          clearScanBuffer();
+        }
+      }, BURST_TIMEOUT_MS);
+      return;
+    }
+
+    // Tecla nao numerica: zera buffer
+    if (!['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'CapsLock'].includes(e.key)) {
+      clearScanBuffer();
+    }
+  }, true);
+})();
+// ─────────────────────────────────────────────────────────────────────────────
 
 initRaceState();
 

@@ -10,11 +10,12 @@ import { IconCheck } from '../../shared/Icons.jsx'
 /** @param {{ onBack?: () => void }} props */
 export default function ScannerPage({ onBack }) {
   const { activeRace } = useActiveRace()
-  const { videoRef, status, message, lastArrival, rejectedScan, isRaceActive } = useScanner(activeRace)
+  const { videoRef, status, message, lastArrival, rejectedScan, isRaceActive, processBarcode } = useScanner(activeRace)
   const { runners } = useRunners(activeRace?.id)
   const [showManual, setShowManual] = useState(false)
   const [manualConfirmation, setManualConfirmation] = useState(null)
   const [manualError, setManualError] = useState(null)
+  const [barcodeInput, setBarcodeInput] = useState('')
 
   const isStarted = Boolean(activeRace?.startTime)
   const isFinished = Boolean(activeRace?.endTime)
@@ -91,6 +92,20 @@ export default function ScannerPage({ onBack }) {
 
       <div className="controls">
         <p>{message}</p>
+        <input
+          type="text"
+          value={barcodeInput}
+          onChange={e => setBarcodeInput(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && barcodeInput.trim()) {
+              processBarcode?.(barcodeInput.trim())
+              setBarcodeInput('')
+            }
+          }}
+          placeholder="Passe o leitor de código de barras aqui..."
+          autoFocus
+          style={{ width: '100%', padding: '8px', marginBottom: '8px', fontSize: '1rem' }}
+        />
         <button
           type="button"
           className="secondary-btn manual-arrival-btn"

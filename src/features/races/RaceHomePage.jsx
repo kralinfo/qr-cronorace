@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { useRaces } from './useRaces.js'
 import { useRunners } from '../runners/useRunners.js'
@@ -7,7 +7,7 @@ import { printRunnerQRCode, printRunnersQRCodeBatch } from '../runners/print.ser
 import { downloadDataUrl } from '../runners/download.service.js'
 import { buildQRFilename } from '../runners/qr-filename.service.js'
 import { isBluetoothSupported, printRunnerToBluetooth } from '../runners/bluetooth-printer.service.js'
-import { generateRunnerQRCode } from '../runners/qrcode.service.js'
+import { generateRunnerBarcode } from '../runners/barcode.service.js'
 import StartTimeField from './StartTimeField.jsx'
 import EditRaceForm from './EditRaceForm.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
@@ -62,7 +62,7 @@ function QRResultPanel({ lastQrCode, raceName, onDismiss }) {
       </div>
       <div className="qr-result-body">
         <div className="qr-result-img-wrap">
-          <img src={lastQrCode.qrDataUrl} alt={`QR de ${lastQrCode.runner.name}`} className="qr-result-img" />
+          <img src={lastQrCode.qrDataUrl} alt={`Código de barras de ${lastQrCode.runner.name}`} className="qr-result-img" />
         </div>
         <div className="qr-result-info">
           <div className="qr-result-name">{lastQrCode.runner.name}</div>
@@ -313,7 +313,7 @@ function RegisteredRunnersList({ runners, onSelectRunner }) {
                 key={r.id}
                 className="registered-runner-item"
                 onClick={() => onSelectRunner?.(r)}
-                title="Clique para abrir e imprimir o QR Code"
+                title="Clique para abrir e imprimir o código de barras"
               >
                 <span className="rri-number">Nº {r.number || '—'}</span>
                 <span className="rri-name">{r.name}</span>
@@ -388,19 +388,19 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [reopenModalOpen, setReopenModalOpen] = useState(false)
 
-  useEffect(() => {
+useEffect(() => {
     let active = true
     if (selectedRunner) {
-      generateRunnerQRCode(selectedRunner).then(url => {
-        if (active) setSelectedQrUrl(url)
-      })
+      generateRunnerBarcode(selectedRunner)
+        .then(url => { if (active) setSelectedQrUrl(url) })
+        .catch(err => { console.error('Erro ao gerar código de barras:', err); if (active) setSelectedQrUrl(null) })
     } else {
       setSelectedQrUrl(null)
     }
     return () => { active = false }
   }, [selectedRunner])
 
-  useEffect(() => {
+useEffect(() => {
     if (activeRace) {
       setName(activeRace.name || '')
       setDistanceKm(activeRace.distanceKm || '')
@@ -562,7 +562,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
     setPrintingBtCat(catKey)
     try {
       for (const runner of runnersList) {
-        const dataUrl = await generateRunnerQRCode(runner)
+        const dataUrl = await generateRunnerBarcode(runner)
         await printRunnerToBluetooth(dataUrl, runner, activeRace?.name)
       }
     } catch (err) {
@@ -1203,7 +1203,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
                   <span className="cqr-num">Nº {selectedRunner.number}</span>
                 )}
                 {selectedQrUrl ? (
-                  <img src={selectedQrUrl} alt={`QR de ${selectedRunner.name}`} className="cqr-img" />
+                  <img src={selectedQrUrl} alt={`Código de barras de ${selectedRunner.name}`} className="cqr-img" />
                 ) : (
                   <span className="cqr-loading">...</span>
                 )}
