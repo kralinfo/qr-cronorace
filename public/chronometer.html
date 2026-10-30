@@ -574,6 +574,7 @@ async function deleteAllResultsForRace() {
       window.fbCollection(window.fbDb, 'results'),
       window.fbWhere('raceId', '==', raceId)
     );
+
     const snap = await window.fbGetDocs(q);
     if (snap.empty) return;
 
@@ -887,6 +888,7 @@ function registerArrival(directBib){
   arrivals.unshift(newArrival);
   renderArrivals();
   showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
+  triggerArrivalFeedback(newArrival, 1);
 
   // Sincroniza em tempo real com o Telão/TV e Firebase incluindo tempo decorrido
   syncArrival(digitsOnly, runnerName, runner, currentTime, elapsedTime);
@@ -958,6 +960,9 @@ window.startFirebaseListening = function() {
     window.fbCollection(window.fbDb, 'results'),
     window.fbWhere('raceId', '==', raceId)
   );
+
+  // Contador prévio para detectar novas chegadas sem vibrar na abertura
+  let _prevCount = null;
 
   window.fbOnSnapshot(q, (snap) => {
     let raceObj = null;
@@ -1034,6 +1039,15 @@ window.startFirebaseListening = function() {
     });
 
     if (newArrivals.length > 0 || snap.empty) {
+      const currentCount = newArrivals.length;
+
+      // ── Vibração + feedback visual ao detectar nova chegada via Firebase ──
+      if (_prevCount !== null && currentCount > _prevCount) {
+        const diff = currentCount - _prevCount;
+        triggerArrivalFeedback(newArrivals[newArrivals.length - 1], diff);
+      }
+      _prevCount = currentCount;
+
       // Inverte para exibir a última chegada no topo do cronômetro
       arrivals = [...newArrivals].reverse();
       renderArrivals();
@@ -1158,6 +1172,82 @@ function showToast(msg,isError=false){
   document.body.appendChild(toast);
   setTimeout(()=>toast.remove(),2500);
 }
+
+// ── Vibração + feedback visual ao detectar nova chegada (manual ou via Firebase) ──
+function triggerArrivalFeedback(lastArrival, count = 1) {
+  // Vibração (Vibration API — celulares Android / PWA)
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate([120, 60, 120]);
+    } catch(e) {}
+  }
+
+  const name = lastArrival?.name && lastArrival.name !== '—' && lastArrival.name !== '-' ? lastArrival.name : null;
+  const bib  = lastArrival?.bib || '';
+  const pos  = lastArrival?.posGeral || '';
+  const time = lastArrival?.time || '';
+
+  const banner = document.createElement('div');
+  banner.style.cssText = [
+    'position:fixed',
+    'top:72px',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'z-index:9999',
+    'display:flex',
+    'align-items:center',
+    'gap:10px',
+    'background:linear-gradient(135deg,#059669,#10b981)',
+    'color:#fff',
+    'font-weight:800',
+    'font-size:13px',
+    'padding:10px 20px',
+    'border-radius:14px',
+    'box-shadow:0 8px 28px rgba(16,185,129,0.55)',
+    'pointer-events:none',
+    'animation:feedbackSlideIn 0.25s ease-out',
+    'white-space:nowrap',
+    'max-width:92vw',
+    'overflow:hidden',
+    'text-overflow:ellipsis',
+  ].join(';');
+
+  let html = '<span style="font-size:18px">✔</span>';
+  html += '<span>';
+  if (count > 1) {
+    html += count + ' chegadas registradas';
+  } else {
+    html += 'Nº ' + bib;
+    if (name) html += ' · ' + name;
+    if (pos)  html += ' — ' + pos + 'º lugar';
+    if (time) html += ' · ' + time;
+  }
+  html += '</span>';
+  banner.innerHTML = html;
+
+  if (!document.getElementById('feedbackKF')) {
+    const style = document.createElement('style');
+    style.id = 'feedbackKF';
+    style.textContent = `
+      @keyframes feedbackSlideIn {
+        from { opacity:0; transform:translateX(-50%) translateY(-12px); }
+        to   { opacity:1; transform:translateX(-50%) translateY(0); }
+      }
+      @keyframes feedbackSlideOut {
+        from { opacity:1; transform:translateX(-50%) translateY(0); }
+        to   { opacity:0; transform:translateX(-50%) translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(banner);
+  setTimeout(() => {
+    banner.style.animation = 'feedbackSlideOut 0.25s ease-in forwards';
+    setTimeout(() => banner.remove(), 280);
+  }, 2200);
+}
+
 
 function initRaceState(){
   try{
