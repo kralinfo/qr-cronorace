@@ -107,6 +107,16 @@ function InnerAppContent() {
         handleNavigate(event.data.tab || 'home')
       } else if (event.data?.type === 'RECORD_ARRIVAL') {
         handleRecordArrival(event.data)
+        if (navigator.vibrate) {
+          try { navigator.vibrate([350, 100, 350, 100, 500]) } catch (e) {}
+        }
+      } else if (event.data?.type === 'VIBRATE') {
+        if (navigator.vibrate) {
+          try {
+            const pat = event.data?.pattern || [350, 100, 350, 100, 500]
+            navigator.vibrate(pat)
+          } catch (e) {}
+        }
       } else if (event.data?.type === 'RACE_RESET') {
         if (activeRace) {
           selectRace({ ...activeRace, startTime: null, endTime: null })
@@ -173,6 +183,7 @@ function InnerAppContent() {
           <iframe
             src="/chronometer.html"
             title="Cronômetro"
+            allow="vibrate; autoplay"
             scrolling="no"
             style={{
               width: '100%',
