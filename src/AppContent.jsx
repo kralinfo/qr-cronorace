@@ -63,6 +63,10 @@ function InnerAppContent() {
 
   useEffect(() => {
     const handleRecordArrival = async (data) => {
+      if (activeRace?.endTime) {
+        console.warn('Registro de chegada recusado: a corrida já está encerrada.')
+        return
+      }
       const bib = String(data?.bib || '').trim()
       const targetRaceId = data?.raceId || activeRace?.id || getStoredActiveRaceId()
       if (!targetRaceId || !bib) return

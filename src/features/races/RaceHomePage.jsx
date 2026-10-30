@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useActiveRace } from './ActiveRaceContext.jsx'
 import { useRaces } from './useRaces.js'
 import { useRunners } from '../runners/useRunners.js'
@@ -616,6 +616,10 @@ useEffect(() => {
       alert('Informe o nome da corrida antes de cadastrar corredores.')
       return
     }
+    if (targetRace?.endTime) {
+      alert('Esta corrida já está encerrada. Para cadastrar novos corredores, reabra a corrida.')
+      return
+    }
 
     const trimmedName = (maleName || '').trim()
     const trimmedNumber = (maleNumber || '').trim()
@@ -905,6 +909,46 @@ useEffect(() => {
           </div>
 
           {/* ── Cards MASCULINO e FEMININO lado a lado ── */}
+          {Boolean(activeRace?.endTime) && (
+            <div style={{
+              background: 'rgba(168, 85, 247, 0.12)',
+              border: '1.5px solid rgba(168, 85, 247, 0.4)',
+              borderRadius: '14px',
+              padding: '14px 18px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              color: '#ddd6fe'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>🔒</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '14px', color: '#fff' }}>CORRIDA ENCERRADA</div>
+                  <div style={{ fontSize: '12px', color: '#cbd5e1' }}>Novos cadastros de corredores estão bloqueados para esta prova.</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReopenModalOpen(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '8px 16px',
+                  fontWeight: 800,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(124,58,237,0.35)'
+                }}
+              >
+                🔓 Reabrir Corrida
+              </button>
+            </div>
+          )}
           <div className="race-config-cards">
             {/* CARD MASCULINO */}
             <section className="race-config-card male">
@@ -1168,7 +1212,13 @@ useEffect(() => {
             <button
               type="button"
               className="race-config-start-btn"
-              onClick={() => { handleStartNow(); onNavigate?.('chronometer') }}
+              onClick={() => {
+                if (!activeRace?.id) {
+                  alert('Confirme a corrida antes de ir para o cronômetro.')
+                  return
+                }
+                onNavigate?.('chronometer')
+              }}
             >
               <IconPlay size={20} /> INICIAR CRONÔMETRO
             </button>

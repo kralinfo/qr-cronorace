@@ -98,11 +98,22 @@ export default function ScannerPage({ onBack }) {
           onChange={e => setBarcodeInput(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter' && barcodeInput.trim()) {
+              if (isFinished) {
+                setManualError('Não é possível registrar chegada: esta corrida já foi encerrada.')
+                setBarcodeInput('')
+                return
+              }
+              if (!isStarted) {
+                setManualError('Não é possível registrar chegada: esta corrida ainda não foi iniciada.')
+                setBarcodeInput('')
+                return
+              }
               processBarcode?.(barcodeInput.trim())
               setBarcodeInput('')
             }
           }}
-          placeholder="Passe o leitor de código de barras aqui..."
+          disabled={!isStarted || isFinished}
+          placeholder={isFinished ? 'Corrida encerrada - leituras bloqueadas' : !isStarted ? 'Corrida não iniciada' : 'Passe o leitor de código de barras aqui...'}
           autoFocus
           style={{ width: '100%', padding: '8px', marginBottom: '8px', fontSize: '1rem' }}
         />

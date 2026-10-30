@@ -1,5 +1,5 @@
 // Responsabilidade única: persistência dos resultados (Cloud Firestore).
-import { collection, doc, getDocs, onSnapshot, query, setDoc, where, writeBatch } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, where, writeBatch } from 'firebase/firestore'
 import { db, COLLECTIONS } from '../../shared/firebase.js'
 
 /**
@@ -8,6 +8,20 @@ import { db, COLLECTIONS } from '../../shared/firebase.js'
  * @param {import('./results.types.js').ResultRow} result
  */
 export async function addResult(result) {
+  if (result.raceId) {
+    try {
+      const raceSnap = await getDoc(doc(db, COLLECTIONS.races, result.raceId))
+      if (raceSnap.exists()) {
+        const raceData = raceSnap.data()
+        if (raceData.endTime) {
+          console.warn(`[addResult] Chegada recusada: corrida ${result.raceId} já está encerrada.`)
+          return null
+        }
+      }
+    } catch (e) {
+      console.warn('[addResult] Erro ao verificar encerramento da corrida:', e)
+    }
+  }
   const id = buildId(result)
   const record = { id, ...result }
   await setDoc(doc(db, COLLECTIONS.results, id), record)

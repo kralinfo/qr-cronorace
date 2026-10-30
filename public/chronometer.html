@@ -14,7 +14,27 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 *{-webkit-tap-highlight-color:transparent;user-select:none}
 input,select{user-select:auto}
 html,body{height:100%;margin:0;overflow:hidden}
+
 .grid-bg{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px}
+
+/* Efeito de Tremor da Tela (Screen Shake) ao passar corredor */
+@keyframes screenShake {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-8px, -4px); }
+  20% { transform: translate(8px, 4px); }
+  30% { transform: translate(-7px, 3px); }
+  40% { transform: translate(7px, -3px); }
+  50% { transform: translate(-5px, 2px); }
+  60% { transform: translate(5px, -2px); }
+  70% { transform: translate(-3px, 1px); }
+  80% { transform: translate(3px, -1px); }
+  90% { transform: translate(-1px, 0px); }
+  100% { transform: translate(0, 0); }
+}
+.screen-tremor {
+  animation: screenShake 0.5s cubic-bezier(.36,.07,.19,.97) both !important;
+}
+
 
 /* ── Ranking View ── */
 #rankingView{display:none;flex-direction:column;height:100%}
@@ -245,7 +265,7 @@ table.rk-table{width:100%;border-collapse:collapse}
             id="bibInput"
             placeholder="Nº Peito"
             inputmode="numeric"
-            class="flex-1 min-w-0 w-full bg-[#0B0813] border-2 border-purple-500/40 focus:border-purple-500 rounded-xl px-3 py-2.5 text-xl font-mono font-bold text-center text-white placeholder-slate-600 outline-none transition-colors"
+            class="flex-1 min-w-0 w-full bg-[#0B0813] border-2 border-purple-500/40 focus:border-purple-500 rounded-xl px-3 py-2.5 text-xl font-mono font-bold text-center text-white placeholder-slate-600 outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             oninput="handleBibInputChange()"
             onkeydown="if(event.key==='Enter'){event.preventDefault();registerArrival();}"
           />
@@ -253,7 +273,7 @@ table.rk-table{width:100%;border-collapse:collapse}
             id="btnBibSubmit"
             onclick="registerArrival()"
             title="Confirmar Chegada"
-            class="h-[48px] w-[50px] shrink-0 bg-gradient-to-tr from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl flex items-center justify-center text-lg shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
+            class="h-[48px] w-[50px] shrink-0 bg-gradient-to-tr from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl flex items-center justify-center text-lg shadow-lg shadow-purple-600/30 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <i class="fa-solid fa-check"></i>
           </button>
@@ -455,6 +475,9 @@ table.rk-table{width:100%;border-collapse:collapse}
   if (typeof window.startFirebaseListening === 'function') {
     window.startFirebaseListening();
   }
+  if (typeof window.startRaceDocumentListening === 'function') {
+    window.startRaceDocumentListening();
+  }
 </script>
 
 <script>
@@ -602,6 +625,9 @@ async function resetTimer(){
   elapsedTime=0;formatTime(0);
   arrivals=[];renderArrivals();
   bibInput.value='';
+  bibInput.disabled=false;
+  btnBibSubmit.disabled=false;
+  bibInput.placeholder='Nº Peito';
   if(runnerPreview)runnerPreview.classList.add('hidden');
 
   lblStart.textContent='INICIAR';
@@ -662,6 +688,11 @@ async function confirmFinish(){
   statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
   statusText.textContent='ENCERRADA';
   raceFinished=true;
+
+  bibInput.disabled=true;
+  btnBibSubmit.disabled=true;
+  bibInput.placeholder='Corrida Encerrada';
+  if(runnerPreview)runnerPreview.classList.add('hidden');
 
   try{
     const raw=localStorage.getItem('pwa-qr-timing:active-race');
@@ -868,6 +899,17 @@ function registerArrival(directBib){
   if (runnerPreview) runnerPreview.classList.add('hidden');
   if (typeof clearScanBuffer === 'function') clearScanBuffer();
 
+  const rawActive = localStorage.getItem('pwa-qr-timing:active-race');
+  const activeRace = rawActive ? JSON.parse(rawActive) : {};
+  if (raceFinished || Boolean(activeRace.endTime) || (statusText && statusText.textContent === 'ENCERRADA')) {
+    showToast('A corrida já está encerrada! Não é permitido registrar novas chegadas.', true);
+    return;
+  }
+  if (!isRunning && elapsedTime === 0 && !activeRace.startTime) {
+    showToast('A corrida ainda não foi iniciada! Dê a largada no botão INICIAR antes de registrar chegadas.', true);
+    return;
+  }
+
   if(!rawBib){showToast('Digite o número de peito!',true);return;}
   const digitsOnly = rawBib.replace(/\D/g, '');
   if(!digitsOnly){showToast('Número inválido: "' + rawBib + '"',true);return;}
@@ -895,6 +937,13 @@ function registerArrival(directBib){
 }
 
 async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs) {
+  const rawActive = localStorage.getItem('pwa-qr-timing:active-race');
+  const activeRace = rawActive ? JSON.parse(rawActive) : {};
+  if (raceFinished || Boolean(activeRace.endTime) || (statusText && statusText.textContent === 'ENCERRADA')) {
+    console.warn('Chegada ignorada no sync: corrida já encerrada.');
+    return;
+  }
+
   const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
                  (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
   const runnerId = runner?.id || `bib_${bibNumber}`;
@@ -1061,6 +1110,9 @@ window.startFirebaseListening = function() {
 
 if (window.fbDb) {
   window.startFirebaseListening();
+  if (typeof window.startRaceDocumentListening === 'function') {
+    window.startRaceDocumentListening();
+  }
 }
 
 function renderArrivals(){
@@ -1177,17 +1229,67 @@ function showToast(msg,isError=false){
   setTimeout(()=>toast.remove(),2500);
 }
 
-// ── Vibração + feedback visual ao detectar nova chegada via Firebase ──────────
-function triggerArrivalFeedback(lastArrival, count) {
-  // Vibração (Vibration API — suportada em Android Chrome / Safari iOS 13+)
+
+// ── Web Audio Beep + Desbloqueio Háptico para Celular ──
+let audioCtx = null;
+function playArrivalBeep() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5 (agudo e limpo)
+    osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08); // E6
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.22);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.22);
+  } catch(e) {}
+}
+
+// Desbloqueia contexto de áudio e haptics no primeiro toque de tela
+document.addEventListener('touchstart', function unlockHaptics() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  } else if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
   if (navigator.vibrate) {
-    // Pulso duplo: 120ms vibra, 60ms pausa, 120ms vibra
-    navigator.vibrate([120, 60, 120]);
+    try { navigator.vibrate(20); } catch(e) {}
+  }
+}, { once: true, passive: true });
+
+// ── Vibração + Tremor de Tela + Bip Sonoro ao detectar nova chegada ──────────
+function triggerArrivalFeedback(lastArrival, count = 1) {
+  // 1. Vibração de alta intensidade (padrão rítmico forte e longo)
+  if (navigator.vibrate) {
+    try {
+      // 3 pulsos fortes com pausas: 300ms vibra, 100ms pausa, 300ms vibra, 100ms pausa, 450ms vibra
+      navigator.vibrate([300, 100, 300, 100, 450]);
+    } catch(e) {}
   }
 
-  // Banner flutuante visual de confirmação
-  const name = lastArrival?.name && lastArrival.name !== '—' ? lastArrival.name : null;
+  // 2. Tremor físico da tela (Screen Shake)
+  try {
+    const mainWrap = document.getElementById('chronoView') || document.body;
+    mainWrap.classList.remove('screen-tremor');
+    void mainWrap.offsetWidth; // Força reflow
+    mainWrap.classList.add('screen-tremor');
+    setTimeout(() => mainWrap.classList.remove('screen-tremor'), 550);
+  } catch(e) {}
 
+  // 3. Bipe sonoro de leitor
+  playArrivalBeep();
+
+  // 4. Banner flutuante visual de confirmação
+  const name = lastArrival?.name && lastArrival.name !== '—' && lastArrival.name !== '-' ? lastArrival.name : null;
   const bib  = lastArrival?.bib || '';
   const pos  = lastArrival?.posGeral || '';
   const time = lastArrival?.time || '';
@@ -1204,11 +1306,11 @@ function triggerArrivalFeedback(lastArrival, count) {
     'gap:10px',
     'background:linear-gradient(135deg,#059669,#10b981)',
     'color:#fff',
-    'font-weight:800',
-    'font-size:13px',
-    'padding:10px 20px',
-    'border-radius:14px',
-    'box-shadow:0 8px 28px rgba(16,185,129,0.55)',
+    'font-weight:900',
+    'font-size:14px',
+    'padding:12px 22px',
+    'border-radius:16px',
+    'box-shadow:0 10px 32px rgba(16,185,129,0.6)',
     'pointer-events:none',
     'animation:feedbackSlideIn 0.25s ease-out',
     'white-space:nowrap',
@@ -1217,10 +1319,10 @@ function triggerArrivalFeedback(lastArrival, count) {
     'text-overflow:ellipsis',
   ].join(';');
 
-  let html = `<span style="font-size:18px">✔</span>`;
+  let html = `<span style="font-size:20px">⚡</span>`;
   html += `<span>`;
   if (count > 1) {
-    html += `${count} chegadas registradas`;
+    html += `${count} novas chegadas registradas!`;
   } else {
     html += `Nº ${bib}`;
     if (name) html += ` · ${name}`;
@@ -1229,8 +1331,6 @@ function triggerArrivalFeedback(lastArrival, count) {
   }
   html += `</span>`;
   banner.innerHTML = html;
-
-  // Injeta keyframe se ainda não existe
 
   if (!document.getElementById('feedbackKF')) {
     const style = document.createElement('style');
@@ -1252,11 +1352,141 @@ function triggerArrivalFeedback(lastArrival, count) {
   setTimeout(() => {
     banner.style.animation = 'feedbackSlideOut 0.25s ease-in forwards';
     setTimeout(() => banner.remove(), 280);
-  }, 2200);
+  }, 2300);
 }
 
 
+
+// ── Sincronização em Tempo Real do Estado da Corrida (PC <-> Celular) ──────────
+function applyLiveRaceState(race) {
+  if (!race) return;
+
+  // CASO 1: CORRIDA REINICIADA / ZERADA (startTime é nulo)
+  if (!race.startTime) {
+    if (isRunning) {
+      clearInterval(timer);
+      isRunning = false;
+    }
+    raceFinished = false;
+    elapsedTime = 0;
+    startTime = 0;
+    formatTime(0);
+
+    lblStart.textContent = 'INICIAR';
+    iconStart.className = 'fa-solid fa-play';
+    btnStart.disabled = false;
+    btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
+    statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
+    statusText.textContent = 'AGUARDANDO';
+
+    bibInput.disabled = false;
+    btnBibSubmit.disabled = false;
+    bibInput.placeholder = 'Nº Peito';
+
+    const btn = document.getElementById('btnFinish');
+    if (btn) {
+      btn.textContent = '🏁 ENCERRAR';
+      btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+      btn.onclick = confirmFinish;
+    }
+    return;
+  }
+
+  // CASO 2: CORRIDA ENCERRADA (possui endTime)
+  if (race.endTime) {
+    if (isRunning) {
+      clearInterval(timer);
+      isRunning = false;
+    }
+    raceFinished = true;
+    const startMs = Date.parse(race.startTime) || 0;
+    const endMs = Date.parse(race.endTime) || 0;
+    elapsedTime = (startMs && endMs && endMs >= startMs) ? (endMs - startMs) : elapsedTime;
+    formatTime(elapsedTime);
+
+    statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
+    statusText.textContent = 'ENCERRADA';
+
+    bibInput.disabled = true;
+    btnBibSubmit.disabled = true;
+    bibInput.placeholder = 'Corrida Encerrada';
+    if (runnerPreview) runnerPreview.classList.add('hidden');
+
+    lblStart.textContent = 'ENCERRADA';
+    iconStart.className = 'fa-solid fa-flag-checkered';
+    btnStart.disabled = true;
+    btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-purple-900/40 text-purple-300 border border-purple-500/30 cursor-not-allowed opacity-80';
+
+    const btn = document.getElementById('btnFinish');
+    if (btn) {
+      btn.innerHTML = '📊 Ver Classificação';
+      btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
+      btn.onclick = showRankingView;
+    }
+    return;
+  }
+
+  // CASO 3: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime)
+  if (race.startTime && !race.endTime) {
+    raceFinished = false;
+    const startMs = Date.parse(race.startTime);
+    if (startMs) {
+      elapsedTime = Math.max(0, Date.now() - startMs);
+      formatTime(elapsedTime);
+      startTime = Date.now() - elapsedTime;
+
+      if (!isRunning) {
+        timer = setInterval(updateTimer, 10);
+        isRunning = true;
+      }
+
+      lblStart.textContent = 'PAUSAR';
+      iconStart.className = 'fa-solid fa-pause';
+      btnStart.disabled = false;
+      btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';
+
+      statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
+      statusText.textContent = 'Em Andamento';
+
+      bibInput.disabled = false;
+      btnBibSubmit.disabled = false;
+      bibInput.placeholder = 'Nº Peito';
+
+      const btn = document.getElementById('btnFinish');
+      if (btn) {
+        btn.textContent = '🏁 ENCERRAR';
+        btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+        btn.onclick = confirmFinish;
+      }
+    }
+  }
+}
+
+window.startRaceDocumentListening = function() {
+  const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
+                 (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+  if (!raceId || !window.fbDb || !window.fbOnSnapshot || !window.fbDoc) return;
+
+  const raceRef = window.fbDoc(window.fbDb, 'races', raceId);
+  window.fbOnSnapshot(raceRef, (docSnap) => {
+    if (!docSnap.exists()) return;
+    const raceData = docSnap.data();
+    
+    // Atualiza o localStorage local do celular
+    try {
+      const currentLocal = JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}');
+      const updatedRace = { ...currentLocal, ...raceData, id: raceId };
+      localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(updatedRace));
+      applyLiveRaceState(updatedRace);
+    } catch(e) {
+      applyLiveRaceState(raceData);
+    }
+  });
+};
+
 function initRaceState(){
+
   try{
     const raw=localStorage.getItem('pwa-qr-timing:active-race');
     if(!raw)return;
@@ -1270,6 +1500,11 @@ function initRaceState(){
       
       statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
       statusText.textContent='ENCERRADA';
+
+      bibInput.disabled=true;
+      btnBibSubmit.disabled=true;
+      bibInput.placeholder='Corrida Encerrada';
+      if(runnerPreview)runnerPreview.classList.add('hidden');
       
       lblStart.textContent='ENCERRADA';
       iconStart.className='fa-solid fa-flag-checkered';
@@ -1331,8 +1566,14 @@ let clearScanBuffer = null;
     lastProcessedCode = code;
     lastProcessedTime = now;
 
-    if (raceFinished) {
-      showToast('A corrida já está encerrada!', true);
+    const rawActive = localStorage.getItem('pwa-qr-timing:active-race');
+    const activeRace = rawActive ? JSON.parse(rawActive) : {};
+    if (raceFinished || Boolean(activeRace.endTime) || (statusText && statusText.textContent === 'ENCERRADA')) {
+      showToast('A corrida já está encerrada! Leitura bloqueada.', true);
+      return;
+    }
+    if (!isRunning && elapsedTime === 0 && !activeRace.startTime) {
+      showToast('A corrida ainda não foi iniciada! Leitura bloqueada.', true);
       return;
     }
 

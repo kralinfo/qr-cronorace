@@ -83,6 +83,14 @@ export function useRunners(raceId) {
       return null
     }
 
+    try {
+      const raceDoc = await getRaceById(effectiveRaceId)
+      if (raceDoc?.endTime) {
+        setError('Esta corrida já está encerrada. Para cadastrar novos corredores, reabra a corrida.')
+        return null
+      }
+    } catch (e) {}
+
     const formattedName = capitalizeName(trimmedName)
     const formattedNumber = formatRunnerNumber(trimmedNumber)
     const normalizedName = normalizeComparable(formattedName)
@@ -251,6 +259,14 @@ export function useRunners(raceId) {
     if (!runnersList || runnersList.length === 0) {
       return { success: true, count: 0 }
     }
+
+    try {
+      const raceDoc = await getRaceById(effectiveRaceId)
+      if (raceDoc?.endTime) {
+        setError('Esta corrida já está encerrada. Para cadastrar corredores, reabra a corrida.')
+        return { success: false, count: 0, error: new Error('Esta corrida já está encerrada.') }
+      }
+    } catch (e) {}
 
     try {
       const currentRaceRunners = raceId === effectiveRaceId
