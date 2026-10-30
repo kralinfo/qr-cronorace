@@ -181,11 +181,6 @@ export default function PublicResultLookupPage() {
           </div>
         </header>
 
-        {/* 2. Subtítulo 'CONSULTE SEU RESULTADO' com tracking aberto */}
-        <div className="plp-subheading-wrap">
-          <span className="plp-subheading">CONSULTE SEU RESULTADO</span>
-        </div>
-
         {/* 3. Card Principal com Form e Resultados */}
         <main className="plp-main">
           <div className="plp-card">

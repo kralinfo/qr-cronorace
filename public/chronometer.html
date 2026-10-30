@@ -961,7 +961,9 @@ window.startFirebaseListening = function() {
     window.fbWhere('raceId', '==', raceId)
   );
 
-  // Contador prévio para detectar novas chegadas sem vibrar na abertura
+  // Quantas chegadas existiam antes deste listener iniciar
+  // (evita vibrar no carregamento inicial)
+
   let _prevCount = null;
 
   window.fbOnSnapshot(q, (snap) => {
@@ -1041,8 +1043,10 @@ window.startFirebaseListening = function() {
     if (newArrivals.length > 0 || snap.empty) {
       const currentCount = newArrivals.length;
 
-      // ── Vibração + feedback visual ao detectar nova chegada via Firebase ──
+      // ── Vibração + feedback visual ao detectar nova chegada ──
       if (_prevCount !== null && currentCount > _prevCount) {
+        // Quantos corredores novos chegaram desde a última leitura
+
         const diff = currentCount - _prevCount;
         triggerArrivalFeedback(newArrivals[newArrivals.length - 1], diff);
       }
@@ -1173,16 +1177,17 @@ function showToast(msg,isError=false){
   setTimeout(()=>toast.remove(),2500);
 }
 
-// ── Vibração + feedback visual ao detectar nova chegada (manual ou via Firebase) ──
-function triggerArrivalFeedback(lastArrival, count = 1) {
-  // Vibração (Vibration API — celulares Android / PWA)
+// ── Vibração + feedback visual ao detectar nova chegada via Firebase ──────────
+function triggerArrivalFeedback(lastArrival, count) {
+  // Vibração (Vibration API — suportada em Android Chrome / Safari iOS 13+)
   if (navigator.vibrate) {
-    try {
-      navigator.vibrate([120, 60, 120]);
-    } catch(e) {}
+    // Pulso duplo: 120ms vibra, 60ms pausa, 120ms vibra
+    navigator.vibrate([120, 60, 120]);
   }
 
-  const name = lastArrival?.name && lastArrival.name !== '—' && lastArrival.name !== '-' ? lastArrival.name : null;
+  // Banner flutuante visual de confirmação
+  const name = lastArrival?.name && lastArrival.name !== '—' ? lastArrival.name : null;
+
   const bib  = lastArrival?.bib || '';
   const pos  = lastArrival?.posGeral || '';
   const time = lastArrival?.time || '';
@@ -1212,18 +1217,20 @@ function triggerArrivalFeedback(lastArrival, count = 1) {
     'text-overflow:ellipsis',
   ].join(';');
 
-  let html = '<span style="font-size:18px">✔</span>';
-  html += '<span>';
+  let html = `<span style="font-size:18px">✔</span>`;
+  html += `<span>`;
   if (count > 1) {
-    html += count + ' chegadas registradas';
+    html += `${count} chegadas registradas`;
   } else {
-    html += 'Nº ' + bib;
-    if (name) html += ' · ' + name;
-    if (pos)  html += ' — ' + pos + 'º lugar';
-    if (time) html += ' · ' + time;
+    html += `Nº ${bib}`;
+    if (name) html += ` · ${name}`;
+    if (pos)  html += ` — ${pos}º lugar`;
+    if (time) html += ` · ${time}`;
   }
-  html += '</span>';
+  html += `</span>`;
   banner.innerHTML = html;
+
+  // Injeta keyframe se ainda não existe
 
   if (!document.getElementById('feedbackKF')) {
     const style = document.createElement('style');
