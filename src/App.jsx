@@ -4,6 +4,7 @@ import ScannerPage from './features/scanner/ScannerPage.jsx'
 import RunnersPage from './features/runners/RunnersPage.jsx'
 import PublicRunnerRegister from './features/runners/PublicRunnerRegister.jsx'
 import PublicRankingPage from './features/results/PublicRankingPage.jsx'
+import PublicResultLookupPage from './features/results/PublicResultLookupPage.jsx'
 import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
@@ -23,6 +24,12 @@ function isPublicRankingRequest() {
   return new URLSearchParams(window.location.search).get('ranking') === '1'
 }
 
+/** @returns {boolean} true quando a URL atual pede a consulta individual de resultado pelo corredor */
+function isPublicResultLookupRequest() {
+  const p = new URLSearchParams(window.location.search)
+  return p.get('resultado') === '1' || p.get('posicao') === '1' || p.get('consulta') === '1'
+}
+
 const TAB_TITLES = {
   home: 'Início',
   races: 'Corridas',
@@ -30,7 +37,6 @@ const TAB_TITLES = {
   scanner: 'Scanner',
   results: 'Ranking',
   chronometer: 'Cronômetro'
-
 }
 
 function AppContent() {
@@ -98,7 +104,9 @@ function AppContent() {
         dateTime: readAt.toISOString(),
         timestamp: String(readAt.getTime()),
         raceId: targetRaceId,
-        runnerName: runner?.name || data?.runnerName || `Nº ${bib}`
+        runnerName: runner?.name || data?.runnerName || `Nº ${bib}`,
+        time: data?.time || null,
+        elapsedMs: typeof data?.elapsedMs === 'number' ? data.elapsedMs : null
       }
       try {
         await addResult(result)
@@ -212,6 +220,9 @@ export default function App(){
   }
   if (isPublicRankingRequest()) {
     return <PublicRankingPage />
+  }
+  if (isPublicResultLookupRequest()) {
+    return <PublicResultLookupPage />
   }
   return (
     <ActiveRaceProvider>

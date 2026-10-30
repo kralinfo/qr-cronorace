@@ -3,8 +3,11 @@ import { useEffect, useState } from 'react'
 import { sortByPlacement } from './results.rules.js'
 import { subscribeToResultsByRace } from './results.repository.js'
 
-/** @param {string} raceId */
-export function useResults(raceId) {
+/** 
+ * @param {string} raceId 
+ * @param {string|null} [startTime]
+ */
+export function useResults(raceId, startTime) {
   const [placements, setPlacements] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -14,13 +17,11 @@ export function useResults(raceId) {
     setLoading(true)
     setError(null)
     const unsubscribe = subscribeToResultsByRace(raceId, (results) => {
-      setPlacements(sortByPlacement(results))
+      setPlacements(sortByPlacement(results, startTime))
       setLoading(false)
     })
     return unsubscribe
-  }, [raceId])
+  }, [raceId, startTime])
 
   return { placements, loading, error }
 }
-
-

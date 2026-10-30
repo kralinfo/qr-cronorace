@@ -8,9 +8,10 @@ import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 
 export default function ResultsPage() {
   const { activeRace } = useActiveRace()
-  const { placements: rawPlacements, loading, error } = useResults(activeRace?.id)
+  const { placements: rawPlacements, loading, error } = useResults(activeRace?.id, activeRace?.startTime)
   const { runners } = useRunners(activeRace?.id)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
+  const [copiedLink, setCopiedLink] = useState(false)
 
   const placements = withElapsedTime(rawPlacements, activeRace?.startTime)
   const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
@@ -26,14 +27,16 @@ export default function ResultsPage() {
     if (!p.barcode || seenIds.has(p.barcode)) return
     const runner = runnersById[p.barcode] ?? null
     seenIds.add(p.barcode)
-    const displayTime = p.elapsedMs != null ? formatDuration(p.elapsedMs) : '—'
+    const displayTime = p.time
+      ? (String(p.time).includes('.') ? String(p.time).split('.')[0] : String(p.time))
+      : (p.elapsedMs != null ? formatDuration(p.elapsedMs) : '\u2014')
     const arrivalTime = formatTimeOnlyBR(p.dateTime)
     allRanked.push({
       posGeral: allRanked.length + 1,
       runner,
       barcode: p.barcode,
-      bib: runner?.number ?? '—',
-      name: p.runnerName ?? runnerNameById[p.barcode] ?? '—',
+      bib: runner?.number ?? '\u2014',
+      name: p.runnerName ?? runnerNameById[p.barcode] ?? '\u2014',
       category: runner?.category ?? 'GERAL',
       displayTime,
       arrivalTime,
@@ -59,6 +62,31 @@ export default function ResultsPage() {
   const raceName = activeRace?.name ?? 'Corrida'
   const localCount = allRanked.filter(i => String(i.category ?? '').toUpperCase().includes('LOCAL')).length
   const distanceKm = activeRace?.distanceKm
+
+  const lookupUrl = `${window.location.origin}/?resultado=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`
+
+  async function handleShareLookup() {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Resultado Oficial - ${raceName}`,
+          text: `Consulte sua coloca\u00e7\u00e3o e tempo oficial na ${raceName} digitando seu n\u00famero de peito:`,
+          url: lookupUrl
+        })
+        return
+      } catch (e) {
+        // Ignora se o usuário apenas cancelou o compartilhamento
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(lookupUrl)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 3000)
+    } catch {
+      window.prompt('Copie o link abaixo para enviar aos corredores:', lookupUrl)
+    }
+  }
 
   function exportCSV() {
     const header = 'POS.GERAL,N\u00ba,NOME,CATEGORIA,POS.CAT,TEMPO,CHEGADA'
@@ -108,6 +136,72 @@ export default function ResultsPage() {
           {isFinished ? 'ENCERRADA' : 'AO VIVO'}
         </div>
       </header>
+
+      {/* Banner de encerramento com compartilhamento */}
+      {isFinished && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.22) 0%, rgba(16, 185, 129, 0.15) 100%)',
+          border: '1.5px solid rgba(139, 92, 246, 0.4)',
+          borderRadius: 14,
+          padding: '16px 20px',
+          margin: '0 20px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12
+        }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>&#127881;</span> Prova Encerrada &mdash; Resultados Prontos!
+            </div>
+            <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 3 }}>
+              Compartilhe o link com os atletas para que cada corredor consulte sua coloca&ccedil;&atilde;o, categoria e tempo.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleShareLookup}
+              style={{
+                background: copiedLink ? '#059669' : '#7c3aed',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                padding: '10px 18px',
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
+                transition: 'all 0.2s'
+              }}
+            >
+              <span>{copiedLink ? '\u2713' : '&#128242;'}</span>
+              <span>{copiedLink ? 'Link Copiado!' : 'Compartilhar Link com Corredores'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => window.open(lookupUrl, '_blank')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#ddd6fe',
+                border: '1px solid rgba(139, 92, 246, 0.35)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Testar / Abrir Tela
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Title bar */}
       <div className="rp-title-bar">
@@ -192,10 +286,27 @@ export default function ResultsPage() {
         <button
           type="button"
           className="rp-action-btn"
+          onClick={handleShareLookup}
+          style={{
+            background: copiedLink ? '#059669' : '#10b981',
+            color: '#fff',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <span>{copiedLink ? '\u2713' : '&#128242;'}</span>
+          <span>{copiedLink ? 'Link Copiado!' : 'Link p/ Corredores'}</span>
+        </button>
+
+        <button
+          type="button"
+          className="rp-action-btn"
           onClick={() => window.open(`/?ranking=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`, '_blank')}
           style={{ background: '#7c3aed', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          📺 Abrir no Telão / TV (Tempo Real)
+          &#128250; Abrir no Tel&atilde;o / TV (Tempo Real)
         </button>
         <button className="rp-action-btn" onClick={exportCSV}>
           &#8595; Exportar CSV

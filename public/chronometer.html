@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR" class="h-full overflow-hidden">
 <head>
 <meta charset="UTF-8" />
@@ -133,7 +133,7 @@ table.rk-table{width:100%;border-collapse:collapse}
             inputmode="numeric"
             class="flex-1 min-w-0 w-full bg-[#0B0813] border-2 border-purple-500/40 focus:border-purple-500 rounded-xl px-3 py-2.5 text-xl font-mono font-bold text-center text-white placeholder-slate-600 outline-none transition-colors"
             oninput="handleBibInputChange()"
-            onkeydown="if(event.key==='Enter') registerArrival()"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();registerArrival();}"
           />
           <button
             onclick="registerArrival()"
@@ -274,6 +274,12 @@ table.rk-table{width:100%;border-collapse:collapse}
 
   <!-- Footer actions -->
   <div class="rk-footer">
+    <button class="rk-btn rk-btn-primary" onclick="shareResultsLink()" style="background: #7c3aed; border-color: #7c3aed; box-shadow: 0 0 14px rgba(124,58,237,0.45);" title="Compartilhar link de consulta com os corredores">
+      <i class="fa-solid fa-share-nodes"></i> Compartilhar Link
+    </button>
+    <button class="rk-btn rk-btn-ghost" onclick="openPublicResultLookup()" style="border-color: rgba(168,85,247,0.4); color: #ddd6fe;" title="Abrir a tela em que o atleta consulta seu número de peito">
+      <i class="fa-solid fa-mobile-screen"></i> Ver Consulta
+    </button>
     <button class="rk-btn rk-btn-amber" onclick="openEditLocais()">
       <i class="fa-solid fa-house"></i> Editar Locais
     </button>
@@ -411,6 +417,22 @@ function toggleTimer(){
     btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';
     statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
     statusText.textContent='Em Andamento';
+
+    // Salva startTime na corrida se ainda não tiver
+    try {
+      const raw = localStorage.getItem('pwa-qr-timing:active-race');
+      if (raw) {
+        const race = JSON.parse(raw);
+        if (race?.id && !race.startTime) {
+          const startIso = new Date(startTime).toISOString();
+          race.startTime = startIso;
+          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+          if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+            window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), { startTime: startIso }, { merge: true });
+          }
+        }
+      }
+    } catch(e) {}
   }else{
     clearInterval(timer);isRunning=false;
     lblStart.textContent='CONTINUAR';
@@ -578,6 +600,44 @@ function newRace(){
   window.location.href='/';
 }
 
+function getPublicResultLookupUrl(){
+  let raceId = localStorage.getItem('pwa-qr-timing:active-race-id');
+  if(!raceId){
+    try {
+      const race = JSON.parse(localStorage.getItem('pwa-qr-timing:active-race')||'{}');
+      raceId = race?.id;
+    } catch(e){}
+  }
+  const base = window.location.origin;
+  return `${base}/?resultado=1${raceId ? '&corrida=' + raceId : ''}`;
+}
+
+async function shareResultsLink(){
+  const url = getPublicResultLookupUrl();
+  const raceName = getRaceName() || 'Corrida';
+  if(navigator.share){
+    try{
+      await navigator.share({
+        title: `Resultado Oficial - ${raceName}`,
+        text: `Consulte sua colocação oficial e tempo na ${raceName} digitando seu número de peito:`,
+        url: url
+      });
+      return;
+    }catch(e){}
+  }
+  try{
+    await navigator.clipboard.writeText(url);
+    showToast('✓ Link copiado para a área de transferência!');
+  }catch(err){
+    window.prompt('Copie o link abaixo para enviar aos corredores:', url);
+  }
+}
+
+function openPublicResultLookup(){
+  const url = getPublicResultLookupUrl();
+  window.open(url, '_blank');
+}
+
 // ── Ranking Table ──
 function getCatLabel(cat){
   const c=String(cat||'').toUpperCase();
@@ -713,11 +773,11 @@ function registerArrival(directBib){
   renderArrivals();
   showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
 
-  // Sincroniza em tempo real com o Telão/TV e Firebase
-  syncArrival(digitsOnly, runnerName, runner);
+  // Sincroniza em tempo real com o Telão/TV e Firebase incluindo tempo decorrido
+  syncArrival(digitsOnly, runnerName, runner, currentTime, elapsedTime);
 }
 
-async function syncArrival(bibNumber, runnerName, runner) {
+async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs) {
   const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
                  (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
   const runnerId = runner?.id || `bib_${bibNumber}`;
@@ -731,7 +791,9 @@ async function syncArrival(bibNumber, runnerName, runner) {
         bib: bibNumber,
         barcode: runnerId,
         runnerName: runnerName,
-        raceId: raceId
+        raceId: raceId,
+        time: currentTime || null,
+        elapsedMs: typeof elapsedMs === 'number' ? elapsedMs : null
       }, '*');
     }
   } catch(e) {}
@@ -744,7 +806,9 @@ async function syncArrival(bibNumber, runnerName, runner) {
       bib: bibNumber,
       barcode: runnerId,
       runnerName: runnerName,
-      raceId: raceId
+      raceId: raceId,
+      time: currentTime || null,
+      elapsedMs: typeof elapsedMs === 'number' ? elapsedMs : null
     });
     bc.close();
   } catch(e) {}
@@ -760,7 +824,9 @@ async function syncArrival(bibNumber, runnerName, runner) {
         dateTime: now.toISOString(),
         timestamp: String(now.getTime()),
         raceId: raceId,
-        runnerName: runnerName || runner?.name || `Nº ${bibNumber}`
+        runnerName: runnerName || runner?.name || `Nº ${bibNumber}`,
+        time: currentTime || null,
+        elapsedMs: typeof elapsedMs === 'number' ? elapsedMs : null
       });
     }
   } catch(err) {
@@ -779,38 +845,82 @@ window.startFirebaseListening = function() {
   );
 
   window.fbOnSnapshot(q, (snap) => {
-    const docs = snap.docs.map(d => d.data());
-    docs.sort((a,b) => (Date.parse(a.dateTime)||0) - (Date.parse(b.dateTime)||0));
-    
-    let changed = false;
-    docs.forEach(res => {
-      const bib = String(res.runnerNumber || '').replace(/^0+/, '');
+    let raceObj = null;
+    try {
+      raceObj = JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}');
+    } catch(e) {}
+    const startMs = raceObj?.startTime ? Date.parse(raceObj.startTime) : NaN;
+
+    const allDocs = snap.docs.map(d => d.data());
+
+    // 1. Descarta resultados anteriores à largada da corrida atual (caso haja sobras de corridas passadas)
+    const validDocs = allDocs.filter(d => {
+      if (Number.isFinite(startMs)) {
+        const docMs = d.timestamp ? Number(d.timestamp) : Date.parse(d.dateTime);
+        if (Number.isFinite(docMs) && docMs < (startMs - 2000)) return false;
+      }
+      return true;
+    });
+
+    // 2. Desduplica por corredor mantendo o registro mais recente da corrida atual
+    const latestByRunner = new Map();
+    validDocs.forEach(d => {
+      const bib = String(d.runnerNumber || '').replace(/\D/g, '');
       if (!bib) return;
       const cleanBib = String(parseInt(bib, 10));
-      const existing = arrivals.find(a => String(parseInt(a.bib, 10)) === cleanBib);
-      if (!existing) {
-        const runner = getRunnerByBib(bib);
-        const runnerCat = runner?.category || 'GERAL';
-        const runnerName = res.runnerName || runner?.name || '—';
-        const dateArrival = res.dateTime ? new Date(res.dateTime) : new Date();
-        const pad = n => n.toString().padStart(2, '0');
-        const formattedArrival = `${pad(dateArrival.getHours())}:${pad(dateArrival.getMinutes())}:${pad(dateArrival.getSeconds())}`;
-        
-        const totalGeral = arrivals.length + 1;
-        const posCat = arrivals.filter(a => a.category === runnerCat).length + 1;
-        arrivals.unshift({
-          id: res.id || Date.now(),
-          posGeral: totalGeral,
-          category: runnerCat,
-          bib: bib.padStart(3, '0'),
-          name: runnerName,
-          posCat,
-          time: formattedArrival
-        });
-        changed = true;
+      const docTime = d.timestamp ? Number(d.timestamp) : (Date.parse(d.dateTime) || 0);
+      const existing = latestByRunner.get(cleanBib);
+      if (!existing || docTime > existing._docTime) {
+        latestByRunner.set(cleanBib, { ...d, _docTime: docTime, _cleanBib: cleanBib });
       }
     });
-    if (changed) {
+
+    // 3. Ordena pela ordem cronológica de chegada
+    const sortedDocs = Array.from(latestByRunner.values()).sort((a, b) => a._docTime - b._docTime);
+
+    // 4. Reconstrói a lista de chegadas com o tempo correto de cronômetro
+    const newArrivals = [];
+    sortedDocs.forEach((res, index) => {
+      const runner = getRunnerByBib(res._cleanBib);
+      const runnerCat = runner?.category || 'GERAL';
+      const runnerName = res.runnerName || runner?.name || '—';
+
+      // Tempo de cronômetro priorizado
+      let displayTime = res.time || null;
+      if (!displayTime && typeof res.elapsedMs === 'number' && Number.isFinite(res.elapsedMs)) {
+        const s = Math.floor(res.elapsedMs / 1000);
+        const pad = n => String(n).padStart(2, '0');
+        displayTime = `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+      } else if (!displayTime && Number.isFinite(startMs) && Number.isFinite(res._docTime)) {
+        const diff = Math.max(0, res._docTime - startMs);
+        const s = Math.floor(diff / 1000);
+        const pad = n => String(n).padStart(2, '0');
+        displayTime = `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+      }
+
+      if (!displayTime) {
+        const dateArrival = res.dateTime ? new Date(res.dateTime) : new Date();
+        const pad = n => String(n).padStart(2, '0');
+        displayTime = `${pad(dateArrival.getHours())}:${pad(dateArrival.getMinutes())}:${pad(dateArrival.getSeconds())}`;
+      }
+
+      const totalGeral = index + 1;
+      const posCat = newArrivals.filter(a => a.category === runnerCat).length + 1;
+
+      newArrivals.push({
+        id: res.id || `${res._cleanBib}_${res._docTime}`,
+        posGeral: totalGeral,
+        category: runnerCat,
+        bib: res._cleanBib.padStart(3, '0'),
+        name: runnerName,
+        posCat,
+        time: displayTime
+      });
+    });
+
+    if (newArrivals.length > 0 || snap.empty) {
+      // Inverte para exibir a última chegada no topo do cronômetro
+      arrivals = [...newArrivals].reverse();
       renderArrivals();
     }
   });
@@ -986,7 +1096,6 @@ let clearScanBuffer = null;
 
 (function setupGlobalBarcodeScanner() {
   let scanBuffer = '';
-  let scanTimer = null;
   let lastKeyTime = 0;
   let lastProcessedCode = '';
   let lastProcessedTime = 0;
@@ -995,10 +1104,6 @@ let clearScanBuffer = null;
   clearScanBuffer = function() {
     scanBuffer = '';
     lastKeyTime = 0;
-    if (scanTimer) {
-      clearTimeout(scanTimer);
-      scanTimer = null;
-    }
   };
 
   function processScan() {
@@ -1034,53 +1139,44 @@ let clearScanBuffer = null;
       return;
     }
 
-    // Se passou mais de 60ms desde a ultima tecla, qualquer tecla que chegar
-    // e inicio de uma NOVA leitura -> ZERA imediatamente o buffer anterior!
-    // Isso impede categoricamente a concatenacao de dois codigos.
+    // ── DIGITAÇÃO MANUAL NO CAMPO (foco no bibInput) ──
+    // Se o usuário clicou no campo para digitar manualmente:
+    // O sistema NUNCA deve registrar automaticamente nem limpar antes do ENTER.
+    if (isBibFocused) {
+      clearScanBuffer();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        registerArrival();
+      }
+      return;
+    }
+
+    // ── LEITOR GLOBAL (foco fora do campo) ──
+    // Se passou mais de 60ms desde a ultima tecla do leitor, zera o buffer
+    // para nunca misturar códigos de duas leituras separadas
     if (now - lastKeyTime > BURST_TIMEOUT_MS) {
       scanBuffer = '';
-      if (isBibFocused && /^\d$/.test(e.key)) {
-        bibInput.value = '';
-      }
     }
     lastKeyTime = now;
 
     if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
-
       if (scanBuffer.trim()) {
         processScan();
-      } else if (bibInput.value.trim()) {
-        const val = bibInput.value.trim();
-        bibInput.value = '';
-        clearScanBuffer();
-        registerArrival(val);
       }
       return;
     }
 
-    // Se for digito, acumula
+    // Se for dígito vindo do leitor
     if (/^\d$/.test(e.key)) {
       scanBuffer += e.key;
-
-      if (!isBibFocused) {
-        e.preventDefault();
-      }
-
-      // Fallback: se o leitor nao enviar Enter ao final, processa apos 60ms sem teclas
-      if (scanTimer) clearTimeout(scanTimer);
-      scanTimer = setTimeout(function() {
-        if (scanBuffer.trim().length >= 1) {
-          processScan();
-        } else {
-          clearScanBuffer();
-        }
-      }, BURST_TIMEOUT_MS);
+      e.preventDefault();
       return;
     }
 
-    // Tecla nao numerica: zera buffer
+    // Tecla não numérica: zera buffer
     if (!['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'CapsLock'].includes(e.key)) {
       clearScanBuffer();
     }

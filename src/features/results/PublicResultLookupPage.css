@@ -1,0 +1,491 @@
+/* ====================================================
+   PAGINA PUBLICA DE RESULTADOS — ESTILO MODELO ORIGINAL
+   Fiel a referencia fotografica do evento
+   ==================================================== */
+
+.plp-page {
+  min-height: 100vh;
+  width: 100vw;
+  background-color: #06020c;
+  background-image: 
+    radial-gradient(ellipse 90% 50% at 50% -10%, rgba(139, 92, 246, 0.2), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 2px, transparent 2px, transparent 14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 20px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #f1f5f9;
+  user-select: none;
+}
+
+/* Container de largura fixa alinhado */
+.plp-container {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── 1. Banner do Topo (Logo do Evento) ── */
+.plp-logo-card {
+  width: 100%;
+  background: #000000;
+  border: 1.5px solid rgba(139, 92, 246, 0.4);
+  border-radius: 14px;
+  padding: 18px 20px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 12px 36px rgba(0, 0, 0, 0.85),
+    0 0 40px -4px rgba(124, 58, 237, 0.3);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.plp-logo-accent-line {
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #a855f7, #c084fc, transparent);
+  box-shadow: 0 0 10px #a855f7;
+}
+
+.plp-logo-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.plp-logo-brand-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #a78bfa;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.plp-logo-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a855f7;
+  box-shadow: 0 0 6px #a855f7;
+}
+
+.plp-logo-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.plp-runner-svg {
+  width: 28px;
+  height: 28px;
+  color: #c084fc;
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+  flex-shrink: 0;
+}
+
+.plp-runner-right {
+  transform: scaleX(-1);
+}
+
+.plp-logo-title {
+  font-size: 26px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin: 0;
+  text-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+.plp-logo-sub {
+  margin-top: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* ── 2. Subtítulo 'CONSULTE SEU RESULTADO' ── */
+.plp-subheading-wrap {
+  margin: 18px 0 16px;
+  text-align: center;
+}
+
+.plp-subheading {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* ── 3. Card Principal ── */
+.plp-main {
+  width: 100%;
+}
+
+.plp-card {
+  width: 100%;
+  background: #100b1a;
+  border: 1.5px solid rgba(139, 92, 246, 0.35);
+  border-radius: 18px;
+  padding: 24px 22px 20px;
+  box-shadow: 
+    0 16px 40px -4px rgba(0, 0, 0, 0.8),
+    0 0 25px -4px rgba(124, 58, 237, 0.2);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.plp-card-center {
+  text-align: center;
+  align-items: center;
+  margin-top: 40px;
+}
+
+.plp-icon-warning {
+  font-size: 40px;
+  color: #f59e0b;
+  margin-bottom: 8px;
+}
+
+.plp-error-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #f87171;
+  margin-bottom: 6px;
+}
+
+.plp-error-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Tag estrelinha */
+.plp-card-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #c084fc;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin-bottom: 8px;
+}
+
+.plp-tag-star {
+  font-size: 12px;
+  color: #a855f7;
+}
+
+/* Headline */
+.plp-title {
+  font-size: 24px;
+  line-height: 1.14;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+}
+
+/* Formulario */
+.plp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.plp-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.plp-input {
+  width: 100%;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(139, 92, 246, 0.35);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.05em;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.plp-input:focus {
+  border-color: #a855f7;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.28);
+}
+
+.plp-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.18s ease;
+  box-shadow: 0 6px 20px -2px rgba(124, 58, 237, 0.5);
+}
+
+.plp-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -2px rgba(124, 58, 237, 0.65);
+}
+
+.plp-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.plp-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.plp-btn-icon {
+  font-size: 15px;
+}
+
+/* ── 4. Sub-Card de Resultado (Idêntico à Foto 2) ── */
+.plp-result-box {
+  margin-top: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 12px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  animation: plpFadeIn 0.25s ease-out;
+}
+
+@keyframes plpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.plp-runner-meta {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.plp-bib-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.plp-bib-val {
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.1;
+  margin-top: 1px;
+}
+
+.plp-runner-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4b5fd;
+  margin-top: 1px;
+}
+
+/* Tempo de Prova em destaque */
+.plp-time-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(139, 92, 246, 0.2);
+}
+
+.plp-time-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.plp-time-icon {
+  font-size: 12px;
+  color: #a78bfa;
+}
+
+.plp-time-val {
+  font-size: 26px;
+  font-weight: 900;
+  color: #c084fc;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 14px rgba(167, 139, 250, 0.35);
+}
+
+/* Grade com as 2 colunas de colocação */
+.plp-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.plp-stat-col {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 10px;
+  padding: 10px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.plp-col-title {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.plp-stat-number {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.plp-ord {
+  font-size: 14px;
+  font-weight: 700;
+  color: #a78bfa;
+  margin-left: 1px;
+}
+
+.plp-col-sub {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 3px;
+  margin-bottom: 8px;
+}
+
+.plp-badge-cat {
+  display: inline-block;
+  background: rgba(124, 58, 237, 0.18);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #ddd6fe;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plp-badge-geral {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #cbd5e1;
+}
+
+/* Erro */
+.plp-error-box {
+  margin-top: 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #fca5a5;
+  font-size: 12px;
+  line-height: 1.4;
+  animation: plpFadeIn 0.2s ease-out;
+}
+
+.plp-error-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.plp-error-box p {
+  margin: 0;
+}
+
+/* ── 5. Rodapé ── */
+.plp-footer {
+  margin-top: 20px;
+  font-size: 10px;
+  color: #475569;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
