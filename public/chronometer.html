@@ -556,17 +556,19 @@ function toggleTimer(){
     statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
     statusText.textContent='Em Andamento';
 
-    // Salva startTime na corrida se ainda não tiver
+    // Salva startTime na corrida se ainda não tiver; retomada: limpa pauseTime
     try {
       const raw = localStorage.getItem('pwa-qr-timing:active-race');
       if (raw) {
         const race = JSON.parse(raw);
-        if (race?.id && !race.startTime) {
-          const startIso = new Date(startTime).toISOString();
-          race.startTime = startIso;
-          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+        if (race?.id) {
+          const patch = { pauseTime: null, elapsedAtPause: null };
+          if (!race.startTime) {
+            patch.startTime = new Date(startTime).toISOString();
+          }
+          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
           if (window.fbDb && window.fbSetDoc && window.fbDoc) {
-            window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), { startTime: startIso }, { merge: true });
+            window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
           }
         }
       }
@@ -578,6 +580,21 @@ function toggleTimer(){
     btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
     statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase';
     statusText.textContent='Pausado';
+
+    // Salva estado de pausa no Firestore para sincronizar com celular
+    try {
+      const raw = localStorage.getItem('pwa-qr-timing:active-race');
+      if (raw) {
+        const race = JSON.parse(raw);
+        if (race?.id) {
+          const patch = { pauseTime: new Date().toISOString(), elapsedAtPause: elapsedTime };
+          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
+          if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+            window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
+          }
+        }
+      }
+    } catch(e) {}
   }
 }
 function updateTimer(){elapsedTime=Date.now()-startTime;formatTime(elapsedTime);}
@@ -1255,24 +1272,36 @@ function playArrivalBeep() {
 }
 
 // Desbloqueia contexto de áudio e haptics no primeiro toque de tela
-document.addEventListener('touchstart', function unlockHaptics() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-  } else if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+// Usa múltiplos eventos para garantir desbloqueio em iframes e dispositivos móveis
+(function setupHapticsUnlock() {
+  let unlocked = false;
+  function unlockHaptics() {
+    if (unlocked) return;
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    } else if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    if (navigator.vibrate) {
+      try { navigator.vibrate(1); } catch(e) {}  // pulso mínimo de 1ms apenas para desbloquear
+    }
+    if (audioCtx && audioCtx.state !== 'suspended') unlocked = true;
   }
-  if (navigator.vibrate) {
-    try { navigator.vibrate(20); } catch(e) {}
-  }
-}, { once: true, passive: true });
+  ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+    document.addEventListener(evt, unlockHaptics, { passive: true });
+  });
+})();
 
 // ── Vibração + Tremor de Tela + Bip Sonoro ao detectar nova chegada ──────────
 function triggerArrivalFeedback(lastArrival, count = 1) {
   // 1. Vibração de alta intensidade (padrão rítmico forte e longo)
   if (navigator.vibrate) {
     try {
-      // 3 pulsos fortes com pausas: 300ms vibra, 100ms pausa, 300ms vibra, 100ms pausa, 450ms vibra
-      navigator.vibrate([300, 100, 300, 100, 450]);
+      // Cancela qualquer vibração pendente e dispara nova com 3 pulsos fortes
+      navigator.vibrate(0);
+      setTimeout(() => {
+        try { navigator.vibrate([300, 100, 300, 100, 450]); } catch(e) {}
+      }, 30);
     } catch(e) {}
   }
 
@@ -1427,7 +1456,39 @@ function applyLiveRaceState(race) {
     return;
   }
 
-  // CASO 3: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime)
+  // CASO 3a: CORRIDA PAUSADA (startTime existe, pauseTime existe, !endTime)
+  if (race.startTime && race.pauseTime && !race.endTime) {
+    raceFinished = false;
+    if (isRunning) { clearInterval(timer); isRunning = false; }
+
+    // Usa elapsedAtPause se disponível para sincronizar exatamente onde parou
+    if (typeof race.elapsedAtPause === 'number') {
+      elapsedTime = race.elapsedAtPause;
+    }
+    formatTime(elapsedTime);
+
+    lblStart.textContent = 'CONTINUAR';
+    iconStart.className = 'fa-solid fa-play';
+    btnStart.disabled = false;
+    btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
+    statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase';
+    statusText.textContent = 'Pausado';
+
+    bibInput.disabled = false;
+    btnBibSubmit.disabled = false;
+    bibInput.placeholder = 'Nº Peito';
+
+    const btnPause = document.getElementById('btnFinish');
+    if (btnPause) {
+      btnPause.textContent = '🏁 ENCERRAR';
+      btnPause.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+      btnPause.onclick = confirmFinish;
+    }
+    return;
+  }
+
+  // CASO 3b: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime nem pauseTime)
   if (race.startTime && !race.endTime) {
     raceFinished = false;
     const startMs = Date.parse(race.startTime);
