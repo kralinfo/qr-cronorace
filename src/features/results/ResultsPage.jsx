@@ -6,7 +6,7 @@ import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
 import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 
-export default function ResultsPage() {
+export default function ResultsPage({ onBack }) {
   const { activeRace } = useActiveRace()
   const { placements: rawPlacements, loading, error } = useResults(activeRace?.id, activeRace?.startTime)
   const { runners } = useRunners(activeRace?.id)
@@ -115,6 +115,17 @@ export default function ResultsPage() {
       {/* Header */}
       <header className="rp-header">
         <div className="rp-header-left">
+          {onBack && (
+            <button
+              type="button"
+              className="rp-back-btn"
+              onClick={onBack}
+              aria-label="Voltar ao início"
+              title="Voltar ao início"
+            >
+              &larr; In&iacute;cio
+            </button>
+          )}
           <div className="rp-logo-wrap">
             <div className="rp-logo-icon">&#127942;</div>
             <span className="rp-logo-text">JANELAMARCA</span>
@@ -136,72 +147,6 @@ export default function ResultsPage() {
           {isFinished ? 'ENCERRADA' : 'AO VIVO'}
         </div>
       </header>
-
-      {/* Banner de encerramento com compartilhamento */}
-      {isFinished && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.22) 0%, rgba(16, 185, 129, 0.15) 100%)',
-          border: '1.5px solid rgba(139, 92, 246, 0.4)',
-          borderRadius: 14,
-          padding: '16px 20px',
-          margin: '0 20px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12
-        }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>&#127881;</span> Prova Encerrada &mdash; Resultados Prontos!
-            </div>
-            <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 3 }}>
-              Compartilhe o link com os atletas para que cada corredor consulte sua coloca&ccedil;&atilde;o, categoria e tempo.
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={handleShareLookup}
-              style={{
-                background: copiedLink ? '#059669' : '#7c3aed',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 10,
-                padding: '10px 18px',
-                fontSize: 13,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
-                transition: 'all 0.2s'
-              }}
-            >
-              <span>{copiedLink ? '\u2713' : '&#128242;'}</span>
-              <span>{copiedLink ? 'Link Copiado!' : 'Compartilhar Link com Corredores'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => window.open(lookupUrl, '_blank')}
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                color: '#ddd6fe',
-                border: '1px solid rgba(139, 92, 246, 0.35)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              Testar / Abrir Tela
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Title bar */}
       <div className="rp-title-bar">
@@ -282,31 +227,23 @@ export default function ResultsPage() {
       </div>
 
       {/* Footer actions */}
-      <footer className="rp-footer" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <footer className="rp-footer">
         <button
           type="button"
-          className="rp-action-btn"
+          className="rp-action-btn rp-action-btn-share"
           onClick={handleShareLookup}
-          style={{
-            background: copiedLink ? '#059669' : '#10b981',
-            color: '#fff',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          style={copiedLink ? { background: '#059669', borderColor: '#059669' } : {}}
         >
           <span>{copiedLink ? '\u2713' : '&#128242;'}</span>
-          <span>{copiedLink ? 'Link Copiado!' : 'Link p/ Corredores'}</span>
+          <span>{copiedLink ? 'Link Copiado!' : 'Compartilhar Link'}</span>
         </button>
 
         <button
           type="button"
-          className="rp-action-btn"
+          className="rp-action-btn rp-action-btn-telao"
           onClick={() => window.open(`/?ranking=1${activeRace?.id ? `&corrida=${activeRace.id}` : ''}`, '_blank')}
-          style={{ background: '#7c3aed', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          &#128250; Abrir no Tel&atilde;o / TV (Tempo Real)
+          &#128250; Tel&atilde;o / TV
         </button>
         <button className="rp-action-btn" onClick={exportCSV}>
           &#8595; Exportar CSV

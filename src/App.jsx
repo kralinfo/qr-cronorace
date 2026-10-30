@@ -156,7 +156,7 @@ function AppContent() {
 
   return (
     <div className={`app ${isNavMinimized ? 'app--nav-minimized' : ''}`}>
-      {tab !== 'home' && tab !== 'chronometer' && (
+      {tab !== 'home' && tab !== 'chronometer' && tab !== 'results' && (
         <header className="app-header">
           <div className="app-header-inner">
             {canGoBack && (
@@ -183,7 +183,7 @@ function AppContent() {
         {tab === 'races' && <RaceSetupPage onRaceSelected={() => handleNavigate('home')} onNavigate={handleNavigate} />}
         {tab === 'runners' && <RunnersPage />}
         {tab === 'scanner' && <ScannerPage onBack={handleBack} />}
-        {tab === 'results' && <ResultsPage />}
+        {tab === 'results' && <ResultsPage onBack={() => handleNavigate('home')} />}
         {tab === 'chronometer' && (
           <iframe
             src="/chronometer.html"

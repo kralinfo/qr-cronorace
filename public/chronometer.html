@@ -83,6 +83,120 @@ table.rk-table{width:100%;border-collapse:collapse}
 .rk-btn-danger:hover{background:#7f1d1d}
 .rk-btn-amber{background:#92400e;color:#fde68a;border-color:#92400e}
 .rk-btn-amber:hover{background:#78350f}
+
+/* ── Responsividade Mobile PWA ── */
+@media (max-width: 1024px) {
+  #chronoMain {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  #chronoLeftSection {
+    flex-shrink: 0 !important;
+  }
+  #chronoRightSection {
+    flex: 1 0 auto !important;
+    min-height: 240px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #timerDisplay {
+    font-size: clamp(2.1rem, 9.5vw, 3rem) !important;
+  }
+  #millisDisplay {
+    font-size: clamp(1.2rem, 5.5vw, 1.85rem) !important;
+  }
+  .chrono-card-pad {
+    padding: 10px 12px !important;
+  }
+  #bibInput {
+    height: 44px !important;
+    font-size: 1.15rem !important;
+  }
+  #btnBibSubmit {
+    height: 44px !important;
+    width: 48px !important;
+  }
+  #arrivalsTableWrap {
+    min-height: 180px !important;
+  }
+  #arrivalsTable th, #arrivalsTable td {
+    padding: 7px 6px !important;
+    font-size: 0.72rem !important;
+  }
+  .chrono-footer-btn {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Ranking view mobile */
+  .rk-header {
+    padding: 8px 12px !important;
+  }
+  .rk-hero {
+    padding: 10px 12px 6px !important;
+  }
+  .rk-hero-title {
+    font-size: clamp(1.2rem, 5.5vw, 1.6rem) !important;
+    margin-bottom: 3px !important;
+  }
+  .rk-hero-subtitle {
+    font-size: 0.72rem !important;
+    gap: 4px 6px !important;
+  }
+  .rk-tabs {
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding: 4px 10px 8px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .rk-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .rk-tab {
+    flex-shrink: 0 !important;
+    padding: 5px 12px !important;
+    font-size: 0.68rem !important;
+  }
+  .rk-body {
+    margin: 0 8px 8px !important;
+    border-radius: 10px !important;
+  }
+  .rk-table th {
+    padding: 7px 6px !important;
+    font-size: 0.58rem !important;
+  }
+  .rk-table td {
+    padding: 8px 6px !important;
+    font-size: 0.75rem !important;
+  }
+  .rk-name {
+    max-width: 105px !important;
+  }
+  .rk-footer {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    padding: 8px 10px max(10px, env(safe-area-inset-bottom)) !important;
+  }
+  .rk-btn-primary {
+    grid-column: span 2 !important;
+    padding: 10px 12px !important;
+    font-size: 0.82rem !important;
+  }
+  .rk-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 8px 4px !important;
+    font-size: 0.72rem !important;
+  }
+}
 </style>
 </head>
 <body class="h-full w-full bg-[#0B0813] text-slate-100 font-sans overflow-hidden grid-bg flex flex-col box-border">
@@ -107,10 +221,10 @@ table.rk-table{width:100%;border-collapse:collapse}
     </div>
   </header>
 
-  <main class="w-full flex-1 min-h-0 box-border px-3 py-2.5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-3 overflow-hidden">
+  <main id="chronoMain" class="w-full flex-1 min-h-0 box-border px-3 py-2.5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-3 overflow-hidden">
     <!-- LEFT -->
-    <section class="flex flex-col gap-3 min-h-0">
-      <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col items-center shrink-0">
+    <section id="chronoLeftSection" class="flex flex-col gap-3 min-h-0">
+      <div class="chrono-card-pad bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col items-center shrink-0">
         <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Tempo Decorrido</span>
         <div class="font-mono text-5xl font-black text-white tracking-tight my-2 drop-shadow-[0_0_15px_rgba(168,85,247,.3)]">
           <span id="timerDisplay">00:00:00</span><span id="millisDisplay" class="text-purple-400 text-3xl">.000</span>
@@ -120,7 +234,7 @@ table.rk-table{width:100%;border-collapse:collapse}
         </button>
       </div>
 
-      <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 shrink-0">
+      <div class="chrono-card-pad bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 shrink-0">
         <div class="flex items-center justify-between">
           <h2 class="text-xs font-extrabold uppercase tracking-wider text-purple-400">REGISTRAR CHEGADA</h2>
           <span class="text-[10px] text-slate-400 font-mono">Pressione ENTER</span>
@@ -136,6 +250,7 @@ table.rk-table{width:100%;border-collapse:collapse}
             onkeydown="if(event.key==='Enter'){event.preventDefault();registerArrival();}"
           />
           <button
+            id="btnBibSubmit"
             onclick="registerArrival()"
             title="Confirmar Chegada"
             class="h-[48px] w-[50px] shrink-0 bg-gradient-to-tr from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl flex items-center justify-center text-lg shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
@@ -151,8 +266,8 @@ table.rk-table{width:100%;border-collapse:collapse}
     </section>
 
     <!-- RIGHT -->
-    <section class="flex flex-col gap-3 h-full min-h-0 overflow-hidden">
-      <div class="bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
+    <section id="chronoRightSection" class="flex flex-col gap-3 h-full min-h-0 overflow-hidden">
+      <div class="chrono-card-pad bg-[#151026] border border-[#2a1f45] rounded-2xl p-4 shadow-xl flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
         <div class="flex items-center justify-between flex-wrap gap-2 shrink-0">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono text-xs font-bold">TOTAL CHEGADAS: <span id="countTotal" class="text-white">0</span></span>
@@ -163,8 +278,8 @@ table.rk-table{width:100%;border-collapse:collapse}
             <button onclick="filterCategory('VISITANTE')" id="filterVisitante" class="px-3 py-1 rounded-lg bg-[#0B0813] border border-[#2a1f45] text-slate-400 hover:text-white text-xs font-bold transition-all">VISITANTE</button>
           </div>
         </div>
-        <div class="w-full overflow-x-auto rounded-xl border border-[#2a1f45] flex-1 min-h-0 overflow-y-auto">
-          <table class="w-full text-left border-collapse">
+        <div id="arrivalsTableWrap" class="w-full overflow-x-auto rounded-xl border border-[#2a1f45] flex-1 min-h-0 overflow-y-auto">
+          <table id="arrivalsTable" class="w-full text-left border-collapse">
             <thead class="sticky top-0 z-10">
               <tr class="bg-[#0B0813] text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-[#2a1f45]">
                 <th class="py-2.5 px-3 text-center">GERAL</th>
