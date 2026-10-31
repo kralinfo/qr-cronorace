@@ -83,6 +83,14 @@ export function validateArrivalScan({ race, runnerData, runnerRecord, activeRace
     }
   }
 
+  if (!runnerRecord) {
+    return {
+      valid: false,
+      errorType: 'runner-not-found',
+      message: 'Corredor não cadastrado. Cadastre-o antes de registrar a chegada.'
+    }
+  }
+
   if (!belongsToActiveRace(runnerData, runnerRecord, activeRaceId)) {
     return {
       valid: false,

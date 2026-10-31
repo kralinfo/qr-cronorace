@@ -203,7 +203,20 @@ export default function ScannerPage({ onBack }) {
         </section>
       )}
 
-      {status === 'error' && (
+      {status === 'runner-not-found' && (
+    <section className="scan-result not-found">
+      <h3>Corredor não cadastrado</h3>
+      <p>{message}</p>
+      {rejectedScan && (
+        <p className="scan-rejected-runner">
+          Corredor lido: <strong>{rejectedScan.runnerName ?? `#${rejectedScan.barcode}`}</strong>
+          {rejectedScan.runnerNumber ? ` (Nº ${rejectedScan.runnerNumber})` : ''}
+        </p>
+      )}
+    </section>
+  )}
+
+  {status === 'error' && (
         <section className="scan-result error">
           <p>{message}</p>
         </section>

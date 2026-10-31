@@ -24,7 +24,6 @@ function InnerAppContent() {
   const { activeRace, loading, clearActiveRace, selectRace } = useActiveRace()
   const { runners } = useRunners(activeRace?.id)
   const [tab, setTabState] = useState('home')
-  const [navHistory, setNavHistory] = useState(['home'])
   const [isNavMinimized, setIsNavMinimized] = useState(() => {
     try {
       return localStorage.getItem('pwa-qr-timing:nav-minimized') === 'true'
@@ -32,6 +31,8 @@ function InnerAppContent() {
       return false
     }
   })
+
+  const [navHistory, setNavHistory] = useState(['home'])
 
   const handleToggleMinimize = () => {
     setIsNavMinimized(prev => {
@@ -59,6 +60,12 @@ function InnerAppContent() {
     } else {
       setTabState('home')
     }
+  }
+
+  const handleLogout = () => {
+    try { sessionStorage.removeItem('qr-cronorace:auth-v1') } catch {}
+    setTabState('home')
+    setNavHistory(['home'])
   }
 
   useEffect(() => {
@@ -165,6 +172,15 @@ function InnerAppContent() {
                 <IconChevronLeft size={20} />
               </button>
             )}
+            <button
+              type="button"
+              className="header-logout-btn"
+              onClick={handleLogout}
+              aria-label="Sair do sistema"
+              title="Sair do sistema"
+            >
+              🚪 Sair
+            </button>
             <div className="app-header-title-wrap">
               <h1>{tab === 'runners' && activeRace?.name ? `Corredores - ${activeRace.name}` : TAB_TITLES[tab]}</h1>
             </div>
@@ -197,14 +213,6 @@ function InnerAppContent() {
 
       </main>
 
-      <BottomNav
-        currentTab={tab}
-        onNavigate={handleNavigate}
-        hasActiveRace={Boolean(activeRace)}
-        isRaceStarted={Boolean(activeRace?.startTime)}
-        isMinimized={isNavMinimized}
-        onToggleMinimize={handleToggleMinimize}
-      />
 
     </div>
   )

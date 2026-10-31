@@ -231,7 +231,7 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
               ORIGEM:
             </span>
             <CategoryToggle
-              label={isLocal ? '🏠 Local ✓' : '🏠 Local'}
+              label={isLocal ? 'Local ✓' : 'Local'}
               active={isLocal}
               onClick={() => setIsLocal(p => !p)}
               color="#f59e0b"
@@ -245,13 +245,13 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
             </span>
             <div className="cat-group">
               <CategoryToggle
-                label="♿ PCD"
+                label="PCD"
                 active={specialCondition === 'PCD'}
                 onClick={() => setSpecialCondition(p => p === 'PCD' ? '' : 'PCD')}
                 color="#a855f7"
               />
               <CategoryToggle
-                label="👴 +60"
+                label="+60"
                 active={specialCondition === '+60'}
                 onClick={() => setSpecialCondition(p => p === '+60' ? '' : '+60')}
                 color="#14b8a6"
@@ -1023,7 +1023,7 @@ useEffect(() => {
                       className={`card-toggle-btn ${maleIsLocal ? 'active' : ''}`}
                       onClick={() => setMaleIsLocal(p => !p)}
                     >
-                      {maleIsLocal ? '🏠 Local ✓' : '🏠 Local'}
+                      {maleIsLocal ? 'Local ✓' : 'Local'}
                     </button>
                     <button
                       type="button"
@@ -1031,7 +1031,7 @@ useEffect(() => {
                       className={`card-toggle-btn pcd ${maleSpecial === 'PCD' ? 'active' : ''}`}
                       onClick={() => setMaleSpecial(p => p === 'PCD' ? '' : 'PCD')}
                     >
-                      {maleSpecial === 'PCD' ? '♿ PCD ✓' : '♿ PCD'}
+                      {maleSpecial === 'PCD' ? 'PCD ✓' : 'PCD'}
                     </button>
                     <button
                       type="button"
@@ -1039,7 +1039,7 @@ useEffect(() => {
                       className={`card-toggle-btn age ${maleSpecial === '+60' ? 'active' : ''}`}
                       onClick={() => setMaleSpecial(p => p === '+60' ? '' : '+60')}
                     >
-                      {maleSpecial === '+60' ? '👴 +60 ✓' : '👴 +60'}
+                      {maleSpecial === '+60' ? '+60 ✓' : '+60'}
                     </button>
                   </div>
                   <button ref={maleAddBtnRef} type="submit" className="race-config-add-btn compact" disabled={submittingMale}>
@@ -1147,7 +1147,7 @@ useEffect(() => {
                       className={`card-toggle-btn ${femaleIsLocal ? 'active' : ''}`}
                       onClick={() => setFemaleIsLocal(p => !p)}
                     >
-                      {femaleIsLocal ? '🏠 Local ✓' : '🏠 Local'}
+                      {femaleIsLocal ? 'Local ✓' : 'Local'}
                     </button>
                     <button
                       type="button"
@@ -1155,7 +1155,7 @@ useEffect(() => {
                       className={`card-toggle-btn pcd ${femaleSpecial === 'PCD' ? 'active' : ''}`}
                       onClick={() => setFemaleSpecial(p => p === 'PCD' ? '' : 'PCD')}
                     >
-                      {femaleSpecial === 'PCD' ? '♿ PCD ✓' : '♿ PCD'}
+                      {femaleSpecial === 'PCD' ? 'PCD ✓' : 'PCD'}
                     </button>
                     <button
                       type="button"
@@ -1163,7 +1163,7 @@ useEffect(() => {
                       className={`card-toggle-btn age ${femaleSpecial === '+60' ? 'active' : ''}`}
                       onClick={() => setFemaleSpecial(p => p === '+60' ? '' : '+60')}
                     >
-                      {femaleSpecial === '+60' ? '👴 +60 ✓' : '👴 +60'}
+                      {femaleSpecial === '+60' ? '+60 ✓' : '+60'}
                     </button>
                   </div>
                   <button ref={femaleAddBtnRef} type="submit" className="race-config-add-btn compact" disabled={submittingFemale}>

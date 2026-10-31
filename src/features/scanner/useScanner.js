@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { addResult } from '../results/results.repository.js'
 import { getRaceById } from '../races/races.repository.js'
-import { getRunnerById } from '../runners/runners.repository.js'
+import { getRunnerById, findRunnerInRaceByNumber } from '../runners/runners.repository.js'
 import { decodeRunnerPayload } from '../runners/barcode.service.js'
 import { buildArrivalResult, validateArrivalScan } from './scanner.rules.js'
 
@@ -128,10 +128,13 @@ export function useScanner(activeRaceOrId) {
     const runnerData = decodeRunnerPayload(text)
 
     // Busca o corredor e a versão mais recente da corrida no banco de dados
-    const [runner, currentRaceDoc] = await Promise.all([
-      getRunnerById(runnerData.id),
-      raceId ? getRaceById(raceId) : Promise.resolve(undefined)
-    ])
+    let runner = await getRunnerById(runnerData.id)
+    // O código de barras grava o número do peito; se não encontrou por id,
+    // tenta localizar o corredor pelo número dentro da corrida ativa.
+    if (!runner && raceId && /^\d+$/.test(String(runnerData.id || ''))) {
+      runner = await findRunnerInRaceByNumber(raceId, runnerData.id)
+    }
+    const currentRaceDoc = raceId ? await getRaceById(raceId) : undefined
 
     const currentRace = currentRaceDoc ?? activeRaceRef.current
 

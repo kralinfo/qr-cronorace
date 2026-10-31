@@ -10,7 +10,6 @@ export default function ChronometerPage() {
   return (
     <div className="chrono-page">
       <header className="chrono-header">
-        <span className="chrono-brand">JANELAMARCA</span>
         <span className="chrono-status">AGUARDANDO</span>
       </header>
       <main className="chrono-main">

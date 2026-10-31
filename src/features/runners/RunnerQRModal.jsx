@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../../shared/Modal.jsx'
 import { generateRunnerThermalLabel } from './barcode.service.js'
 import { isBluetoothSupported, printRunnerToBluetooth } from './bluetooth-printer.service.js'
+import { useDialog } from '../../shared/DialogProvider.jsx'
 import { printRunnerQRCode } from './print.service.js'
 import { buildQRFilename } from './qr-filename.service.js'
 
 export default function RunnerQRModal({ runner, raceName, onClose }) {
+  const dialog = useDialog()
   const [labelDataUrl, setLabelDataUrl] = useState(null)
   const [loading, setLoading] = useState(true)
   const [printingBt, setPrintingBt] = useState(false)
@@ -37,7 +39,7 @@ export default function RunnerQRModal({ runner, raceName, onClose }) {
       await printRunnerToBluetooth(labelDataUrl, runner, raceName)
     } catch (err) {
       if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
-        alert('Erro na impressora Bluetooth: ' + (err.message || 'Verifique se a impressora térmica está ligada.'))
+        dialog.alert('Erro na impressora Bluetooth: ' + (err.message || 'Verifique se a impressora térmica está ligada.'))
       }
     } finally {
       setPrintingBt(false)

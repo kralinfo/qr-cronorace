@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>JanelaMarca - Cronômetro</title>
+<title>Cronômetro</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
@@ -232,7 +232,6 @@ table.rk-table{width:100%;border-collapse:collapse}
       </button>
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20"><i class="fa-solid fa-clock text-white text-base"></i></div>
-        <span class="font-extrabold tracking-wider text-base bg-gradient-to-r from-purple-400 via-pink-400 to-purple-200 bg-clip-text text-transparent">JANELAMARCA</span>
       </div>
     </div>
     <div id="statusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase">
@@ -339,7 +338,6 @@ table.rk-table{width:100%;border-collapse:collapse}
       </button>
       <div class="rk-logo">
         <i class="fa-solid fa-clock" style="-webkit-text-fill-color:#a78bfa;color:#a78bfa"></i>
-        JANELAMARCA
       </div>
     </div>
     <div class="rk-status">
@@ -365,22 +363,22 @@ table.rk-table{width:100%;border-collapse:collapse}
   <!-- Category Tabs -->
   <div class="rk-tabs" id="rkTabs">
     <button class="rk-tab rk-active" onclick="rkFilter('ALL')" id="rkTab-ALL">
-      <i class="fa-solid fa-globe rk-tab-icon"></i> GERAL
+       GERAL
     </button>
     <button class="rk-tab" onclick="rkFilter('MASCULINO')" id="rkTab-MASCULINO">
-      <i class="fa-solid fa-mars rk-tab-icon"></i> MASCULINO
+      MASCULINO
     </button>
     <button class="rk-tab" onclick="rkFilter('FEMININO')" id="rkTab-FEMININO">
-      <i class="fa-solid fa-venus rk-tab-icon"></i> FEMININO
+       FEMININO
     </button>
     <button class="rk-tab" onclick="rkFilter('LOCAL MASC')" id="rkTab-LOCAL MASC">
-      <i class="fa-solid fa-house rk-tab-icon"></i><i class="fa-solid fa-mars rk-tab-icon"></i> LOCAL MASC
+      LOCAL MASC
     </button>
     <button class="rk-tab" onclick="rkFilter('LOCAL FEM')" id="rkTab-LOCAL FEM">
-      <i class="fa-solid fa-house rk-tab-icon"></i><i class="fa-solid fa-venus rk-tab-icon"></i> LOCAL FEM
+     LOCAL FEM
     </button>
     <button class="rk-tab" onclick="rkFilter('PCD_60')" id="rkTab-PCD_60">
-      <i class="fa-solid fa-wheelchair rk-tab-icon"></i> PCD / +60
+      PCD / +60
     </button>
   </div>
 
@@ -436,7 +434,7 @@ table.rk-table{width:100%;border-collapse:collapse}
 <div id="editLocaisModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center">
   <div style="background:#151026;border:1px solid #2a1f45;border-radius:16px;padding:20px;max-width:480px;width:90%;max-height:80vh;display:flex;flex-direction:column;gap:12px">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <h3 style="margin:0;font-size:.9rem;font-weight:800;color:#a78bfa">🏠 Definir Corredores Locais</h3>
+      <h3 style="margin:0;font-size:.9rem;font-weight:800;color:#a78bfa">Definir Corredores Locais</h3>
       <button onclick="closeEditLocais()" style="background:rgba(255,255,255,.06);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;padding:4px 10px;cursor:pointer;font-size:.75rem">✕</button>
     </div>
     <p style="margin:0;font-size:.75rem;color:#64748b">Clique para alternar cada corredor entre <strong>Local</strong> e <strong>Não Local (Visitante)</strong>.</p>
@@ -1236,6 +1234,37 @@ function exportCSV(){
   const el=document.createElement('a');
   el.href=url;el.download='ranking-classificacao.csv';el.click();
   URL.revokeObjectURL(url);
+}
+
+
+
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'native-dialog-overlay';
+    overlay.innerHTML = '<div class="native-dialog"><p>' + message.replace(/'/g, '\'') + '</p><div class="native-dialog-actions"><button class="native-dialog-cancel" type="button">Cancelar</button><button class="native-dialog-ok" type="button">OK</button></div></div>';
+    overlay.querySelector('.native-dialog-ok').onclick = () => { resolve(true); overlay.remove(); };
+    overlay.querySelector('.native-dialog-cancel').onclick = () => { resolve(false); overlay.remove(); };
+    document.body.appendChild(overlay);
+  });
+}
+
+async function showPrompt(message, defaultValue) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'native-dialog-overlay';
+    overlay.innerHTML = '<div class="native-dialog"><p>' + message.replace(/'/g, '\'') + '</p><input class="native-dialog-input" type="text" value="' + (defaultValue || '').replace(/'/g, '\'') + '" autocomplete="off"><div class="native-dialog-actions"><button class="native-dialog-cancel" type="button">Cancelar</button><button class="native-dialog-ok" type="button">OK</button></div></div>';
+    const input = overlay.querySelector('.native-dialog-input');
+    overlay.querySelector('.native-dialog-ok').onclick = () => { resolve(input.value); overlay.remove(); };
+    overlay.querySelector('.native-dialog-cancel').onclick = () => { resolve(null); overlay.remove(); };
+    input.focus();
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { resolve(input.value); overlay.remove(); }
+      if (e.key === 'Escape') { resolve(null); overlay.remove(); }
+    });
+    document.body.appendChild(overlay);
+    setTimeout(() => input.select(), 0);
+  });
 }
 
 function showToast(msg,isError=false){

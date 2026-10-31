@@ -57,13 +57,14 @@ export function useRunners(raceId) {
   const clearError = useCallback(() => setError(null), [])
   const clearLastQrCode = useCallback(() => setLastQrCode(null), [])
 
-  const createRunner = useCallback(async (name, number, cpf, targetRaceId, category) => {
+  const createRunner = useCallback(async (name, number, cpf, birthDate, targetRaceId, category) => {
     setError(null)
     const effectiveRaceId = targetRaceId || (raceId !== 'ALL' ? raceId : null)
 
     const trimmedName = (name || '').trim()
     const trimmedNumber = (number || '').trim()
     const trimmedCpf = (cpf || '').trim()
+    const trimmedBirthDate = (birthDate || '').trim()
     const trimmedCategory = (category || '').trim()
 
     if (!trimmedNumber) {
@@ -139,6 +140,7 @@ export function useRunners(raceId) {
         id: generateRunnerId(effectiveRaceId, sequenceNumber),
         number: formattedNumber,
         cpf: formattedCpf,
+        birthDate: trimmedBirthDate !== '' ? trimmedBirthDate : undefined,
         name: formattedName,
         category: trimmedCategory,
         raceId: effectiveRaceId

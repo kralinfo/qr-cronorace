@@ -19,12 +19,14 @@ import {
   normalizeCpf,
 } from './runner-formatter.service.js'
 import { normalizeComparable } from './runners.repository.js'
+import { useDialog } from '../../shared/DialogProvider.jsx'
 import { IconClose, IconUpload, IconDownload, IconCheck } from '../../shared/Icons.jsx'
 
 const ACCEPTED_EXTENSIONS = '.xlsx,.xls,.csv'
 
 export default function ImportRunnersModal({ raceId, onClose }) {
   const { runners, createRunnersBatch, loading: loadingRunners } = useRunners(raceId)
+  const dialog = useDialog()
 
   const [file, setFile] = useState(null)
   const [fileName, setFileName] = useState('')
@@ -294,11 +296,11 @@ export default function ImportRunnersModal({ raceId, onClose }) {
         setImportedCount(res.count)
         setShowSummary(true)
       } else {
-        alert(res.error?.message || 'Ocorreu um erro ao salvar os corredores.')
+        dialog.alert(res.error?.message || 'Ocorreu um erro ao salvar os corredores.')
       }
     } catch (err) {
       console.error(err)
-      alert(err?.message || 'Erro durante a importação em lote.')
+      dialog.alert(err?.message || 'Erro durante a importação em lote.')
     } finally {
       setImporting(false)
       setConfirmingPartial(false)

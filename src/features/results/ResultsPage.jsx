@@ -5,12 +5,14 @@ import { formatDuration } from './duration.formatter.js'
 import { withElapsedTime } from './results.rules.js'
 import { useRunners } from '../runners/useRunners.js'
 import { useActiveRace } from '../races/ActiveRaceContext.jsx'
+import { useDialog } from '../../shared/DialogProvider.jsx'
 
 export default function ResultsPage({ onBack }) {
   const { activeRace } = useActiveRace()
   const { placements: rawPlacements, loading, error } = useResults(activeRace?.id, activeRace?.startTime)
   const { runners } = useRunners(activeRace?.id)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
+  const dialog = useDialog()
   const [copiedLink, setCopiedLink] = useState(false)
 
   const placements = withElapsedTime(rawPlacements, activeRace?.startTime)
@@ -84,7 +86,7 @@ export default function ResultsPage({ onBack }) {
       setCopiedLink(true)
       setTimeout(() => setCopiedLink(false), 3000)
     } catch {
-      window.prompt('Copie o link abaixo para enviar aos corredores:', lookupUrl)
+      dialog.prompt('Copie o link abaixo para enviar aos corredores:', lookupUrl)
     }
   }
 
@@ -128,7 +130,6 @@ export default function ResultsPage({ onBack }) {
           )}
           <div className="rp-logo-wrap">
             <div className="rp-logo-icon">&#127942;</div>
-            <span className="rp-logo-text">JANELAMARCA</span>
           </div>
           <div className="rp-race-info">
             <h1 className="rp-race-name">{raceName}</h1>

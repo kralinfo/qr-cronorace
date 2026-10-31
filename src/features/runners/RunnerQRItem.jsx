@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { useRunnerQRCode } from './useRunnerQRCode.js'
 import { printRunnerQRCode } from './print.service.js'
+import { useDialog } from '../../shared/DialogProvider.jsx'
 import { downloadDataUrl } from './download.service.js'
 import { buildQRFilename } from './qr-filename.service.js'
 import { isBluetoothSupported, printRunnerToBluetooth } from './bluetooth-printer.service.js'
@@ -32,6 +33,7 @@ export default function RunnerQRItem({
   selected = false,
   onToggleSelect
 }) {
+  const dialog = useDialog()
   const { qrDataUrl, loading, ensureQRCode } = useRunnerQRCode(runner)
   const [showPreview, setShowPreview] = useState(false)
   const [printingBt, setPrintingBt] = useState(false)
@@ -63,7 +65,7 @@ export default function RunnerQRItem({
       await printRunnerToBluetooth(dataUrl, runner, raceName)
     } catch (err) {
       if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
-        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+        dialog.alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
       }
     } finally {
       setPrintingBt(false)

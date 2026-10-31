@@ -54,7 +54,7 @@ export default function EditRaceForm({ race, onSave, onCancel }) {
     <div className="edit-race-form-wrap">
       {confirming ? (
         <div className="form-confirm-prompt">
-          <div className="form-confirm-icon">📋</div>
+          <div className="form-confirm-icon"></div>
           <h3 className="form-confirm-title">Confirmar alterações</h3>
           <p className="form-confirm-desc">
             Deseja confirmar as alterações desta corrida?

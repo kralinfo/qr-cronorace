@@ -13,6 +13,7 @@ import { buildQRFilename } from './qr-filename.service.js'
 import { printRunnerQRCode, printRunnersQRCodeBatch } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
 import { getAllRunners, normalizeComparable } from './runners.repository.js'
+import { useDialog } from '../../shared/DialogProvider.jsx'
 import { maskCpf, normalizeCpf } from './runner-formatter.service.js'
 import {
   getPrinterStatus,
@@ -36,6 +37,7 @@ const PAGE_SIZE = 35
 export default function RunnersPage() {
   const { races } = useRaces()
   const { activeRace } = useActiveRace()
+  const dialog = useDialog()
 
   // Gerenciamento de Impressora Bluetooth
   const [printerModalOpen, setPrinterModalOpen] = useState(false)
@@ -210,7 +212,7 @@ export default function RunnersPage() {
       await printRunnerToBluetooth(qrDataUrl, runner, raceName)
     } catch (err) {
       if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
-        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+        dialog.alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
       }
     } finally {
       setPrintingBt(false)
@@ -261,7 +263,7 @@ export default function RunnersPage() {
       }
     } catch (err) {
       if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
-        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
+        dialog.alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
       }
     } finally {
       setPrintingBt(false)

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { printRunnersTablePDF } from '../runners/print.service.js'
 import RunnerQRModal from '../runners/RunnerQRModal.jsx'
+import { useDialog } from '../../shared/DialogProvider.jsx'
 
 export default function AllRunnersModal({
   isOpen,
@@ -13,6 +14,7 @@ export default function AllRunnersModal({
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterGender, setFilterGender] = useState('ALL') // 'ALL' | 'MALE' | 'FEMALE'
+  const dialog = useDialog()
   const [viewingQrRunner, setViewingQrRunner] = useState(null)
 
   useEffect(() => {
@@ -208,12 +210,12 @@ export default function AllRunnersModal({
                           {isMale ? 'Masculino' : 'Feminino'}
                         </span>
                         {isLocal ? (
-                          <span className="arm-flag local">🏠 Local</span>
+                          <span className="arm-flag local">Local</span>
                         ) : (
-                          <span className="arm-flag visitor">🏃 Visitante</span>
+                          <span className="arm-flag visitor">Visitante</span>
                         )}
-                        {isPcd && <span className="arm-flag pcd">♿ PCD</span>}
-                        {is60 && <span className="arm-flag age">👴 +60</span>}
+                        {isPcd && <span className="arm-flag pcd">PCD</span>}
+                        {is60 && <span className="arm-flag age">+60</span>}
                       </div>
                     </td>
                     <td className="td-actions">
@@ -233,8 +235,8 @@ export default function AllRunnersModal({
                           <button
                             type="button"
                             className="arm-action-btn del"
-                            onClick={() => {
-                              if (window.confirm(`Deseja realmente excluir ${runner.name} (Nº ${runner.number})?`)) {
+                            onClick={async () => {
+                              if (await dialog.confirm(`Deseja realmente excluir ${runner.name} (Nº ${runner.number})?`)) {
                                 onDeleteRunner(runner.id)
                               }
                             }}
