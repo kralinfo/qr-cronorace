@@ -343,7 +343,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const { runners: allRunners } = useRunners('ALL')
   const { placements } = useResults(activeRace?.id)
 
-  const [raceTab, setRaceTab] = useState('current')
+  const [raceTab, setRaceTab] = useState('registered')
   const [registeredPage, setRegisteredPage] = useState(0)
   const [name, setName] = useState(activeRace?.name || '')
   const [distanceKm, setDistanceKm] = useState(activeRace?.distanceKm || '')
