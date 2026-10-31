@@ -345,6 +345,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
 
   const [raceTab, setRaceTab] = useState('registered')
   const [registeredPage, setRegisteredPage] = useState(0)
+  const [raceSearch, setRaceSearch] = useState('')
   const [name, setName] = useState(activeRace?.name || '')
   const [distanceKm, setDistanceKm] = useState(activeRace?.distanceKm || '')
   const [isConfirmed, setIsConfirmed] = useState(Boolean(activeRace?.id))
@@ -777,23 +778,22 @@ useEffect(() => {
     setConfirmingStartEmpty(false)
   }
 
-  const raceStatus = activeRace?.startTime && !activeRace?.endTime
-    ? 'EM ANDAMENTO'
-    : activeRace?.endTime
-      ? 'ENCERRADA'
-      : 'AGUARDANDO'
+    // Filter races based on search term
+    const filteredRaces = (races || []).filter(r => {
+      if (!raceSearch.trim()) return true
+      const term = raceSearch.trim().toLowerCase()
+      return (r.name || '').toLowerCase().includes(term) || String(r.distanceKm || '').toLowerCase().includes(term)
+    })
 
-  return (
+    return (
     <div className="race-config-page">
       {/* Header */}
       <header className="race-config-header">
         <div className="race-config-brand">
           <IconClock size={20} />
-          <span>JANELAMARCA</span>
         </div>
         <div className="race-config-status">
           <span className="status-dot" style={{ background: activeRace?.startTime ? '#22c55e' : '#a78bfa' }} />
-          {raceStatus}
         </div>
       </header>
 
@@ -1311,10 +1311,27 @@ useEffect(() => {
       {/* ── Tab: Registered ── */}
       {raceTab === 'registered' && (
         <main className="race-config-main">
+          <input
+            type="text"
+            placeholder="Pesquisar corrida..."
+            value={raceSearch}
+            onChange={e => { setRaceSearch(e.target.value); setRegisteredPage(0) }}
+            className="race-config-search-input"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              marginBottom: '12px',
+              borderRadius: '8px',
+              border: '1px solid #301344',
+              background: '#130020',
+              color: '#fff',
+              fontSize: '14px'
+            }}
+          />
           <div className="registered-races-grid">
             {(() => {
               const pageSize = 6
-              const pagedRaces = (races || []).slice(registeredPage * pageSize, (registeredPage + 1) * pageSize)
+              const pagedRaces = filteredRaces.slice(registeredPage * pageSize, (registeredPage + 1) * pageSize)
               return pagedRaces.map(r => {
                 const isActive = r.id === activeRace?.id
                 const status = r.endTime ? 'Encerrada' : r.startTime ? 'Em andamento' : 'Aguardando'
@@ -1341,7 +1358,7 @@ useEffect(() => {
               })
             })()}
           </div>
-          {races.length > 6 && (
+          {filteredRaces.length > 6 && (
             <div className="registered-races-pagination" style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
               <button
                 type="button"
@@ -1353,7 +1370,7 @@ useEffect(() => {
               </button>
               <button
                 type="button"
-                disabled={(registeredPage + 1) * 6 >= races.length}
+                disabled={(registeredPage + 1) * 6 >= filteredRaces.length}
                 onClick={() => setRegisteredPage(p => p + 1)}
                 style={{ padding: '6px 12px', borderRadius: 8, background: '#1f1633', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
               >

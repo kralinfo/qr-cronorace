@@ -10,7 +10,6 @@ export default function ChronometerPage() {
   return (
     <div className="chrono-page">
       <header className="chrono-header">
-        <span className="chrono-status">AGUARDANDO</span>
       </header>
       <main className="chrono-main">
         <div className="chrono-time">00:00:00.000</div>
