@@ -156,7 +156,7 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
         return
       }
 
-      const result = await createRunner(name, number, '', targetRace.id, buildCategory())
+      const result = await createRunner(name, number, '', targetRace.id, '')  // category stored separately; passed as empty string since effectiveRaceId uses targetRace.id
       if (result) {
         setName('')
         setNumber('')
@@ -656,7 +656,8 @@ useEffect(() => {
     try {
       const base = maleIsLocal ? 'LOCAL MASC' : 'MASCULINO'
       const cat = maleSpecial ? `${base} | ${maleSpecial}` : base
-      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, cat)
+      // Category stored separately; raceId passed as 5th param, category as 6th (empty for now)
+      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, '')
       if (created) {
         setMaleName('')
         setMaleNumber('')
@@ -719,7 +720,8 @@ useEffect(() => {
     try {
       const base = femaleIsLocal ? 'LOCAL FEM' : 'FEMININO'
       const cat = femaleSpecial ? `${base} | ${femaleSpecial}` : base
-      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, cat)
+      // Category stored separately; raceId passed as 5th param, category as 6th (empty for now)
+      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, '')
       if (created) {
         setFemaleName('')
         setFemaleNumber('')
