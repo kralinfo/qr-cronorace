@@ -351,6 +351,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [isConfirmed, setIsConfirmed] = useState(Boolean(activeRace?.id))
   const [savingRace, setSavingRace] = useState(false)
   const [confirmingStartEmpty, setConfirmingStartEmpty] = useState(false)
+  const [genderTab, setGenderTab] = useState('MASCULINO') // 'MASCULINO' | 'FEMININO'
   const [lastRace, setLastRace] = useState(activeRace || null)
   const raceNameInputRef = React.useRef(null)
   const raceDistInputRef = React.useRef(null)
@@ -949,9 +950,14 @@ useEffect(() => {
               </button>
             </div>
           )}
-          <div className="race-config-cards">
+          <div className="race-config-card tab-view-card">
+            {/* Tab header inside the card */}
+            <div className="race-config-gender-tabs">
+              <button type="button" className={genderTab === 'MASCULINO' ? 'tab-active' : 'tab-inactive'} onClick={() => setGenderTab('MASCULINO')}>MASCULINO</button>
+              <button type="button" className={genderTab === 'FEMININO' ? 'tab-active' : 'tab-inactive'} onClick={() => setGenderTab('FEMININO')}>FEMININO</button>
+            </div>
             {/* CARD MASCULINO */}
-            <section className="race-config-card male">
+            <section className="race-config-card male" style={{display: genderTab === 'MASCULINO' ? 'block' : 'none'}}>
               <div className="race-config-card-header">
                 <div className="race-config-card-title">
                   <span className="cat-dot male" />
@@ -1075,7 +1081,7 @@ useEffect(() => {
             </section>
 
             {/* CARD FEMININO */}
-            <section className="race-config-card female">
+            <section className="race-config-card female" style={{display: genderTab === 'FEMININO' ? 'block' : 'none'}}>
               <div className="race-config-card-header">
                 <div className="race-config-card-title">
                   <span className="cat-dot female" />

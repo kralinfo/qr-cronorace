@@ -5300,3 +5300,51 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   }
   main.no-header { padding-top: 16px; }
 }
+.race-config-gender-tabs { display: flex; gap: 0; margin-bottom: 12px; border-radius: 8px; overflow: hidden; } .race-config-gender-tabs button { flex: 1; padding: 10px 16px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s ease; } .race-config-gender-tabs button.tab-active { background: #7c3aed; color: #fff; } .race-config-gender-tabs button.tab-inactive { background: #130020; color: #845EF7; } .race-config-gender-tabs button.tab-inactive:hover { background: #1c0d2e; }
+.tab-view-card {
+  background: #130020;
+  border: 1px solid #301344;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.race-config-gender-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  border-bottom: 1px solid #301344;
+  background: #0b0213;
+}
+
+.race-config-gender-tabs button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 0;
+}
+
+.race-config-gender-tabs button.tab-active {
+  background: #130020;
+  color: #fff;
+  border-bottom: 2px solid #7c3aed;
+}
+
+.race-config-gender-tabs button.tab-inactive {
+  background: #0b0213;
+  color: #845EF7;
+}
+
+.race-config-gender-tabs button.tab-inactive:hover {
+  background: #1c0d2e;
+}
+
+.tab-view-card .race-config-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
