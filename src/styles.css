@@ -3288,6 +3288,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   display: flex;
   align-items: center;
   gap: 18px;
+  overflow: hidden;
   box-shadow: 0 8px 30px rgba(139, 92, 246, 0.35);
   box-sizing: border-box;
   animation: qrPanelFade 0.2s ease-out;
@@ -3326,6 +3327,8 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   align-items: center;
   flex-shrink: 0;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+  width: 220px;
+  max-width: 100%;
 }
 
 .cqr-num {
@@ -3337,7 +3340,8 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
 }
 
 .cqr-img {
-  width: 190px;
+  width: 100%;
+  max-width: 190px;
   height: auto;
   display: block;
 }
@@ -3389,6 +3393,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .cqr-btn {
@@ -3445,6 +3450,59 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   margin-top: 18px;
   padding-top: 10px;
   border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 980px) {
+  .centered-qr-panel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .cqr-close {
+    top: 8px;
+    right: 8px;
+  }
+
+  .cqr-card {
+    width: min(100%, 300px);
+    margin: 0 auto;
+  }
+
+  .cqr-name-group {
+    padding-right: 0;
+    flex-wrap: wrap;
+  }
+
+  .cqr-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .cqr-btn {
+    width: 100%;
+    justify-content: center;
+    height: 40px;
+    padding: 0 10px;
+  }
+
+  .cqr-footer-actions {
+    justify-content: stretch;
+  }
+
+  .cqr-btn-del {
+    width: 100%;
+    justify-content: center;
+    height: 34px;
+  }
+
+  .race-config-view-all-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 }
 
 .cqr-btn-del {

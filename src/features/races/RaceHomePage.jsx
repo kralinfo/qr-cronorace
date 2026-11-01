@@ -1264,6 +1264,15 @@ useEffect(() => {
             >
               👥 Ver todos os corredores ({runners.length}) →
             </button>
+            <button
+              type="button"
+              className="race-config-view-all-btn"
+              onClick={() => handlePrintBatchBt(runners || [], 'all')}
+              disabled={!runners?.length || printingBtCat === 'all' || printingBatchCat === 'all'}
+              title="Imprimir todos os corredores em lote"
+            >
+              🖨 {printingBtCat === 'all' || printingBatchCat === 'all' ? 'Imprimindo lote...' : 'Impressão em lote'}
+            </button>
           </div>
 
           {/* QR Code Centralizado Abaixo do Botão Iniciar Cronômetro */}
