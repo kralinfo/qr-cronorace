@@ -3503,6 +3503,14 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
     grid-template-columns: 1fr;
     gap: 10px;
   }
+
+  .race-batch-control-panel {
+    padding: 12px;
+  }
+
+  .race-batch-control-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .cqr-btn-del {
@@ -4558,6 +4566,137 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   border-color: #a855f7;
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+}
+
+.race-batch-control-panel {
+  margin-top: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  background: rgba(19, 0, 35, 0.72);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.race-batch-control-panel--running {
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.race-batch-control-panel--paused {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+
+.race-batch-control-panel--completed {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.race-batch-control-panel--cancelled,
+.race-batch-control-panel--error {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.race-batch-control-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.race-batch-control-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ede9fe;
+  letter-spacing: 0.02em;
+}
+
+.race-batch-control-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c4b5fd;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.race-batch-control-subtitle {
+  font-size: 11px;
+  color: #a5b4fc;
+}
+
+.race-batch-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #cbd5e1;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.race-batch-progress-track {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.race-batch-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed, #22d3ee);
+  transition: width 0.2s ease;
+}
+
+.race-batch-current-runner {
+  font-size: 12px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.race-batch-error {
+  font-size: 12px;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.26);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.race-batch-control-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.race-batch-btn {
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  background: rgba(139, 92, 246, 0.18);
+  color: #e9d5ff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.race-batch-btn:hover {
+  background: rgba(139, 92, 246, 0.32);
+  border-color: #a78bfa;
+  color: #fff;
+}
+
+.race-batch-btn.danger {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fda4af;
+}
+
+.race-batch-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.65);
+  color: #fff;
 }
 
 /* ─── AllRunnersModal: Modal Dark Premium com Tabela de Corredores ─── */

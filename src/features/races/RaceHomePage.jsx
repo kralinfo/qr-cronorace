@@ -8,6 +8,15 @@ import { downloadDataUrl } from '../runners/download.service.js'
 import { buildQRFilename } from '../runners/qr-filename.service.js'
 import { isBluetoothSupported, printRunnerToBluetooth } from '../runners/bluetooth-printer.service.js'
 import { generateRunnerBarcode } from '../runners/barcode.service.js'
+import {
+  subscribeBatchPrintState,
+  getBatchPrintState,
+  startBluetoothBatchPrint,
+  pauseBatchPrint,
+  resumeBatchPrint,
+  cancelBatchPrint,
+  clearBatchPrintState
+} from './batch-print.controller.js'
 import StartTimeField from './StartTimeField.jsx'
 import EditRaceForm from './EditRaceForm.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
@@ -388,13 +397,18 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [selectedQrUrl, setSelectedQrUrl] = useState(null)
   const [printingBt, setPrintingBt] = useState(false)
   const [printingBatchCat, setPrintingBatchCat] = useState(null)
-  const [printingBtCat, setPrintingBtCat] = useState(null)
+  const [batchPrintState, setBatchPrintState] = useState(() => getBatchPrintState())
 
   // Modal de QR individual, todos os corredores e reabrir corrida
   const [selectedRunnerModal, setSelectedRunnerModal] = useState(null)
   const [allRunnersModalOpen, setAllRunnersModalOpen] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [reopenModalOpen, setReopenModalOpen] = useState(false)
+
+useEffect(() => {
+    const unsubscribe = subscribeBatchPrintState(setBatchPrintState)
+    return () => unsubscribe()
+  }, [])
 
 useEffect(() => {
     let active = true
@@ -550,6 +564,11 @@ useEffect(() => {
 
   const handlePrintBatchSystem = async (runnersList, catKey) => {
     if (!runnersList || runnersList.length === 0) return
+    const hasBtBatchRunning = batchPrintState.status === 'running' || batchPrintState.status === 'paused'
+    if (hasBtBatchRunning) {
+      alert('Já existe uma impressão em lote em andamento. Pause ou cancele antes de iniciar outra.')
+      return
+    }
     setPrintingBatchCat(catKey)
     try {
       await printRunnersQRCodeBatch(runnersList, activeRace?.name)
@@ -563,23 +582,23 @@ useEffect(() => {
 
   const handlePrintBatchBt = async (runnersList, catKey) => {
     if (!runnersList || runnersList.length === 0) return
+    const hasBtBatchRunning = batchPrintState.status === 'running' || batchPrintState.status === 'paused'
+    if (hasBtBatchRunning || printingBatchCat) {
+      alert('Já existe uma impressão em lote em andamento. Pause ou cancele antes de iniciar outra.')
+      return
+    }
     if (!isBluetoothSupported()) {
       await handlePrintBatchSystem(runnersList, catKey)
       return
     }
-    setPrintingBtCat(catKey)
-    try {
-      for (const runner of runnersList) {
-        const dataUrl = await generateRunnerBarcode(runner)
-        await printRunnerToBluetooth(dataUrl, runner, activeRace?.name)
-      }
-    } catch (err) {
-      if (err.name !== 'NotFoundError' && !err.message?.includes('User cancelled')) {
-        alert(`Erro na impressora Bluetooth: ${err.message || 'Verifique se a impressora térmica está ligada.'}`)
-      }
-    } finally {
-      setPrintingBtCat(null)
-    }
+    startBluetoothBatchPrint({
+      runners: runnersList,
+      raceName: activeRace?.name,
+      catKey
+    }).catch(err => {
+      console.error(err)
+      alert(`Erro na impressora Bluetooth: ${err?.message || 'Verifique se a impressora térmica está ligada.'}`)
+    })
   }
 
   const handleSaveField = async () => {
@@ -767,6 +786,17 @@ useEffect(() => {
         return (a.name || '').localeCompare(b.name || '')
       })
   }, [runners])
+
+  const isBatchRunning = batchPrintState.status === 'running'
+  const isBatchPaused = batchPrintState.status === 'paused'
+  const isBatchActive = isBatchRunning || isBatchPaused
+  const isAnyBatchActive = isBatchActive || Boolean(printingBatchCat)
+  const activeBatchCategory = printingBatchCat || batchPrintState.catKey
+  const isCategoryBatchActive = (catKey) => activeBatchCategory === catKey && isAnyBatchActive
+  const hasBatchFeedback = batchPrintState.status && batchPrintState.status !== 'idle'
+  const batchTotal = Number(batchPrintState.total || 0)
+  const batchCurrent = Number(batchPrintState.current || 0)
+  const batchProgressPercent = batchTotal > 0 ? Math.min(100, Math.round((batchCurrent / batchTotal) * 100)) : 0
 
 
   const handleOpenImportModal = async () => {
@@ -976,10 +1006,10 @@ useEffect(() => {
                     type="button"
                     className="card-batch-btn bt"
                     onClick={() => handlePrintBatchBt(maleRunners, 'male')}
-                    disabled={maleRunners.length === 0 || printingBtCat === 'male'}
+                    disabled={maleRunners.length === 0 || isAnyBatchActive}
                     title="Imprimir todos os cupons QR masculinos na Impressora Térmica Bluetooth"
                   >
-                    {printingBtCat === 'male' ? '⏳' : '🖨'}
+                    {isCategoryBatchActive('male') ? '⏳' : '🖨'}
                   </button>
                 </div>
               </div>
@@ -1108,10 +1138,10 @@ useEffect(() => {
                     type="button"
                     className="card-batch-btn bt"
                     onClick={() => handlePrintBatchBt(femaleRunners, 'female')}
-                    disabled={femaleRunners.length === 0 || printingBtCat === 'female'}
+                    disabled={femaleRunners.length === 0 || isAnyBatchActive}
                     title="Imprimir todos os cupons QR femininos na Impressora Térmica Bluetooth"
                   >
-                    {printingBtCat === 'female' ? '⏳' : '🖨'}
+                    {isCategoryBatchActive('female') ? '⏳' : '🖨'}
                   </button>
                 </div>
               </div>
@@ -1268,12 +1298,91 @@ useEffect(() => {
               type="button"
               className="race-config-view-all-btn"
               onClick={() => handlePrintBatchBt(runners || [], 'all')}
-              disabled={!runners?.length || printingBtCat === 'all' || printingBatchCat === 'all'}
+              disabled={!runners?.length || isAnyBatchActive}
               title="Imprimir todos os corredores em lote"
             >
-              🖨 {printingBtCat === 'all' || printingBatchCat === 'all' ? 'Imprimindo lote...' : 'Impressão em lote'}
+              🖨 {isAnyBatchActive ? 'Imprimindo lote...' : 'Impressão em lote'}
             </button>
           </div>
+
+          {hasBatchFeedback && (
+            <section className={`race-batch-control-panel race-batch-control-panel--${batchPrintState.status}`}>
+              <div className="race-batch-control-top">
+                <div className="race-batch-control-title">🖨 Impressão em lote</div>
+                <div className="race-batch-control-status">
+                  {batchPrintState.status === 'running' && 'Em andamento'}
+                  {batchPrintState.status === 'paused' && 'Pausada'}
+                  {batchPrintState.status === 'completed' && 'Concluída'}
+                  {batchPrintState.status === 'cancelled' && 'Cancelada'}
+                  {batchPrintState.status === 'error' && 'Com erro'}
+                </div>
+              </div>
+
+              <div className="race-batch-control-subtitle">
+                {batchPrintState.catKey === 'male' && 'Categoria: Masculino'}
+                {batchPrintState.catKey === 'female' && 'Categoria: Feminino'}
+                {batchPrintState.catKey === 'all' && 'Categoria: Todos os corredores'}
+                {!batchPrintState.catKey && 'Categoria: Lote'}
+              </div>
+
+              <div className="race-batch-progress-meta">
+                <span>{batchCurrent}/{batchTotal}</span>
+                <span>{batchProgressPercent}%</span>
+              </div>
+              <div className="race-batch-progress-track">
+                <div className="race-batch-progress-fill" style={{ width: `${batchProgressPercent}%` }} />
+              </div>
+
+              {batchPrintState.currentRunner?.name && (
+                <div className="race-batch-current-runner" title={batchPrintState.currentRunner.name}>
+                  Atual: {batchPrintState.currentRunner.name} {batchPrintState.currentRunner.number ? `· Nº ${batchPrintState.currentRunner.number}` : ''}
+                </div>
+              )}
+
+              {batchPrintState.errorMessage && (
+                <div className="race-batch-error">{batchPrintState.errorMessage}</div>
+              )}
+
+              <div className="race-batch-control-actions">
+                {isBatchRunning && (
+                  <button
+                    type="button"
+                    className="race-batch-btn"
+                    onClick={() => pauseBatchPrint()}
+                  >
+                    ⏸ Pausar
+                  </button>
+                )}
+                {isBatchPaused && (
+                  <button
+                    type="button"
+                    className="race-batch-btn"
+                    onClick={() => resumeBatchPrint()}
+                  >
+                    ▶ Retomar
+                  </button>
+                )}
+                {(isBatchRunning || isBatchPaused) && (
+                  <button
+                    type="button"
+                    className="race-batch-btn danger"
+                    onClick={() => cancelBatchPrint()}
+                  >
+                    ✕ Cancelar
+                  </button>
+                )}
+                {!isBatchRunning && !isBatchPaused && (
+                  <button
+                    type="button"
+                    className="race-batch-btn"
+                    onClick={() => clearBatchPrintState()}
+                  >
+                    Fechar
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* QR Code Centralizado Abaixo do Botão Iniciar Cronômetro */}
           {selectedRunner && (

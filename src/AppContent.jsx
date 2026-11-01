@@ -8,6 +8,7 @@ import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceCo
 import { useRunners } from './features/runners/useRunners.js'
 import { addResult } from './features/results/results.repository.js'
 import { getStoredActiveRaceId } from './features/races/active-race.storage.js'
+import { isBatchPrintActive } from './features/races/batch-print.controller.js'
 import BottomNav from './shared/BottomNav.jsx'
 import { IconChevronLeft } from './shared/Icons.jsx'
 
@@ -57,11 +58,19 @@ function InnerAppContent() {
 
   const handleNavigate = (newTab) => {
     if (newTab === tab) return
+    if (isBatchPrintActive()) {
+      const confirmed = window.confirm('Há uma impressão em lote em andamento. Sair desta tela pode atrapalhar o controle do processo. Deseja continuar?')
+      if (!confirmed) return
+    }
     setNavHistory(prev => [...prev, newTab])
     setTabState(newTab)
   }
 
   const handleBack = () => {
+    if (isBatchPrintActive()) {
+      const confirmed = window.confirm('Há uma impressão em lote em andamento. Deseja realmente sair desta tela?')
+      if (!confirmed) return
+    }
     if (navHistory.length > 1) {
       const nextHistory = [...navHistory]
       nextHistory.pop()
@@ -74,10 +83,25 @@ function InnerAppContent() {
   }
 
   const handleLogout = () => {
+    if (isBatchPrintActive()) {
+      const confirmed = window.confirm('Há uma impressão em lote em andamento. Deseja encerrar mesmo assim?')
+      if (!confirmed) return
+    }
     try { sessionStorage.removeItem('qr-cronorace:auth-v1') } catch {}
     setTabState('home')
     setNavHistory(['home'])
   }
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (!isBatchPrintActive()) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
 
   useEffect(() => {
     const handleRecordArrival = async (data) => {
