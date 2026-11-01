@@ -1,12 +1,12 @@
 import { generateRunnerThermalLabel } from './barcode.service.js'
 
-const THERMAL_LABEL_WIDTH_MM = '80mm'
+const THERMAL_LABEL_WIDTH_MM = '85mm'
 const THERMAL_LABEL_HEIGHT_MM = '48mm'
 
-// Responsabilidade única: abrir janela/iframe de impressão formatada especialmente para impressoras térmicas e etiquetas adesivas de 8.0 cm (80mm x 48mm) ou PDF.
+// Responsabilidade única: abrir janela/iframe de impressão formatada especialmente para impressoras térmicas e etiquetas adesivas de 8.5 cm (85mm x 48mm) ou PDF.
 
 /**
- * Abre janela de impressão formatada exatamente no tamanho do adesivo térmico (8.0 cm).
+ * Abre janela de impressão formatada exatamente no tamanho do adesivo térmico (8.5 cm).
  * Todas as informações (Número, Nome com destaque, Categoria e Código de Barras bem grande) estão 100% no mesmo sentido horizontal.
  * @param {string} [qrDataUrl] - Data URL (opcional).
  * @param {{ id: string, name: string, number?: string, category?: string }} runner - Dados do corredor.
@@ -108,7 +108,7 @@ export async function printRunnerQRCode(qrDataUrl, runner, raceName) {
 
 /**
  * Imprime em lote as etiquetas adesivas dos corredores informados.
- * Cada etiqueta possui largura exata de 8cm (80mm) e quebra de página automática.
+ * Cada etiqueta possui largura exata de 8,5cm (85mm) e quebra de página automática.
  * @param {Array<{ id: string, name: string, number?: string, category?: string }>} runners
  * @param {string} [raceName]
  * @returns {Promise<void>}
