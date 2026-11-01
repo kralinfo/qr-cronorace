@@ -8,7 +8,19 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
 <script>
-tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{brand:{dark:'#0B0813',card:'#151026',border:'#2a1f45'}}}}}
+window.tailwind = window.tailwind || {}
+window.tailwind.config = {theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{brand:{dark:'#0B0813',card:'#151026',border:'#2a1f45'}}}}}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const probe = document.createElement('div')
+  probe.className = 'hidden'
+  document.body.appendChild(probe)
+  const tailwindActive = window.getComputedStyle(probe).display === 'none'
+  probe.remove()
+  if (!tailwindActive) {
+    document.documentElement.classList.add('no-tw')
+  }
+})
 </script>
 <style>
 *{-webkit-tap-highlight-color:transparent;user-select:none}
@@ -16,6 +28,364 @@ input,select{user-select:auto}
 html,body{height:100%;margin:0;overflow:hidden}
 
 .grid-bg{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px}
+
+/* ── Estilo base estável do Cronômetro (independente do CDN) ── */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #e2e8f0;
+  background-color: #0B0813;
+}
+
+#chronoView,
+#rankingView {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#chronoView > header,
+#chronoView > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(18, 13, 36, 0.92);
+  border-color: #2a1f45;
+}
+
+#chronoMain {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1025px) {
+  #chronoMain {
+    grid-template-columns: 360px minmax(0, 1fr);
+  }
+}
+
+#chronoLeftSection,
+#chronoRightSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.chrono-card-pad {
+  background: #151026;
+  border: 1px solid #2a1f45;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+#chronoRightSection > .chrono-card-pad {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#arrivalsTableWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid #2a1f45;
+  border-radius: 12px;
+}
+
+#arrivalsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#arrivalsTable th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #0B0813;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#arrivalsTable th,
+#arrivalsTable td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(42, 31, 69, 0.5);
+  white-space: nowrap;
+}
+
+#categoryFilterButtons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+#chronoView button,
+#rankingView button {
+  font: inherit;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 10px;
+  background: #1b1331;
+  cursor: pointer;
+}
+
+#btnStart {
+  width: 100%;
+  padding: 12px 14px;
+  background: #10b981;
+  border-color: #10b981;
+  color: #04110c;
+  font-weight: 800;
+}
+
+#btnBibSubmit {
+  width: 52px;
+  height: 48px;
+  border-radius: 12px;
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: #ffffff;
+}
+
+#btnFinish {
+  flex: 1;
+  padding: 10px 14px;
+  border-color: #7c3aed;
+  background: #7c3aed;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+#bibInput {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  background: #0B0813;
+  border: 2px solid rgba(139, 92, 246, 0.45);
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-align: center;
+  outline: none;
+}
+
+#bibInput::placeholder {
+  color: #64748b;
+}
+
+/* ── Aparência canônica da tela Cronômetro (igual ao PWA) ── */
+#chronoView {
+  color: #e2e8f0;
+}
+
+#chronoView header {
+  width: 100%;
+  flex-shrink: 0;
+  background: rgba(18, 13, 36, 0.9);
+  border-bottom: 1px solid #2a1f45;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+#chronoView header > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#chronoView header button {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #151026;
+  border: 1px solid #2a1f45;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#chronoView header button:hover {
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #ffffff;
+}
+
+#statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  background: rgba(100, 116, 139, 0.12);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#statusBadge > span:first-child {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+#chronoLeftSection .chrono-card-pad:first-child > span {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#timerDisplay {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(2.4rem, 4.2vw, 4rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+#millisDisplay {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.4rem, 2.2vw, 2.25rem);
+  font-weight: 900;
+  color: #c084fc;
+  margin-left: 4px;
+}
+
+#chronoLeftSection .chrono-card-pad:nth-child(2) h2 {
+  margin: 0;
+  color: #c084fc;
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+#chronoLeftSection .chrono-card-pad:nth-child(2) h2 + span {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+#runnerPreview {
+  color: #e9d5ff;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+#chronoRightSection > .chrono-card-pad > div:first-child > div:first-child > span {
+  color: #d8b4fe;
+  background: rgba(124, 58, 237, 0.22);
+  border: 1px solid rgba(168, 85, 247, 0.38);
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+}
+
+#categoryFilterButtons button {
+  min-width: 92px;
+  height: 34px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+#arrivalsTable thead tr {
+  background: #0B0813;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#arrivalsTable tbody tr {
+  border-bottom: 1px solid rgba(42, 31, 69, 0.45);
+}
+
+#arrivalsTable tbody tr td {
+  color: #e2e8f0;
+  font-size: 0.92rem;
+}
+
+#arrivalsTable tbody tr td:nth-child(1) {
+  color: #d8b4fe;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  text-align: center;
+}
+
+#arrivalsTable tbody tr td:nth-child(2) {
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 900;
+}
+
+#arrivalsTable tbody tr td:nth-child(6) {
+  color: #e9d5ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  text-align: right;
+}
+
+#chronoView footer {
+  width: 100%;
+  flex-shrink: 0;
+  background: rgba(18, 13, 36, 0.95);
+  border-top: 1px solid #2a1f45;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+#chronoView footer > button:first-child {
+  flex: 1;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid #7c3aed;
+  background: #7c3aed;
+  color: #ffffff;
+  font-size: 1.03rem;
+  font-weight: 900;
+}
+
+#chronoView footer > button:last-child {
+  height: 46px;
+  min-width: 170px;
+  border-radius: 14px;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  background: rgba(244, 63, 94, 0.16);
+  color: #fb7185;
+  font-size: 1rem;
+  font-weight: 900;
+}
 
 /* Efeito de Tremor da Tela (Screen Shake) ao passar corredor */
 @keyframes screenShake {
@@ -82,7 +452,8 @@ table.rk-table{width:100%;border-collapse:collapse}
 .rk-cat-GERAL{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
 .rk-cat-MASCULINO{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
 .rk-cat-FEMININO{background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.3)}
-.rk-cat-60{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.rk-cat-50{background:rgba(20,184,166,.15);color:#2dd4bf;border:1px solid rgba(20,184,166,.35)}
+.rk-cat-45{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
 
 .rk-bib{font-family:'JetBrains Mono',monospace;font-weight:800;color:#fff;font-size:.85rem}
 .rk-name{color:#e2e8f0;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis}
@@ -377,8 +748,11 @@ table.rk-table{width:100%;border-collapse:collapse}
     <button class="rk-tab" onclick="rkFilter('LOCAL FEM')" id="rkTab-LOCAL FEM">
      LOCAL FEM
     </button>
-    <button class="rk-tab" onclick="rkFilter('PCD_60')" id="rkTab-PCD_60">
-      PCD / +60
+    <button class="rk-tab" onclick="rkFilter('PCD_50')" id="rkTab-PCD_50">
+      PCD / +50
+    </button>
+    <button class="rk-tab" onclick="rkFilter('AGE_45_49')" id="rkTab-AGE_45_49">
+      45-49
     </button>
   </div>
 
@@ -496,6 +870,38 @@ const runnerPreviewText=document.getElementById('runnerPreviewText');
 const arrivalsList=document.getElementById('arrivalsList');
 const countTotal=document.getElementById('countTotal');
 
+function getActiveRaceId() {
+  try {
+    const byId = localStorage.getItem('pwa-qr-timing:active-race-id');
+    if (byId) return byId;
+    const raw = localStorage.getItem('pwa-qr-timing:active-race');
+    const race = raw ? JSON.parse(raw) : null;
+    return race?.id || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function getActiveRaceSafe() {
+  try {
+    const currentId = getActiveRaceId();
+    if (!currentId) return null;
+
+    const raw = localStorage.getItem('pwa-qr-timing:active-race');
+    const race = raw ? JSON.parse(raw) : null;
+
+    if (!race || race.id !== currentId) {
+      const normalized = { id: currentId };
+      localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(normalized));
+      return normalized;
+    }
+
+    return race;
+  } catch (e) {
+    return null;
+  }
+}
+
 function goBack(){
   try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'BACK'},'*');return;}}catch(e){}
   if(window.history.length>1)window.history.back();else window.location.href='/';
@@ -523,9 +929,8 @@ function getRunnerByBib(bib){
 
 function getRaceName(){
   try{
-    const raw=localStorage.getItem('pwa-qr-timing:active-race');
-    if(!raw)return null;
-    const race=JSON.parse(raw);
+    const race=getActiveRaceSafe();
+    if(!race)return null;
     return race?.name||null;
   }catch(e){return null;}
 }
@@ -556,18 +961,15 @@ function toggleTimer(){
 
     // Salva startTime na corrida se ainda não tiver; retomada: limpa pauseTime
     try {
-      const raw = localStorage.getItem('pwa-qr-timing:active-race');
-      if (raw) {
-        const race = JSON.parse(raw);
-        if (race?.id) {
-          const patch = { pauseTime: null, elapsedAtPause: null };
-          if (!race.startTime) {
-            patch.startTime = new Date(startTime).toISOString();
-          }
-          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
-          if (window.fbDb && window.fbSetDoc && window.fbDoc) {
-            window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
-          }
+      const race = getActiveRaceSafe();
+      if (race?.id) {
+        const patch = { pauseTime: null, elapsedAtPause: null };
+        if (!race.startTime) {
+          patch.startTime = new Date(startTime).toISOString();
+        }
+        localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
+        if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+          window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
         }
       }
     } catch(e) {}
@@ -581,15 +983,12 @@ function toggleTimer(){
 
     // Salva estado de pausa no Firestore para sincronizar com celular
     try {
-      const raw = localStorage.getItem('pwa-qr-timing:active-race');
-      if (raw) {
-        const race = JSON.parse(raw);
-        if (race?.id) {
-          const patch = { pauseTime: new Date().toISOString(), elapsedAtPause: elapsedTime };
-          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
-          if (window.fbDb && window.fbSetDoc && window.fbDoc) {
-            window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
-          }
+      const race = getActiveRaceSafe();
+      if (race?.id) {
+        const patch = { pauseTime: new Date().toISOString(), elapsedAtPause: elapsedTime };
+        localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
+        if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+          window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
         }
       }
     } catch(e) {}
@@ -604,8 +1003,7 @@ function formatTime(ms){
 }
 async function deleteAllResultsForRace() {
   try {
-    const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') ||
-                   (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+    const raceId = getActiveRaceId();
     if (!raceId || !window.fbDb) return;
 
     const q = window.fbQuery(
@@ -664,9 +1062,8 @@ async function resetTimer(){
 
   // 2. Reabre a corrida no Firestore e no localStorage (limpando startTime e endTime)
   try {
-    const raw = localStorage.getItem('pwa-qr-timing:active-race');
-    if (raw) {
-      const race = JSON.parse(raw);
+    const race = getActiveRaceSafe();
+    if (race) {
       race.startTime = null;
       race.endTime = null;
       localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
@@ -710,9 +1107,8 @@ async function confirmFinish(){
   if(runnerPreview)runnerPreview.classList.add('hidden');
 
   try{
-    const raw=localStorage.getItem('pwa-qr-timing:active-race');
-    if(raw){
-      const race=JSON.parse(raw);
+    const race=getActiveRaceSafe();
+    if(race){
       race.endTime=nowIso;
       localStorage.setItem('pwa-qr-timing:active-race',JSON.stringify(race));
       if(window.fbDb&&window.fbSetDoc&&window.fbDoc&&race.id){
@@ -763,13 +1159,7 @@ function newRace(){
 }
 
 function getPublicResultLookupUrl(){
-  let raceId = localStorage.getItem('pwa-qr-timing:active-race-id');
-  if(!raceId){
-    try {
-      const race = JSON.parse(localStorage.getItem('pwa-qr-timing:active-race')||'{}');
-      raceId = race?.id;
-    } catch(e){}
-  }
+  const raceId = getActiveRaceId();
   const base = window.location.origin;
   return `${base}/?resultado=1${raceId ? '&corrida=' + raceId : ''}`;
 }
@@ -803,6 +1193,8 @@ function openPublicResultLookup(){
 // ── Ranking Table ──
 function getCatLabel(cat){
   const c=String(cat||'').toUpperCase();
+  if(c.includes('45-49') || c.includes('45 A 49'))return{label:'45',cls:'rk-cat-45'};
+  if(c.includes('+50') || c.includes('50'))return{label:'50',cls:'rk-cat-50'};
   if(c.includes('LOCAL'))return{label:'L',cls:'rk-cat-LOCAL'};
   if(c.includes('VISITANTE'))return{label:'V',cls:'rk-cat-VISITANTE'};
   if(c.includes('PCD'))return{label:'P',cls:'rk-cat-PCD'};
@@ -811,7 +1203,7 @@ function getCatLabel(cat){
 
 function rkFilter(cat){
   rkActiveFilter=cat;
-  const allKeys=['ALL','MASCULINO','FEMININO','LOCAL MASC','LOCAL FEM','PCD_60'];
+  const allKeys=['ALL','MASCULINO','FEMININO','LOCAL MASC','LOCAL FEM','PCD_50','AGE_45_49'];
   allKeys.forEach(k=>{
     const btn=document.getElementById('rkTab-'+k);
     if(!btn)return;
@@ -824,7 +1216,8 @@ function rkFilter(cat){
     'FEMININO':'CLASSIFICAÇÃO FEMININO',
     'LOCAL MASC':'CLASSIFICAÇÃO LOCAL MASCULINO',
     'LOCAL FEM':'CLASSIFICAÇÃO LOCAL FEMININO',
-    'PCD_60':'CLASSIFICAÇÃO PCD / +60'
+    'PCD_50':'CLASSIFICAÇÃO PCD / +50',
+    'AGE_45_49':'CLASSIFICAÇÃO 45-49'
   };
   document.getElementById('rkSectionLabel').textContent=labels[cat]||'CLASSIFICAÇÃO';
   renderRankingTable();
@@ -847,7 +1240,8 @@ function renderRankingTable(){
     if(rkActiveFilter==='FEMININO')return isFem;
     if(rkActiveFilter==='LOCAL MASC')return isLocal&&isMasc;
     if(rkActiveFilter==='LOCAL FEM')return isLocal&&isFem;
-    if(rkActiveFilter==='PCD_60')return hasSpecial('PCD')||hasSpecial('+60')||hasSpecial('60');
+    if(rkActiveFilter==='PCD_50')return hasSpecial('PCD')||hasSpecial('+50')||hasSpecial('50');
+    if(rkActiveFilter==='AGE_45_49')return hasSpecial('45-49')||hasSpecial('45 A 49');
     return false;
   }
 
@@ -884,8 +1278,9 @@ function getCatLabel(cat){
   if(base==='FEMININO')return{label:'F',cls:'rk-cat-FEMININO'};
   if(base==='LOCAL')return{label:'L',cls:'rk-cat-LOCAL'};
   if(base==='VISITANTE')return{label:'V',cls:'rk-cat-VISITANTE'};
+  if(raw.includes('45-49') || raw.includes('45 A 49'))return{label:'45',cls:'rk-cat-45'};
+  if(raw.includes('+50') || raw.includes('50'))return{label:'50',cls:'rk-cat-50'};
   if(raw.includes('PCD'))return{label:'P',cls:'rk-cat-PCD'};
-  if(raw.includes('+60'))return{label:'60',cls:'rk-cat-60'};
   return{label:'G',cls:'rk-cat-GERAL'};
 }
 
@@ -914,8 +1309,7 @@ function registerArrival(directBib){
   if (runnerPreview) runnerPreview.classList.add('hidden');
   if (typeof clearScanBuffer === 'function') clearScanBuffer();
 
-  const rawActive = localStorage.getItem('pwa-qr-timing:active-race');
-  const activeRace = rawActive ? JSON.parse(rawActive) : {};
+  const activeRace = getActiveRaceSafe() || {};
   if (raceFinished || Boolean(activeRace.endTime) || (statusText && statusText.textContent === 'ENCERRADA')) {
     showToast('A corrida já está encerrada! Não é permitido registrar novas chegadas.', true);
     return;
@@ -952,15 +1346,13 @@ function registerArrival(directBib){
 }
 
 async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs) {
-  const rawActive = localStorage.getItem('pwa-qr-timing:active-race');
-  const activeRace = rawActive ? JSON.parse(rawActive) : {};
+  const activeRace = getActiveRaceSafe() || {};
   if (raceFinished || Boolean(activeRace.endTime) || (statusText && statusText.textContent === 'ENCERRADA')) {
     console.warn('Chegada ignorada no sync: corrida já encerrada.');
     return;
   }
 
-  const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
-                 (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+  const raceId = getActiveRaceId();
   const runnerId = runner?.id || `bib_${bibNumber}`;
   const now = new Date();
 
@@ -1016,8 +1408,7 @@ async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs
 }
 
 window.startFirebaseListening = function() {
-  const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
-                 (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+  const raceId = getActiveRaceId();
   if (!raceId || !window.fbDb || !window.fbOnSnapshot) return;
 
   const q = window.fbQuery(
@@ -1031,10 +1422,7 @@ window.startFirebaseListening = function() {
   let _prevCount = null;
 
   window.fbOnSnapshot(q, (snap) => {
-    let raceObj = null;
-    try {
-      raceObj = JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}');
-    } catch(e) {}
+    let raceObj = getActiveRaceSafe();
     const startMs = raceObj?.startTime ? Date.parse(raceObj.startTime) : NaN;
 
     const allDocs = snap.docs.map(d => d.data());
@@ -1166,7 +1554,7 @@ function openEditLocais(){
     const isLocal=cat.includes('LOCAL');
     const isFem=cat.includes('FEM');
     const genderLabel=isFem?'♀ Fem':'♂ Masc';
-    const special=cat.includes('PCD')?' · PCD':(cat.includes('+60')||cat.includes('60'))?' · +60':'';
+    const special=cat.includes('PCD')?' · PCD':(cat.includes('+50')||cat.includes('50'))?' · +50':'';
     return `
     <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;background:#0d0920;border:1px solid #2a1f45;border-radius:12px">
       <span style="font-family:monospace;font-weight:800;color:#fff;font-size:.85rem;min-width:44px">#${a.bib}</span>
@@ -1191,7 +1579,7 @@ function toggleRunnerLocal(id){
   const isCurrentlyLocal=currentCat.includes('LOCAL');
   const makeLocal=!isCurrentlyLocal;
   
-  // Parse base and extras (preserving gender and PCD/+60)
+  // Parse base and extras (preserving gender and categorias especiais)
   const parts=currentCat.split(' | ');
   let base=parts[0].trim();
   const extras=parts.slice(1);
@@ -1572,8 +1960,7 @@ function applyLiveRaceState(race) {
 }
 
 window.startRaceDocumentListening = function() {
-  const raceId = localStorage.getItem('pwa-qr-timing:active-race-id') || 
-                 (JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}'))?.id;
+  const raceId = getActiveRaceId();
   if (!raceId || !window.fbDb || !window.fbOnSnapshot || !window.fbDoc) return;
 
   const raceRef = window.fbDoc(window.fbDb, 'races', raceId);
@@ -1583,7 +1970,7 @@ window.startRaceDocumentListening = function() {
     
     // Atualiza o localStorage local do celular
     try {
-      const currentLocal = JSON.parse(localStorage.getItem('pwa-qr-timing:active-race') || '{}');
+      const currentLocal = getActiveRaceSafe() || {};
       const updatedRace = { ...currentLocal, ...raceData, id: raceId };
       localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(updatedRace));
       applyLiveRaceState(updatedRace);
@@ -1596,9 +1983,8 @@ window.startRaceDocumentListening = function() {
 function initRaceState(){
 
   try{
-    const raw=localStorage.getItem('pwa-qr-timing:active-race');
-    if(!raw)return;
-    const race=JSON.parse(raw);
+    const race=getActiveRaceSafe();
+    if(!race)return;
     if(race.endTime){
       raceFinished=true;
       const startMs=Date.parse(race.startTime)||0;
@@ -1674,8 +2060,7 @@ let clearScanBuffer = null;
     lastProcessedCode = code;
     lastProcessedTime = now;
 
-    const rawActive = localStorage.getItem('pwa-qr-timing:active-race');
-    const activeRace = rawActive ? JSON.parse(rawActive) : {};
+    const activeRace = getActiveRaceSafe() || {};
     if (raceFinished || Boolean(activeRace.endTime) || (statusText && statusText.textContent === 'ENCERRADA')) {
       showToast('A corrida já está encerrada! Leitura bloqueada.', true);
       return;

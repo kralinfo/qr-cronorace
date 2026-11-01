@@ -57,9 +57,7 @@ export default function PublicRankingPage() {
         !cat.includes('+50') &&
         !cat.includes('50') &&
         !cat.includes('45-49') &&
-        !cat.includes('45 A 49') &&
-        !cat.includes('+60') &&
-        !cat.includes('60')
+        !cat.includes('45 A 49')
       ) return
     }
     seenArrivalIds.add(p.barcode)
