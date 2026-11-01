@@ -7,7 +7,7 @@ export const COLUMN_ALIASES = {
   nome: ['nome', 'name', 'corredor', 'atleta', 'nome do corredor', 'nome_completo', 'nomecompleto', 'nome completo'],
   sexo: ['sexo', 'sex', 'genero', 'gênero', 'gender'],
   local: ['local', 'localidade', 'origem', 'cidade', 'visitante', 'residencia', 'residente'],
-  especial: ['categoria especial', 'categoria_especial', 'especial', 'condicao', 'condição', 'pcd', 'pcd/60', 'pcd_60', 'obs', 'observacao', 'observação'],
+  especial: ['categoria especial', 'categoria_especial', 'especial', 'condicao', 'condição', 'pcd', 'pcd/50', 'pcd_50', 'obs', 'observacao', 'observação'],
   cpf: ['cpf', 'documento'],
   categoria: ['categoria', 'category', 'cat'],
 }
@@ -52,9 +52,9 @@ export function normalizeLocal(val) {
 }
 
 /**
- * Normaliza a categoria especial (PCD ou +60).
+ * Normaliza a categoria especial (PCD, +50 ou 45-49).
  * @param {any} val
- * @returns {{ special: '' | 'PCD' | '+60', valid: boolean }}
+ * @returns {{ special: '' | 'PCD' | '+50' | '45-49', valid: boolean }}
  */
 export function normalizeSpecial(val) {
   if (val == null || String(val).trim() === '' || String(val).trim() === '-') {
@@ -64,8 +64,23 @@ export function normalizeSpecial(val) {
   if (clean === 'PCD' || clean === 'P.C.D.' || clean === 'DEFICIENTE' || clean.includes('PCD')) {
     return { special: 'PCD', valid: true }
   }
-  // Aceita +60, 60, 60+, '60 anos', 'maior de 60', 'idoso', etc.
+  // Aceita 45-49, 45 a 49, 45/49.
   if (
+    clean === '45-49' ||
+    clean === '45 A 49' ||
+    clean === '45/49' ||
+    clean.includes('45-49') ||
+    clean.includes('45 A 49')
+  ) {
+    return { special: '45-49', valid: true }
+  }
+
+  // Aceita +50, 50, 50+, '50 anos', 'maior de 50', 'idoso' e legado de 60+.
+  if (
+    clean === '+50' ||
+    clean === '50+' ||
+    clean === '50' ||
+    clean.includes('50') ||
     clean === '+60' ||
     clean === '60+' ||
     clean === '60' ||
@@ -75,14 +90,14 @@ export function normalizeSpecial(val) {
     clean.includes('SÊNIOR') ||
     clean.includes('MASTER')
   ) {
-    return { special: '+60', valid: true }
+    return { special: '+50', valid: true }
   }
   return { special: '', valid: false }
 }
 
 /**
  * Constrói a categoria canônica usada no sistema.
- * @param {{ sex: 'MASCULINO' | 'FEMININO', isLocal: boolean, special?: '' | 'PCD' | '+60', rawCategory?: string }} params
+ * @param {{ sex: 'MASCULINO' | 'FEMININO', isLocal: boolean, special?: '' | 'PCD' | '+50' | '45-49', rawCategory?: string }} params
  * @returns {string}
  */
 export function buildCanonicalCategory({ sex, isLocal, special = '', rawCategory = '' }) {
@@ -109,7 +124,7 @@ export function expectedColumns() {
     { key: 'nome', label: 'Nome', obrigatorio: true, exemplo: 'João da Silva' },
     { key: 'sexo', label: 'Sexo (M ou F)', obrigatorio: true, exemplo: 'M' },
     { key: 'local', label: 'Local (L ou V)', obrigatorio: false, exemplo: 'L' },
-    { key: 'especial', label: 'Categoria especial (PCD, +60 ou 60)', obrigatorio: false, exemplo: '60' },
+    { key: 'especial', label: 'Categoria especial (PCD, +50 ou 45-49)', obrigatorio: false, exemplo: '+50' },
   ]
 }
 
@@ -223,7 +238,7 @@ export function downloadRunnersTemplateXlsx() {
     ['0010', 'Breno Henrique', 'M', 'L', ''],
     ['0020', 'Bruno Silva', 'M', 'V', ''],
     ['0040', 'Silmara Santos', 'F', 'V', ''],
-    ['0045', 'Fernando Costa', 'M', 'L', '60'],
+    ['0045', 'Fernando Costa', 'M', 'L', '+50'],
     ['0050', 'Roberto Almeida', 'M', 'V', 'PCD'],
     ['0060', 'Bebel Pereira', 'F', 'L', ''],
   ]
@@ -249,11 +264,11 @@ export function downloadRunnersTemplateXlsx() {
     ['Nome', 'SIM', 'Nome completo do atleta', 'João da Silva', 'Nome e sobrenome do participante.'],
     ['Sexo', 'SIM', 'M ou F (ou Masculino / Feminino)', 'M ou F', 'Gênero da categoria: M para masculino, F para feminino.'],
     ['Local', 'NÃO', 'L (Local) ou V (Visitante)', 'L ou V', 'L para morador local/da cidade; V para visitante. Vazio = Visitante.'],
-    ['Categoria especial', 'NÃO', 'PCD, +60 ou 60 (ou vazio)', 'PCD, +60, 60 ou vazio', 'PCD para deficiência; +60 ou 60 para 60 anos ou mais. Vazio se padrão.'],
+    ['Categoria especial', 'NÃO', 'PCD, +50 ou 45-49 (ou vazio)', 'PCD, +50, 45-49 ou vazio', 'PCD para deficiência; +50 para 50 anos ou mais; 45-49 para essa faixa etária. Vazio se padrão.'],
     [''],
     ['INSTRUÇÃO PARA PROMPTS DE IA:'],
     ['Se você possui listas separadas (ex: Masculino Local, Feminino Visitante, PCDs), envie esta planilha junto com as listas para uma IA (como ChatGPT, Gemini ou Claude) com o comando:'],
-    ['"Organize a lista de corredores anexa nas colunas exatas da aba Inscrições desta planilha: Número, Nome, Sexo (M/F), Local (L/V), Categoria especial (PCD/+60 ou vazio)."'],
+    ['"Organize a lista de corredores anexa nas colunas exatas da aba Inscrições desta planilha: Número, Nome, Sexo (M/F), Local (L/V), Categoria especial (PCD/+50/45-49 ou vazio)."'],
   ]
   const wsInstrucoes = XLSX.utils.aoa_to_sheet(dataInstrucoes)
   wsInstrucoes['!cols'] = [
@@ -277,7 +292,7 @@ export function downloadRunnersTemplateCsv() {
     '0010,Breno Henrique,M,L,',
     '0020,Bruno Silva,M,V,',
     '0040,Silmara Santos,F,V,',
-    '0045,Fernando Costa,M,L,+60',
+    '0045,Fernando Costa,M,L,+50',
     '0050,Roberto Almeida,M,V,PCD',
     '0060,Bebel Pereira,F,L,',
   ]

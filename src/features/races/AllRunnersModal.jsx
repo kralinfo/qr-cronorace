@@ -191,8 +191,10 @@ export default function AllRunnersModal({
               ) : filteredRunners.map(runner => {
                 const isMale = (runner.category || '').toUpperCase().includes('MASC')
                 const isLocal = (runner.category || '').toUpperCase().includes('LOCAL')
-                const isPcd = (runner.category || '').toUpperCase().includes('PCD')
-                const is60 = (runner.category || '').toUpperCase().includes('+60') || (runner.category || '').toUpperCase().includes('60')
+                const normalizedCategory = (runner.category || '').toUpperCase()
+                const isPcd = normalizedCategory.includes('PCD')
+                const is50 = normalizedCategory.includes('+50') || normalizedCategory.includes('50') || normalizedCategory.includes('+60') || normalizedCategory.includes('60')
+                const is45to49 = normalizedCategory.includes('45-49') || normalizedCategory.includes('45 A 49')
 
                 return (
                   <tr key={runner.id} className="arm-tr">
@@ -215,7 +217,8 @@ export default function AllRunnersModal({
                           <span className="arm-flag visitor">Visitante</span>
                         )}
                         {isPcd && <span className="arm-flag pcd">PCD</span>}
-                        {is60 && <span className="arm-flag age">+60</span>}
+                        {is50 && <span className="arm-flag age">+50</span>}
+                        {is45to49 && <span className="arm-flag age">45-49</span>}
                       </div>
                     </td>
                     <td className="td-actions">

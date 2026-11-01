@@ -517,6 +517,8 @@ export default function RunnersPage() {
               <option value="MASCULINO">MASCULINO</option>
               <option value="FEMININO">FEMININO</option>
               <option value="PCD">PCD</option>
+              <option value="+50">+50</option>
+              <option value="45-49">45-49</option>
             </select>
 
             {isTargetRaceRunning && (

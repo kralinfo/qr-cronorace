@@ -129,7 +129,7 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
   const [submitting, setSubmitting] = useState(false)
   const [sex, setSex] = useState('MASCULINO')             // 'MASCULINO' | 'FEMININO'
   const [isLocal, setIsLocal] = useState(false)            // false = VISITANTE, true = LOCAL
-  const [specialCondition, setSpecialCondition] = useState('') // '' | 'PCD' | '+60'
+  const [specialCondition, setSpecialCondition] = useState('') // '' | 'PCD' | '+50' | '45-49'
   const [localError, setLocalError] = useState(null)
 
   const buildCategory = () => {
@@ -238,7 +238,7 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
             />
           </div>
 
-          {/* Opção de PCD ou +60 (não clicou = nenhum) */}
+          {/* Opção de PCD, +50 ou 45-49 (não clicou = nenhum) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               CONDIÇÃO (OPCIONAL):
@@ -251,10 +251,16 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
                 color="#a855f7"
               />
               <CategoryToggle
-                label="+60"
-                active={specialCondition === '+60'}
-                onClick={() => setSpecialCondition(p => p === '+60' ? '' : '+60')}
+                label="+50"
+                active={specialCondition === '+50'}
+                onClick={() => setSpecialCondition(p => p === '+50' ? '' : '+50')}
                 color="#14b8a6"
+              />
+              <CategoryToggle
+                label="45-49"
+                active={specialCondition === '45-49'}
+                onClick={() => setSpecialCondition(p => p === '45-49' ? '' : '45-49')}
+                color="#f59e0b"
               />
             </div>
           </div>
@@ -1044,10 +1050,18 @@ useEffect(() => {
                     <button
                       type="button"
                       tabIndex={-1}
-                      className={`card-toggle-btn age ${maleSpecial === '+60' ? 'active' : ''}`}
-                      onClick={() => setMaleSpecial(p => p === '+60' ? '' : '+60')}
+                      className={`card-toggle-btn age ${maleSpecial === '+50' ? 'active' : ''}`}
+                      onClick={() => setMaleSpecial(p => p === '+50' ? '' : '+50')}
                     >
-                      {maleSpecial === '+60' ? '+60 ✓' : '+60'}
+                      {maleSpecial === '+50' ? '+50 ✓' : '+50'}
+                    </button>
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      className={`card-toggle-btn age ${maleSpecial === '45-49' ? 'active' : ''}`}
+                      onClick={() => setMaleSpecial(p => p === '45-49' ? '' : '45-49')}
+                    >
+                      {maleSpecial === '45-49' ? '45-49 ✓' : '45-49'}
                     </button>
                   </div>
                   <button ref={maleAddBtnRef} type="submit" className="race-config-add-btn compact" disabled={submittingMale}>
@@ -1168,10 +1182,18 @@ useEffect(() => {
                     <button
                       type="button"
                       tabIndex={-1}
-                      className={`card-toggle-btn age ${femaleSpecial === '+60' ? 'active' : ''}`}
-                      onClick={() => setFemaleSpecial(p => p === '+60' ? '' : '+60')}
+                      className={`card-toggle-btn age ${femaleSpecial === '+50' ? 'active' : ''}`}
+                      onClick={() => setFemaleSpecial(p => p === '+50' ? '' : '+50')}
                     >
-                      {femaleSpecial === '+60' ? '+60 ✓' : '+60'}
+                      {femaleSpecial === '+50' ? '+50 ✓' : '+50'}
+                    </button>
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      className={`card-toggle-btn age ${femaleSpecial === '45-49' ? 'active' : ''}`}
+                      onClick={() => setFemaleSpecial(p => p === '45-49' ? '' : '45-49')}
+                    >
+                      {femaleSpecial === '45-49' ? '45-49 ✓' : '45-49'}
                     </button>
                   </div>
                   <button ref={femaleAddBtnRef} type="submit" className="race-config-add-btn compact" disabled={submittingFemale}>

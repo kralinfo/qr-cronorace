@@ -51,7 +51,16 @@ export default function PublicRankingPage() {
       if (categoryFilter === 'FEMININO' && !cat.includes('FEM')) return
       if (categoryFilter === 'LOCAL' && !cat.includes('LOCAL')) return
       if (categoryFilter === 'VISITANTE' && cat.includes('LOCAL')) return
-      if (categoryFilter === 'PCD_60' && !cat.includes('PCD') && !cat.includes('+60') && !cat.includes('60')) return
+      if (
+        categoryFilter === 'PCD_AGE' &&
+        !cat.includes('PCD') &&
+        !cat.includes('+50') &&
+        !cat.includes('50') &&
+        !cat.includes('45-49') &&
+        !cat.includes('45 A 49') &&
+        !cat.includes('+60') &&
+        !cat.includes('60')
+      ) return
     }
     seenArrivalIds.add(p.barcode)
     const displayTime = p.elapsedMs != null
@@ -109,7 +118,7 @@ export default function PublicRankingPage() {
             <option value="FEMININO">Feminino</option>
             <option value="LOCAL">Local</option>
             <option value="VISITANTE">Visitante</option>
-            <option value="PCD_60">PCD / +60</option>
+            <option value="PCD_AGE">PCD / +50 / 45-49</option>
           </select>
           <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
           {race?.endTime ? (

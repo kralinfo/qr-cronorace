@@ -3017,7 +3017,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   gap: 8px;
   align-items: center;
 }
-/* Linha de toggles (Local, PCD, +60) e botão Adicionar */
+/* Linha de toggles (Local, PCD, +50, 45-49) e botão Adicionar */
 .race-config-card-toggles {
   display: flex;
   align-items: center;

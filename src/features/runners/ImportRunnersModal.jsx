@@ -117,16 +117,17 @@ export default function ImportRunnersModal({ raceId, onClose }) {
         errors.push('Local inválido (use L para Local ou V para Visitante)')
       }
 
-      // 5. Categoria Especial (PCD ou +60 ou 60)
+      // 5. Categoria Especial (PCD, +50 ou 45-49)
       let rawSpecial = row.especial
       if ((rawSpecial == null || String(rawSpecial).trim() === '') && row.categoria) {
         const catStr = String(row.categoria).toUpperCase()
         if (catStr.includes('PCD')) rawSpecial = 'PCD'
-        else if (catStr.includes('60') || catStr.includes('IDOSO')) rawSpecial = '+60'
+        else if (catStr.includes('45-49') || catStr.includes('45 A 49')) rawSpecial = '45-49'
+        else if (catStr.includes('50') || catStr.includes('60') || catStr.includes('IDOSO')) rawSpecial = '+50'
       }
       const specialNorm = normalizeSpecial(rawSpecial)
       if (!specialNorm.valid) {
-        errors.push('Categoria especial inválida (use PCD, +60, 60 ou deixe vazio)')
+        errors.push('Categoria especial inválida (use PCD, +50, 45-49 ou deixe vazio)')
       }
 
       const formattedName = capitalizeName(rawName)
@@ -515,7 +516,7 @@ export default function ImportRunnersModal({ raceId, onClose }) {
                   <span><strong>Nome</strong> (João Silva)</span>
                   <span><strong>Sexo</strong> (M ou F)</span>
                   <span><strong>Local</strong> (L ou V)</span>
-                  <span><strong>Categoria especial</strong> (PCD, +60 ou 60)</span>
+                  <span><strong>Categoria especial</strong> (PCD, +50 ou 45-49)</span>
                 </div>
               </div>
 
