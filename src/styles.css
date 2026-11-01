@@ -2157,7 +2157,7 @@ form label {
 .public-ranking-arrived-head,
 .public-ranking-arrived-row {
   display: grid;
-  grid-template-columns: 60px 85px minmax(160px,1fr) 110px 110px;
+  grid-template-columns: 60px 85px minmax(160px,1fr) 90px 110px 110px;
   gap: 10px;
   align-items: center;
   white-space: nowrap;
@@ -2175,7 +2175,8 @@ form label {
 .public-ranking-arrived-head { font-size: 0.88rem; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.06em; }
 .public-ranking-arrived-row { font-size: 1.02rem; border-top: 1px solid #2a1f45; padding-top: 6px; }
 .public-ranking-arrived-row span:nth-child(1),
-.public-ranking-arrived-row span:nth-child(5) { font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; }
+.public-ranking-arrived-row span:nth-child(6) { font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; }
+.public-ranking-arrived-row span:nth-child(4) { font-weight: 700; color: #c4b5fd; font-family: 'JetBrains Mono', monospace; }
 
 .public-top10-section { margin-top: 16px; background: rgba(251,191,36,0.07); border: 1.5px solid rgba(251,191,36,0.35); border-radius: 12px; padding: 14px; }
 .public-top10-section h2 { margin: 0 0 10px; color: #fbbf24; font-size: 1.25rem; font-weight: 800; }
@@ -2511,7 +2512,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   .public-ranking-header h1 { font-size: 1.05rem; }
   .public-ranking-start-time, .public-ranking-meta { font-size: 0.82rem; }
   .public-ranking-chronometer { font-size: 0.88rem; }
-  .public-ranking-arrived-head, .public-ranking-arrived-row { grid-template-columns: 44px 55px minmax(100px,1fr) 68px 68px; gap: 6px; font-size: 0.8rem; }
+  .public-ranking-arrived-head, .public-ranking-arrived-row { grid-template-columns: 44px 55px minmax(100px,1fr) 58px 68px 68px; gap: 6px; font-size: 0.8rem; }
   .public-top10-list { grid-template-columns: 1fr; gap: 6px; }
 }
 

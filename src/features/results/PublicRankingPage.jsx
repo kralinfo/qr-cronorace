@@ -40,40 +40,54 @@ export default function PublicRankingPage() {
   const runnersStillRunning = runners.filter(r => !arrivedBarcodes.has(r.id))
   const runnerNameById = Object.fromEntries(runners.map(r => [r.id, r.name]))
   const runnersById = Object.fromEntries(runners.map(r => [r.id, r]))
-  const rankedArrivals = []
+  const allRankedArrivals = []
   const seenArrivalIds = new Set()
+
   placements.forEach((p) => {
     if (!p.barcode || seenArrivalIds.has(p.barcode)) return
     const runner = runnersById[p.barcode] ?? null
-    if (categoryFilter !== 'ALL') {
-      const cat = String(runner?.category || '').toUpperCase()
-      if (categoryFilter === 'MASCULINO' && !cat.includes('MASC')) return
-      if (categoryFilter === 'FEMININO' && !cat.includes('FEM')) return
-      if (categoryFilter === 'LOCAL' && !cat.includes('LOCAL')) return
-      if (categoryFilter === 'VISITANTE' && cat.includes('LOCAL')) return
-      if (
-        categoryFilter === 'PCD_AGE' &&
-        !cat.includes('PCD') &&
-        !cat.includes('+50') &&
-        !cat.includes('50') &&
-        !cat.includes('45-49') &&
-        !cat.includes('45 A 49')
-      ) return
-    }
+
     seenArrivalIds.add(p.barcode)
     const displayTime = p.elapsedMs != null
       ? formatDuration(p.elapsedMs)
       : formatDateTimeBR(p.dateTime)
     const arrivalTime = formatTimeOnlyBR(p.dateTime)
-    rankedArrivals.push({
-      position: rankedArrivals.length + 1,
+    allRankedArrivals.push({
       runner: runnersById[p.barcode] ?? null,
       barcode: p.barcode,
       name: p.runnerName ?? runnerNameById[p.barcode] ?? '—',
+      category: runner?.category ?? 'GERAL',
       displayTime,
-      arrivalTime
+      arrivalTime,
+      posCat: 0
     })
   })
+
+  const categoryPositions = {}
+  allRankedArrivals.forEach((item) => {
+    const category = item.category
+    categoryPositions[category] = (categoryPositions[category] ?? 0) + 1
+    item.posCat = categoryPositions[category]
+  })
+
+  const rankedArrivals = allRankedArrivals
+    .filter((item) => {
+      if (categoryFilter === 'ALL') return true
+      const cat = String(item.category || '').toUpperCase()
+      if (categoryFilter === 'MASCULINO') return cat.includes('MASC')
+      if (categoryFilter === 'FEMININO') return cat.includes('FEM')
+      if (categoryFilter === 'LOCAL') return cat.includes('LOCAL')
+      if (categoryFilter === 'VISITANTE') return !cat.includes('LOCAL')
+      if (categoryFilter === 'PCD_AGE') {
+        return cat.includes('PCD') || cat.includes('+50') || cat.includes('50') || cat.includes('45-49') || cat.includes('45 A 49')
+      }
+      return true
+    })
+    .map((item, index) => ({
+      ...item,
+      position: index + 1
+    }))
+
   const showTop10 = runners.length > 50
   const top10Arrivals = rankedArrivals.slice(0, 10)
 
@@ -161,6 +175,7 @@ export default function PublicRankingPage() {
                   <span>Pos.</span>
                   <span>Número</span>
                   <span>Nome</span>
+                  <span>Pos. Cat.</span>
                   <span>Chegada</span>
                   <span>Tempo</span>
                 </div>
@@ -169,6 +184,7 @@ export default function PublicRankingPage() {
                     <span>{item.position}º</span>
                     <span>{item.runner?.number ?? '—'}</span>
                     <span>{item.name}</span>
+                    <span>{item.posCat}º</span>
                     <span className="tv-arrival-time">{item.arrivalTime}</span>
                     <span>{item.displayTime}</span>
                   </div>
