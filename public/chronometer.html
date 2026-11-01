@@ -151,6 +151,28 @@ body {
   font-weight: 800;
 }
 
+#btnStart[class*="bg-amber-500"] {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #111827;
+}
+
+#btnStart[class*="bg-amber-500"]:hover {
+  background: #fbbf24;
+  border-color: #fbbf24;
+}
+
+#btnStart[class*="bg-emerald-500"] {
+  background: #10b981;
+  border-color: #10b981;
+  color: #04110c;
+}
+
+#btnStart[class*="bg-emerald-500"]:hover {
+  background: #34d399;
+  border-color: #34d399;
+}
+
 #btnBibSubmit {
   width: 52px;
   height: 48px;
@@ -946,7 +968,14 @@ function getRunnerByBib(bib){
     if(!raw)return null;
     const list=JSON.parse(raw);
     const clean=String(parseInt(bib,10));
-    return list.find(r=>String(parseInt(r.number,10))===clean)||null;
+    const activeRaceId = getActiveRaceId();
+    return list.find(r=>{
+      const sameBib = String(parseInt(r.number,10))===clean;
+      if (!sameBib) return false;
+      if (!activeRaceId) return true;
+      if (!r?.raceId) return true;
+      return r.raceId === activeRaceId;
+    })||null;
   }catch(e){return null;}
 }
 
@@ -1350,18 +1379,37 @@ function registerArrival(directBib){
   if(!digitsOnly){showToast('Número inválido: "' + rawBib + '"',true);return;}
 
   const cleanBib=String(parseInt(digitsOnly,10));
-  const existing=arrivals.find(a=>String(parseInt(a.bib,10))===cleanBib);
-  if(existing){
-    showToast('O Nº ' + existing.bib + ' (' + existing.name + ') já cruzou a chegada! (' + existing.time + ')',true);
+  const runner=getRunnerByBib(digitsOnly);
+  const activeRaceId = getActiveRaceId();
+
+  if(!runner){
+    showToast('Corredor não cadastrado nesta corrida. Não é permitido registrar chegada.',true);
+    scheduleBibInputFocus();
     return;
   }
-  const runner=getRunnerByBib(digitsOnly);
+
+  if(activeRaceId && runner.raceId && runner.raceId !== activeRaceId){
+    showToast('Corredor pertence a outra corrida. Leitura bloqueada.',true);
+    scheduleBibInputFocus();
+    return;
+  }
+
+  const existing=arrivals.find(a=>
+    String(parseInt(a.bib,10))===cleanBib ||
+    (runner?.id && a.runnerId && String(a.runnerId)===String(runner.id))
+  );
+  if(existing){
+    showToast('O Nº ' + existing.bib + ' (' + existing.name + ') já cruzou a chegada! (' + existing.time + ')',true);
+    scheduleBibInputFocus();
+    return;
+  }
+
   const runnerName=runner?runner.name:'-';
   const runnerCat=runner?.category?runner.category:'GERAL';
   const currentTime=timerDisplay.textContent + millisDisplay.textContent;
   const totalGeral=arrivals.length+1;
   const posCat=arrivals.filter(a=>a.category===runnerCat).length+1;
-  const newArrival={id:Date.now(),posGeral:totalGeral,category:runnerCat,bib:digitsOnly.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
+  const newArrival={id:Date.now(),runnerId:runner?.id||null,posGeral:totalGeral,category:runnerCat,bib:digitsOnly.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
   arrivals.unshift(newArrival);
   renderArrivals();
   showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
@@ -1380,6 +1428,15 @@ async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs
   }
 
   const raceId = getActiveRaceId();
+  if (!runner?.id) {
+    console.warn('Chegada ignorada no sync: corredor não cadastrado na corrida ativa.');
+    return;
+  }
+  if (raceId && runner.raceId && runner.raceId !== raceId) {
+    console.warn('Chegada ignorada no sync: corredor pertence a outra corrida.');
+    return;
+  }
+
   const runnerId = runner?.id || `bib_${bibNumber}`;
   const now = new Date();
 
@@ -1510,6 +1567,7 @@ window.startFirebaseListening = function() {
 
       newArrivals.push({
         id: res.id || `${res._cleanBib}_${res._docTime}`,
+        runnerId: res.barcode || null,
         posGeral: totalGeral,
         category: runnerCat,
         bib: res._cleanBib.padStart(3, '0'),

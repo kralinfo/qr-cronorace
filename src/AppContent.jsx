@@ -100,14 +100,24 @@ function InnerAppContent() {
         } catch (e) {}
       }
 
+      if (!runner) {
+        console.warn('Registro de chegada ignorado: corredor não cadastrado nesta corrida.')
+        return
+      }
+
+      if (runner.raceId && runner.raceId !== targetRaceId) {
+        console.warn('Registro de chegada ignorado: corredor pertence a outra corrida.')
+        return
+      }
+
       const readAt = new Date()
       const result = {
-        barcode: runner?.id || `bib_${bib}`,
-        runnerNumber: runner?.number || bib,
+        barcode: runner.id,
+        runnerNumber: runner.number || bib,
         dateTime: readAt.toISOString(),
         timestamp: String(readAt.getTime()),
         raceId: targetRaceId,
-        runnerName: runner?.name || data?.runnerName || `Nº ${bib}`,
+        runnerName: runner.name || data?.runnerName || `Nº ${bib}`,
         time: data?.time || null,
         elapsedMs: typeof data?.elapsedMs === 'number' ? data.elapsedMs : null
       }
