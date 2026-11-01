@@ -870,6 +870,29 @@ const runnerPreviewText=document.getElementById('runnerPreviewText');
 const arrivalsList=document.getElementById('arrivalsList');
 const countTotal=document.getElementById('countTotal');
 
+function canFocusBibInput() {
+  if (!bibInput) return false;
+  if (bibInput.disabled) return false;
+  if (raceFinished) return false;
+  return true;
+}
+
+function focusBibInput() {
+  if (!canFocusBibInput()) return;
+  try {
+    bibInput.focus({ preventScroll: true });
+  } catch (e) {
+    try { bibInput.focus(); } catch (_) {}
+  }
+}
+
+function scheduleBibInputFocus() {
+  if (!canFocusBibInput()) return;
+  window.requestAnimationFrame(() => focusBibInput());
+  window.setTimeout(() => focusBibInput(), 40);
+  window.setTimeout(() => focusBibInput(), 180);
+}
+
 function getActiveRaceId() {
   try {
     const byId = localStorage.getItem('pwa-qr-timing:active-race-id');
@@ -958,6 +981,7 @@ function toggleTimer(){
     btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';
     statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
     statusText.textContent='Em Andamento';
+    scheduleBibInputFocus();
 
     // Salva startTime na corrida se ainda não tiver; retomada: limpa pauseTime
     try {
@@ -980,6 +1004,7 @@ function toggleTimer(){
     btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
     statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase';
     statusText.textContent='Pausado';
+    scheduleBibInputFocus();
 
     // Salva estado de pausa no Firestore para sincronizar com celular
     try {
@@ -1051,6 +1076,7 @@ async function resetTimer(){
   statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
   statusText.textContent='AGUARDANDO';
   raceFinished=false;
+  scheduleBibInputFocus();
 
   const btn=document.getElementById('btnFinish');
   btn.textContent='🏁 ENCERRAR';
@@ -1340,6 +1366,7 @@ function registerArrival(directBib){
   renderArrivals();
   showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
   triggerArrivalFeedback(newArrival, 1);
+  scheduleBibInputFocus();
 
   // Sincroniza em tempo real com o Telão/TV e Firebase incluindo tempo decorrido
   syncArrival(digitsOnly, runnerName, runner, currentTime, elapsedTime);
@@ -2029,6 +2056,8 @@ function initRaceState(){
   }catch(e){
     console.warn('Erro ao inicializar estado da corrida:',e);
   }
+
+  scheduleBibInputFocus();
 }
 
 
@@ -2129,6 +2158,20 @@ let clearScanBuffer = null;
   }, true);
 })();
 // ─────────────────────────────────────────────────────────────────────────────
+
+window.addEventListener('message', (event) => {
+  if (event?.data?.type === 'FOCUS_BIB_INPUT') {
+    scheduleBibInputFocus();
+  }
+});
+
+window.addEventListener('focus', () => {
+  scheduleBibInputFocus();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) scheduleBibInputFocus();
+});
 
 initRaceState();
 

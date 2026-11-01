@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import ResultsPage from './features/results/ResultsPage.jsx'
 import ScannerPage from './features/scanner/ScannerPage.jsx'
 import RunnersPage from './features/runners/RunnersPage.jsx'
@@ -33,6 +33,17 @@ function InnerAppContent() {
   })
 
   const [navHistory, setNavHistory] = useState(['home'])
+  const chronometerFrameRef = useRef(null)
+
+  const focusChronometerFrame = useCallback(() => {
+    const frame = chronometerFrameRef.current
+    if (!frame) return
+    try {
+      frame.focus()
+      frame.contentWindow?.focus()
+      frame.contentWindow?.postMessage({ type: 'FOCUS_BIB_INPUT' }, '*')
+    } catch (e) {}
+  }, [])
 
   const handleToggleMinimize = () => {
     setIsNavMinimized(prev => {
@@ -152,6 +163,16 @@ function InnerAppContent() {
     }
   }, [navHistory, tab, activeRace?.id, runners])
 
+  useEffect(() => {
+    if (tab !== 'chronometer') return
+    const t1 = window.setTimeout(() => focusChronometerFrame(), 80)
+    const t2 = window.setTimeout(() => focusChronometerFrame(), 260)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [tab, focusChronometerFrame])
+
   const canGoBack = tab !== 'home'
 
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
@@ -197,10 +218,13 @@ function InnerAppContent() {
         {tab === 'results' && <ResultsPage onBack={() => handleNavigate('home')} />}
         {tab === 'chronometer' && (
           <iframe
+            ref={chronometerFrameRef}
             src="/chronometer.html"
             title="Cronômetro"
             allow="vibrate; autoplay"
             scrolling="no"
+            tabIndex={0}
+            onLoad={() => focusChronometerFrame()}
             style={{
               width: '100%',
               height: isNavMinimized ? '100vh' : 'calc(100vh - var(--bottom-nav-h))',
