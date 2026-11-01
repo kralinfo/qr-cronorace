@@ -881,6 +881,8 @@ let raceFinished=false;
 let unsubscribeResultsListener=null;
 let listeningResultsRaceId=null;
 let previousResultsCount=null;
+let unsubscribeRaceListener=null;
+let listeningRaceDocId=null;
 
 const timerDisplay=document.getElementById('timerDisplay');
 const millisDisplay=document.getElementById('millisDisplay');
@@ -948,6 +950,37 @@ function getActiveRaceSafe() {
   } catch (e) {
     return null;
   }
+}
+
+function getRaceEndMarkerKey(raceId) {
+  return raceId ? `pwa-qr-timing:race-ended-at:${raceId}` : null;
+}
+
+function setRaceEndedMarker(raceId, endTimeIso) {
+  try {
+    const key = getRaceEndMarkerKey(raceId);
+    if (!key) return;
+    if (!endTimeIso) return;
+    localStorage.setItem(key, String(endTimeIso));
+  } catch (e) {}
+}
+
+function getRaceEndedMarker(raceId) {
+  try {
+    const key = getRaceEndMarkerKey(raceId);
+    if (!key) return null;
+    return localStorage.getItem(key) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearRaceEndedMarker(raceId) {
+  try {
+    const key = getRaceEndMarkerKey(raceId);
+    if (!key) return;
+    localStorage.removeItem(key);
+  } catch (e) {}
 }
 
 function getArrivalsCacheKey(raceId) {
@@ -1143,6 +1176,7 @@ async function resetTimer(){
 
   elapsedTime=0;formatTime(0);
   arrivals=[];renderArrivals();
+  clearRaceEndedMarker(getActiveRaceId());
   clearArrivalsCache(getActiveRaceId());
   bibInput.value='';
   bibInput.disabled=false;
@@ -1219,6 +1253,7 @@ async function confirmFinish(){
     if(race){
       race.endTime=nowIso;
       localStorage.setItem('pwa-qr-timing:active-race',JSON.stringify(race));
+      setRaceEndedMarker(race.id, nowIso);
       if(window.fbDb&&window.fbSetDoc&&window.fbDoc&&race.id){
         await window.fbSetDoc(window.fbDoc(window.fbDb,'races',race.id),{endTime:nowIso},{merge:true});
       }
@@ -2007,9 +2042,11 @@ function triggerArrivalFeedback(lastArrival, count = 1) {
 // ── Sincronização em Tempo Real do Estado da Corrida (PC <-> Celular) ──────────
 function applyLiveRaceState(race) {
   if (!race) return;
+  const raceId = race.id || getActiveRaceId();
 
   // CASO 1: CORRIDA REINICIADA / ZERADA (startTime é nulo)
   if (!race.startTime) {
+    clearRaceEndedMarker(raceId);
     if (isRunning) {
       clearInterval(timer);
       isRunning = false;
@@ -2042,6 +2079,7 @@ function applyLiveRaceState(race) {
 
   // CASO 2: CORRIDA ENCERRADA (possui endTime)
   if (race.endTime) {
+    setRaceEndedMarker(raceId, race.endTime);
     if (isRunning) {
       clearInterval(timer);
       isRunning = false;
@@ -2076,6 +2114,7 @@ function applyLiveRaceState(race) {
 
   // CASO 3a: CORRIDA PAUSADA (startTime existe, pauseTime existe, !endTime)
   if (race.startTime && race.pauseTime && !race.endTime) {
+    clearRaceEndedMarker(raceId);
     raceFinished = false;
     if (isRunning) { clearInterval(timer); isRunning = false; }
 
@@ -2108,6 +2147,7 @@ function applyLiveRaceState(race) {
 
   // CASO 3b: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime nem pauseTime)
   if (race.startTime && !race.endTime) {
+    clearRaceEndedMarker(raceId);
     raceFinished = false;
     const startMs = Date.parse(race.startTime);
     if (startMs) {
@@ -2142,12 +2182,23 @@ function applyLiveRaceState(race) {
   }
 }
 
-window.startRaceDocumentListening = function() {
+window.startRaceDocumentListening = function(forceRestart=false) {
   const raceId = getActiveRaceId();
-  if (!raceId || !window.fbDb || !window.fbOnSnapshot || !window.fbDoc) return;
+  if (!raceId || !window.fbDb || !window.fbOnSnapshot || !window.fbDoc) return false;
+
+  if (!forceRestart && unsubscribeRaceListener && listeningRaceDocId === raceId) {
+    return true;
+  }
+
+  if (unsubscribeRaceListener) {
+    try { unsubscribeRaceListener(); } catch (e) {}
+    unsubscribeRaceListener = null;
+  }
+
+  listeningRaceDocId = raceId;
 
   const raceRef = window.fbDoc(window.fbDb, 'races', raceId);
-  window.fbOnSnapshot(raceRef, (docSnap) => {
+  unsubscribeRaceListener = window.fbOnSnapshot(raceRef, (docSnap) => {
     if (!docSnap.exists()) return;
     const raceData = docSnap.data();
     
@@ -2161,6 +2212,8 @@ window.startRaceDocumentListening = function() {
       applyLiveRaceState(raceData);
     }
   });
+
+  return true;
 };
 
 function initRaceState(){
@@ -2168,6 +2221,11 @@ function initRaceState(){
   try{
     const race=getActiveRaceSafe();
     if(!race)return;
+    const endedAtMarker = getRaceEndedMarker(race.id || getActiveRaceId());
+    if (!race.endTime && endedAtMarker) {
+      race.endTime = endedAtMarker;
+      localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+    }
     if(race.endTime){
       raceFinished=true;
       const startMs=Date.parse(race.startTime)||0;
@@ -2325,6 +2383,9 @@ window.addEventListener('focus', () => {
   if (typeof window.startFirebaseListening === 'function') {
     window.startFirebaseListening();
   }
+  if (typeof window.startRaceDocumentListening === 'function') {
+    window.startRaceDocumentListening();
+  }
   scheduleBibInputFocus();
 });
 
@@ -2332,6 +2393,9 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
     if (typeof window.startFirebaseListening === 'function') {
       window.startFirebaseListening();
+    }
+    if (typeof window.startRaceDocumentListening === 'function') {
+      window.startRaceDocumentListening();
     }
     scheduleBibInputFocus();
   }
@@ -2343,6 +2407,9 @@ window.addEventListener('storage', (event) => {
     if (typeof window.startFirebaseListening === 'function') {
       window.startFirebaseListening(true);
     }
+    if (typeof window.startRaceDocumentListening === 'function') {
+      window.startRaceDocumentListening(true);
+    }
   }
 });
 
@@ -2352,11 +2419,17 @@ setTimeout(() => {
   if (typeof window.startFirebaseListening === 'function') {
     window.startFirebaseListening();
   }
+  if (typeof window.startRaceDocumentListening === 'function') {
+    window.startRaceDocumentListening();
+  }
 }, 150);
 
 setTimeout(() => {
   if (typeof window.startFirebaseListening === 'function') {
     window.startFirebaseListening();
+  }
+  if (typeof window.startRaceDocumentListening === 'function') {
+    window.startRaceDocumentListening();
   }
 }, 800);
 
@@ -2368,6 +2441,11 @@ setInterval(() => {
     restoreArrivalsFromCache();
     if (typeof window.startFirebaseListening === 'function') {
       window.startFirebaseListening(true);
+    }
+  }
+  if (!unsubscribeRaceListener || listeningRaceDocId !== raceId) {
+    if (typeof window.startRaceDocumentListening === 'function') {
+      window.startRaceDocumentListening(true);
     }
   }
 }, 1500);
