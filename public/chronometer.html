@@ -1251,11 +1251,17 @@ async function confirmFinish(){
   try{
     const race=getActiveRaceSafe();
     if(race){
+      const safeStartTime = race.startTime || (startTime ? new Date(startTime).toISOString() : null);
       race.endTime=nowIso;
+      if (safeStartTime && !race.startTime) {
+        race.startTime = safeStartTime;
+      }
       localStorage.setItem('pwa-qr-timing:active-race',JSON.stringify(race));
       setRaceEndedMarker(race.id, nowIso);
       if(window.fbDb&&window.fbSetDoc&&window.fbDoc&&race.id){
-        await window.fbSetDoc(window.fbDoc(window.fbDb,'races',race.id),{endTime:nowIso},{merge:true});
+        const patch={endTime:nowIso};
+        if (safeStartTime) patch.startTime = safeStartTime;
+        await window.fbSetDoc(window.fbDoc(window.fbDb,'races',race.id),patch,{merge:true});
       }
     }
   }catch(e){
@@ -2044,40 +2050,7 @@ function applyLiveRaceState(race) {
   if (!race) return;
   const raceId = race.id || getActiveRaceId();
 
-  // CASO 1: CORRIDA REINICIADA / ZERADA (startTime é nulo)
-  if (!race.startTime) {
-    clearRaceEndedMarker(raceId);
-    if (isRunning) {
-      clearInterval(timer);
-      isRunning = false;
-    }
-    raceFinished = false;
-    elapsedTime = 0;
-    startTime = 0;
-    formatTime(0);
-
-    lblStart.textContent = 'INICIAR';
-    iconStart.className = 'fa-solid fa-play';
-    btnStart.disabled = false;
-    btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
-
-    statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
-    statusText.textContent = 'AGUARDANDO';
-
-    bibInput.disabled = false;
-    btnBibSubmit.disabled = false;
-    bibInput.placeholder = 'Nº Peito';
-
-    const btn = document.getElementById('btnFinish');
-    if (btn) {
-      btn.textContent = '🏁 ENCERRAR';
-      btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
-      btn.onclick = confirmFinish;
-    }
-    return;
-  }
-
-  // CASO 2: CORRIDA ENCERRADA (possui endTime)
+  // CASO 0: CORRIDA ENCERRADA (prioritário para evitar regressão quando startTime ainda não sincronizou)
   if (race.endTime) {
     setRaceEndedMarker(raceId, race.endTime);
     if (isRunning) {
@@ -2108,6 +2081,39 @@ function applyLiveRaceState(race) {
       btn.innerHTML = '📊 Ver Classificação';
       btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
       btn.onclick = showRankingView;
+    }
+    return;
+  }
+
+  // CASO 1: CORRIDA REINICIADA / ZERADA (startTime é nulo)
+  if (!race.startTime) {
+    clearRaceEndedMarker(raceId);
+    if (isRunning) {
+      clearInterval(timer);
+      isRunning = false;
+    }
+    raceFinished = false;
+    elapsedTime = 0;
+    startTime = 0;
+    formatTime(0);
+
+    lblStart.textContent = 'INICIAR';
+    iconStart.className = 'fa-solid fa-play';
+    btnStart.disabled = false;
+    btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
+    statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
+    statusText.textContent = 'AGUARDANDO';
+
+    bibInput.disabled = false;
+    btnBibSubmit.disabled = false;
+    bibInput.placeholder = 'Nº Peito';
+
+    const btn = document.getElementById('btnFinish');
+    if (btn) {
+      btn.textContent = '🏁 ENCERRAR';
+      btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+      btn.onclick = confirmFinish;
     }
     return;
   }
