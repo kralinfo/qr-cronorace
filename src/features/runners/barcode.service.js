@@ -62,12 +62,12 @@ export async function generateRunnerBarcode(runner, options = {}) {
 }
 
 /**
- * Gera a ETIQUETA ADESIVA COMPLETA do corredor para o tamanho ampliado do adesivo térmico (~8.8 cm).
+ * Gera a ETIQUETA ADESIVA COMPLETA do corredor para o tamanho ampliado do adesivo térmico (~8.0 cm).
  * - TODAS AS INFORMAÇÕES (Número, Nome, Categoria e Código de Barras) ficam 100% no mesmo sentido horizontal.
  * - MÁXIMA ÊNFASE AO NOME DO ATLETA (fonte gigante de até 40px em negrito).
  * - Categoria/sexo secundária e discreta no cantinho superior.
  * - CÓDIGO DE BARRAS BEM GRANDE: barras grossas (width: 5 a 6), altura de ~165px, preenchendo a maior parte da etiqueta!
- * - Comprimento ampliado para ~8.8 cm (700 dots) para cobrir toda a extensão do adesivo e cortar exatamente no picote.
+ * - Comprimento ampliado para ~8.0 cm (640 dots) para cobrir toda a extensão do adesivo e cortar exatamente no picote.
  *
  * @param {import('./runners.types.js').Runner} runner
  * @param {{ rotatedForThermal?: boolean }} [options]
@@ -76,9 +76,9 @@ export async function generateRunnerBarcode(runner, options = {}) {
 export async function generateRunnerThermalLabel(runner, options = {}) {
   const { rotatedForThermal = false } = options
   const canvas = document.createElement('canvas')
-  // Comprimento aumentado para ~8.8 cm (700 pixels em 203 DPI)
+  // Comprimento aumentado para ~8.0 cm (640 pixels em 203 DPI)
   // Largura útil da bobina de 58mm = 380 pixels
-  const width = 700
+  const width = 640
   const height = 360
   canvas.width = width
   canvas.height = height

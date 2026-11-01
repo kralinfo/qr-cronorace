@@ -1,9 +1,12 @@
 import { generateRunnerThermalLabel } from './barcode.service.js'
 
-// Responsabilidade única: abrir janela/iframe de impressão formatada especialmente para impressoras térmicas e etiquetas adesivas de ~8.8 cm (88mm x 48mm) ou PDF.
+const THERMAL_LABEL_WIDTH_MM = '80mm'
+const THERMAL_LABEL_HEIGHT_MM = '48mm'
+
+// Responsabilidade única: abrir janela/iframe de impressão formatada especialmente para impressoras térmicas e etiquetas adesivas de 8.0 cm (80mm x 48mm) ou PDF.
 
 /**
- * Abre janela de impressão formatada exatamente no tamanho do adesivo térmico (~8.8 cm).
+ * Abre janela de impressão formatada exatamente no tamanho do adesivo térmico (8.0 cm).
  * Todas as informações (Número, Nome com destaque, Categoria e Código de Barras bem grande) estão 100% no mesmo sentido horizontal.
  * @param {string} [qrDataUrl] - Data URL (opcional).
  * @param {{ id: string, name: string, number?: string, category?: string }} runner - Dados do corredor.
@@ -21,17 +24,17 @@ export async function printRunnerQRCode(qrDataUrl, runner, raceName) {
         '<title>Etiqueta Adesiva - ' + escapeHtml(runner ? runner.name : '') + '</title>' +
         '<style>' +
           '@page {' +
-            'size: 88mm 48mm;' +
+            'size: ' + THERMAL_LABEL_WIDTH_MM + ' ' + THERMAL_LABEL_HEIGHT_MM + ';' +
             'margin: 0;' +
           '}' +
           '* { box-sizing: border-box; }' +
           'html, body {' +
             'margin: 0;' +
             'padding: 0;' +
-            'width: 88mm;' +
-            'height: 48mm;' +
-            'max-width: 88mm;' +
-            'max-height: 48mm;' +
+            'width: ' + THERMAL_LABEL_WIDTH_MM + ';' +
+            'height: ' + THERMAL_LABEL_HEIGHT_MM + ';' +
+            'max-width: ' + THERMAL_LABEL_WIDTH_MM + ';' +
+            'max-height: ' + THERMAL_LABEL_HEIGHT_MM + ';' +
             'overflow: hidden;' +
             'background: #ffffff;' +
             'display: flex;' +
@@ -46,8 +49,8 @@ export async function printRunnerQRCode(qrDataUrl, runner, raceName) {
           '}' +
           '@media print {' +
             'body {' +
-              'width: 88mm;' +
-              'height: 48mm;' +
+              'width: ' + THERMAL_LABEL_WIDTH_MM + ';' +
+              'height: ' + THERMAL_LABEL_HEIGHT_MM + ';' +
             '}' +
           '}' +
         '</style>' +
@@ -105,7 +108,7 @@ export async function printRunnerQRCode(qrDataUrl, runner, raceName) {
 
 /**
  * Imprime em lote as etiquetas adesivas dos corredores informados.
- * Cada etiqueta possui o tamanho exato de 88mm e quebra de página automática.
+ * Cada etiqueta possui largura exata de 8cm (80mm) e quebra de página automática.
  * @param {Array<{ id: string, name: string, number?: string, category?: string }>} runners
  * @param {string} [raceName]
  * @returns {Promise<void>}
@@ -133,7 +136,7 @@ export async function printRunnersQRCodeBatch(runners, raceName) {
         '<title>Etiquetas Adesivas em Lote</title>' +
         '<style>' +
           '@page {' +
-            'size: 88mm 48mm;' +
+            'size: ' + THERMAL_LABEL_WIDTH_MM + ' ' + THERMAL_LABEL_HEIGHT_MM + ';' +
             'margin: 0;' +
           '}' +
           '* { box-sizing: border-box; }' +
@@ -143,10 +146,10 @@ export async function printRunnersQRCodeBatch(runners, raceName) {
             'background: #fff;' +
           '}' +
           '.label-card {' +
-            'width: 88mm;' +
-            'height: 48mm;' +
-            'max-width: 88mm;' +
-            'max-height: 48mm;' +
+            'width: ' + THERMAL_LABEL_WIDTH_MM + ';' +
+            'height: ' + THERMAL_LABEL_HEIGHT_MM + ';' +
+            'max-width: ' + THERMAL_LABEL_WIDTH_MM + ';' +
+            'max-height: ' + THERMAL_LABEL_HEIGHT_MM + ';' +
             'page-break-after: always;' +
             'overflow: hidden;' +
             'display: flex;' +
@@ -163,10 +166,10 @@ export async function printRunnersQRCodeBatch(runners, raceName) {
           '}' +
           '@media print {' +
             'body {' +
-              'width: 88mm;' +
+              'width: ' + THERMAL_LABEL_WIDTH_MM + ';' +
             '}' +
             '.label-card {' +
-              'height: 48mm;' +
+              'height: ' + THERMAL_LABEL_HEIGHT_MM + ';' +
             '}' +
           '}' +
         '</style>' +
