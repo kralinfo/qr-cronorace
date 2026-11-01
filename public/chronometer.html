@@ -878,6 +878,9 @@ table.rk-table{width:100%;border-collapse:collapse}
 let timer=null,startTime=0,elapsedTime=0,isRunning=false,activeCategoryFilter='ALL',arrivals=[];
 let rkActiveFilter='ALL';
 let raceFinished=false;
+let unsubscribeResultsListener=null;
+let listeningResultsRaceId=null;
+let previousResultsCount=null;
 
 const timerDisplay=document.getElementById('timerDisplay');
 const millisDisplay=document.getElementById('millisDisplay');
@@ -945,6 +948,55 @@ function getActiveRaceSafe() {
   } catch (e) {
     return null;
   }
+}
+
+function getArrivalsCacheKey(raceId) {
+  return raceId ? `pwa-qr-timing:chronometer-arrivals:${raceId}` : null;
+}
+
+function saveArrivalsCache(raceId, list) {
+  try {
+    const key = getArrivalsCacheKey(raceId);
+    if (!key) return;
+    const payload = {
+      raceId,
+      updatedAt: Date.now(),
+      arrivals: Array.isArray(list) ? list : []
+    };
+    localStorage.setItem(key, JSON.stringify(payload));
+  } catch (e) {}
+}
+
+function loadArrivalsCache(raceId) {
+  try {
+    const key = getArrivalsCacheKey(raceId);
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.arrivals)) return null;
+    return parsed.arrivals;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearArrivalsCache(raceId) {
+  try {
+    const key = getArrivalsCacheKey(raceId);
+    if (!key) return;
+    localStorage.removeItem(key);
+  } catch (e) {}
+}
+
+function restoreArrivalsFromCache() {
+  const raceId = getActiveRaceId();
+  if (!raceId) return false;
+  const cached = loadArrivalsCache(raceId);
+  if (!cached) return false;
+  arrivals = recomputeArrivalsPositions(cached);
+  renderArrivals();
+  return true;
 }
 
 function goBack(){
@@ -1091,6 +1143,7 @@ async function resetTimer(){
 
   elapsedTime=0;formatTime(0);
   arrivals=[];renderArrivals();
+  clearArrivalsCache(getActiveRaceId());
   bibInput.value='';
   bibInput.disabled=false;
   btnBibSubmit.disabled=false;
@@ -1409,8 +1462,10 @@ function registerArrival(directBib){
   const currentTime=timerDisplay.textContent + millisDisplay.textContent;
   const totalGeral=arrivals.length+1;
   const posCat=arrivals.filter(a=>a.category===runnerCat).length+1;
-  const newArrival={id:Date.now(),runnerId:runner?.id||null,posGeral:totalGeral,category:runnerCat,bib:digitsOnly.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
+  const newArrival={id:Date.now(),arrivalMs:Date.now(),runnerId:runner?.id||null,posGeral:totalGeral,category:runnerCat,bib:digitsOnly.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
   arrivals.unshift(newArrival);
+  arrivals=recomputeArrivalsPositions(arrivals);
+  saveArrivalsCache(getActiveRaceId(), arrivals);
   renderArrivals();
   showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
   triggerArrivalFeedback(newArrival, 1);
@@ -1491,21 +1546,30 @@ async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs
   }
 }
 
-window.startFirebaseListening = function() {
+window.startFirebaseListening = function(forceRestart=false) {
   const raceId = getActiveRaceId();
-  if (!raceId || !window.fbDb || !window.fbOnSnapshot) return;
+  if (!raceId || !window.fbDb || !window.fbOnSnapshot) return false;
+
+  restoreArrivalsFromCache();
+
+  if (!forceRestart && unsubscribeResultsListener && listeningResultsRaceId === raceId) {
+    return true;
+  }
+
+  if (unsubscribeResultsListener) {
+    try { unsubscribeResultsListener(); } catch(e) {}
+    unsubscribeResultsListener = null;
+  }
+
+  listeningResultsRaceId = raceId;
+  previousResultsCount = null;
 
   const q = window.fbQuery(
     window.fbCollection(window.fbDb, 'results'),
     window.fbWhere('raceId', '==', raceId)
   );
 
-  // Quantas chegadas existiam antes deste listener iniciar
-  // (evita vibrar no carregamento inicial)
-
-  let _prevCount = null;
-
-  window.fbOnSnapshot(q, (snap) => {
+  unsubscribeResultsListener = window.fbOnSnapshot(q, (snap) => {
     let raceObj = getActiveRaceSafe();
     const startMs = raceObj?.startTime ? Date.parse(raceObj.startTime) : NaN;
 
@@ -1568,6 +1632,7 @@ window.startFirebaseListening = function() {
       newArrivals.push({
         id: res.id || `${res._cleanBib}_${res._docTime}`,
         runnerId: res.barcode || null,
+        arrivalMs: Number.isFinite(res._docTime) ? res._docTime : Date.now(),
         posGeral: totalGeral,
         category: runnerCat,
         bib: res._cleanBib.padStart(3, '0'),
@@ -1579,21 +1644,24 @@ window.startFirebaseListening = function() {
 
     if (newArrivals.length > 0 || snap.empty) {
       const currentCount = newArrivals.length;
+      const recomputedArrivals = recomputeArrivalsPositions(newArrivals);
 
       // ── Vibração + feedback visual ao detectar nova chegada ──
-      if (_prevCount !== null && currentCount > _prevCount) {
+      if (previousResultsCount !== null && currentCount > previousResultsCount) {
         // Quantos corredores novos chegaram desde a última leitura
 
-        const diff = currentCount - _prevCount;
-        triggerArrivalFeedback(newArrivals[newArrivals.length - 1], diff);
+        const diff = currentCount - previousResultsCount;
+        triggerArrivalFeedback(recomputedArrivals[0], diff);
       }
-      _prevCount = currentCount;
+      previousResultsCount = currentCount;
 
-      // Inverte para exibir a última chegada no topo do cronômetro
-      arrivals = [...newArrivals].reverse();
+      arrivals = recomputedArrivals;
+      saveArrivalsCache(raceId, arrivals);
       renderArrivals();
     }
   });
+
+  return true;
 };
 
 if (window.fbDb) {
@@ -1601,6 +1669,36 @@ if (window.fbDb) {
   if (typeof window.startRaceDocumentListening === 'function') {
     window.startRaceDocumentListening();
   }
+}
+
+function getArrivalMs(item) {
+  if (Number.isFinite(Number(item?.arrivalMs))) return Number(item.arrivalMs);
+  if (Number.isFinite(Number(item?.timestamp))) return Number(item.timestamp);
+  if (item?.dateTime) {
+    const parsed = Date.parse(item.dateTime);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (Number.isFinite(Number(item?.id))) return Number(item.id);
+  return Date.now();
+}
+
+function recomputeArrivalsPositions(source) {
+  const sortedByArrival = [...(source || [])].sort((a, b) => getArrivalMs(a) - getArrivalMs(b));
+  const categoryCount = {};
+
+  const normalized = sortedByArrival.map((entry, index) => {
+    const cat = String(entry.category || 'GERAL');
+    categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+    const arrivalMs = getArrivalMs(entry);
+    return {
+      ...entry,
+      arrivalMs,
+      posGeral: index + 1,
+      posCat: categoryCount[cat]
+    };
+  });
+
+  return normalized.sort((a, b) => getArrivalMs(b) - getArrivalMs(a));
 }
 
 function renderArrivals(){
@@ -2224,14 +2322,55 @@ window.addEventListener('message', (event) => {
 });
 
 window.addEventListener('focus', () => {
+  if (typeof window.startFirebaseListening === 'function') {
+    window.startFirebaseListening();
+  }
   scheduleBibInputFocus();
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) scheduleBibInputFocus();
+  if (!document.hidden) {
+    if (typeof window.startFirebaseListening === 'function') {
+      window.startFirebaseListening();
+    }
+    scheduleBibInputFocus();
+  }
+});
+
+window.addEventListener('storage', (event) => {
+  if (event?.key === 'pwa-qr-timing:active-race-id' || event?.key === 'pwa-qr-timing:active-race') {
+    restoreArrivalsFromCache();
+    if (typeof window.startFirebaseListening === 'function') {
+      window.startFirebaseListening(true);
+    }
+  }
 });
 
 initRaceState();
+
+setTimeout(() => {
+  if (typeof window.startFirebaseListening === 'function') {
+    window.startFirebaseListening();
+  }
+}, 150);
+
+setTimeout(() => {
+  if (typeof window.startFirebaseListening === 'function') {
+    window.startFirebaseListening();
+  }
+}, 800);
+
+setInterval(() => {
+  if (document.hidden) return;
+  const raceId = getActiveRaceId();
+  if (!raceId) return;
+  if (!unsubscribeResultsListener || listeningResultsRaceId !== raceId) {
+    restoreArrivalsFromCache();
+    if (typeof window.startFirebaseListening === 'function') {
+      window.startFirebaseListening(true);
+    }
+  }
+}, 1500);
 
 </script>
 </body>

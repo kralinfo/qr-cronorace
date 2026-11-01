@@ -119,29 +119,36 @@ function InnerAppContent() {
           const raw = localStorage.getItem('pwa-qr-timing:runners-lookup')
           if (raw) {
             const list = JSON.parse(raw)
-            runner = list.find(r => String(parseInt(r.number, 10)) === String(parseInt(bib, 10)))
+            runner = list.find(r => {
+              const sameBib = String(parseInt(r.number, 10)) === String(parseInt(bib, 10))
+              if (!sameBib) return false
+              if (!targetRaceId) return true
+              if (!r?.raceId) return true
+              return r.raceId === targetRaceId
+            })
           }
         } catch (e) {}
       }
 
-      if (!runner) {
-        console.warn('Registro de chegada ignorado: corredor não cadastrado nesta corrida.')
-        return
-      }
+      const fallbackBarcode = data?.barcode || `${targetRaceId}:${String(parseInt(bib, 10))}`
+      const fallbackRunnerName = data?.runnerName || `Nº ${bib}`
+      const runnerBarcode = runner?.id || fallbackBarcode
+      const runnerNumber = runner?.number || bib
+      const runnerName = runner?.name || fallbackRunnerName
 
-      if (runner.raceId && runner.raceId !== targetRaceId) {
+      if (runner?.raceId && runner.raceId !== targetRaceId) {
         console.warn('Registro de chegada ignorado: corredor pertence a outra corrida.')
         return
       }
 
       const readAt = new Date()
       const result = {
-        barcode: runner.id,
-        runnerNumber: runner.number || bib,
+        barcode: runnerBarcode,
+        runnerNumber: runnerNumber,
         dateTime: readAt.toISOString(),
         timestamp: String(readAt.getTime()),
         raceId: targetRaceId,
-        runnerName: runner.name || data?.runnerName || `Nº ${bib}`,
+        runnerName: runnerName,
         time: data?.time || null,
         elapsedMs: typeof data?.elapsedMs === 'number' ? data.elapsedMs : null
       }
