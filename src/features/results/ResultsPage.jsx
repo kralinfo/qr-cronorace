@@ -110,6 +110,8 @@ export default function ResultsPage({ onBack }) {
     { key: 'LOCAL', label: 'LOCAL' },
     { key: 'VISITANTE', label: 'VISITANTE' },
     { key: 'PCD', label: 'PCD' },
+    { key: '+50', label: '+50' },
+    { key: '45-49', label: '45-49' },
   ]
 
   return (

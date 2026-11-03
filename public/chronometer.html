@@ -770,8 +770,11 @@ table.rk-table{width:100%;border-collapse:collapse}
     <button class="rk-tab" onclick="rkFilter('LOCAL FEM')" id="rkTab-LOCAL FEM">
      LOCAL FEM
     </button>
-    <button class="rk-tab" onclick="rkFilter('PCD_50')" id="rkTab-PCD_50">
-      PCD / +50
+    <button class="rk-tab" onclick="rkFilter('PCD')" id="rkTab-PCD">
+      PCD
+    </button>
+    <button class="rk-tab" onclick="rkFilter('AGE_50')" id="rkTab-AGE_50">
+      +50
     </button>
     <button class="rk-tab" onclick="rkFilter('AGE_45_49')" id="rkTab-AGE_45_49">
       45-49
@@ -826,36 +829,133 @@ table.rk-table{width:100%;border-collapse:collapse}
 </div><!-- end rankingView -->
 
 
-<!-- Edit Categoria Modal (sexo, local/visitante, PCD, +50, 45-49) -->
-<div id="editLocaisModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center">
-  <div style="background:#151026;border:1px solid #2a1f45;border-radius:16px;padding:20px;max-width:560px;width:92%;max-height:85vh;display:flex;flex-direction:column;gap:12px">
+<!-- Edit Categoria Modal (Super intuitivo e completo) -->
+<div id="editLocaisModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);z-index:100;align-items:center;justify-content:center" onclick="if(event.target===this)closeEditLocais()">
+  <div style="background:#151026;border:1px solid #2a1f45;border-radius:18px;padding:22px;max-width:640px;width:94%;max-height:88vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 24px 48px rgba(0,0,0,0.7)" onclick="event.stopPropagation()">
+    
+    <!-- Topo / Cabeçalho -->
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <h3 style="margin:0;font-size:.9rem;font-weight:800;color:#a78bfa">Editar Categoria dos Corredores</h3>
-      <button onclick="closeEditLocais()" style="background:rgba(255,255,255,.06);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;padding:4px 10px;cursor:pointer;font-size:.75rem">✕</button>
-    </div>
-    <p style="margin:0;font-size:.75rem;color:#64748b"><strong style="color:#a78bfa">1.</strong> Marque abaixo quem deseja alterar → <strong style="color:#a78bfa">2.</strong> toque numa ação em lote. O botão LOCAL/NÃO LOCAL de cada corredor também funciona sozinho, sem marcar nada.</p>
-
-    <div style="display:flex;flex-direction:column;gap:8px;padding:10px;background:#0d0920;border:1px solid #2a1f45;border-radius:12px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:#cbd5e1;cursor:pointer">
-        <input type="checkbox" id="editLocaisSelectAllBox" onchange="editLocaisSelectAll(this.checked)" />
-        <span id="editLocaisSelectedCount">0 selecionado(s)</span>
-      </label>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <span style="font-size:.68rem;font-weight:800;color:#64748b;align-self:center">ORIGEM:</span>
-        <button type="button" id="editLocaisBtnOrigemLocal" onclick="editLocaisApplyOrigem(true)" style="padding:5px 10px;border-radius:16px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #22c55e;background:rgba(34,197,94,.15);color:#4ade80">🏠 Local</button>
-        <button type="button" id="editLocaisBtnOrigemVisitante" onclick="editLocaisApplyOrigem(false)" style="padding:5px 10px;border-radius:16px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #2a1f45;background:rgba(255,255,255,.04);color:#94a3b8">🧳 Visitante</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.18);border:1px solid #f59e0b;display:flex;align-items:center;justify-content:center;color:#fbbf24;font-size:1rem">
+          <i class="fa-solid fa-tags"></i>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:1.05rem;font-weight:800;color:#fff">Editar Categorias e Nomes</h3>
+          <span style="font-size:0.75rem;color:#94a3b8">Altere sexo, localidade ou faixa de cada atleta com 1 clique</span>
+        </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <span style="font-size:.68rem;font-weight:800;color:#64748b;align-self:center">CONDIÇÃO:</span>
-        <button type="button" id="editLocaisBtnCondPcd" onclick="editLocaisApplyCondition('PCD')" style="padding:5px 10px;border-radius:16px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #a855f7;background:rgba(168,85,247,.15);color:#c084fc">PCD</button>
-        <button type="button" id="editLocaisBtnCond50" onclick="editLocaisApplyCondition('+50')" style="padding:5px 10px;border-radius:16px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #14b8a6;background:rgba(20,184,166,.15);color:#2dd4bf">+50</button>
-        <button type="button" id="editLocaisBtnCond4549" onclick="editLocaisApplyCondition('45-49')" style="padding:5px 10px;border-radius:16px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#fbbf24">45-49</button>
-        <button type="button" id="editLocaisBtnCondNone" onclick="editLocaisApplyCondition('')" style="padding:5px 10px;border-radius:16px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #2a1f45;background:rgba(255,255,255,.04);color:#94a3b8">✕ Nenhuma</button>
-      </div>
+      <button onclick="closeEditLocais()" style="background:rgba(255,255,255,.06);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;padding:6px 12px;cursor:pointer;font-size:.85rem;transition:all .15s" title="Fechar">✕</button>
     </div>
 
-    <div id="editLocaisList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px"></div>
-    <button onclick="closeEditLocais()" style="padding:8px;border-radius:10px;background:#7c3aed;color:#fff;font-weight:800;font-size:.8rem;cursor:pointer;border:none">Concluir</button>
+    <!-- Barra de Pesquisa Rápida (Por Nome ou Número) -->
+    <div style="position:relative;width:100%">
+      <div style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#a78bfa;font-size:.9rem;pointer-events:none">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <input
+        type="text"
+        id="editLocaisSearchInput"
+        placeholder="Buscar por número ou nome do atleta..."
+        autocomplete="off"
+        oninput="editLocaisOnSearch(this.value)"
+        style="width:100%;box-sizing:border-box;background:#0d0920;border:1.5px solid #2a1f45;border-radius:12px;padding:11px 40px 11px 38px;font-size:.9rem;font-weight:600;color:#fff;outline:none;transition:all .2s"
+        onfocus="this.style.borderColor='#a855f7';this.style.boxShadow='0 0 12px rgba(168,85,247,0.25)'"
+        onblur="this.style.borderColor='#2a1f45';this.style.boxShadow='none'"
+      />
+      <button
+        type="button"
+        id="editLocaisSearchClearBtn"
+        onclick="editLocaisClearSearch()"
+        style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:22px;height:22px;color:#94a3b8;cursor:pointer;font-size:.7rem;align-items:center;justify-content:center"
+        title="Limpar busca"
+      >✕</button>
+    </div>
+
+    <!-- Barra de Ações em Lote (Expansível apenas quando há seleção) -->
+    <div style="background:#0d0920;border:1px solid #2a1f45;border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;color:#cbd5e1;cursor:pointer">
+          <input type="checkbox" id="editLocaisSelectAllBox" onchange="editLocaisSelectAll(this.checked)" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer" />
+          <span id="editLocaisSelectedCount">Selecionar todos (0 marcados)</span>
+        </label>
+        <span style="font-size:0.75rem;color:#94a3b8;font-weight:600" id="editLocaisFilterStats"></span>
+      </div>
+
+      <!-- Controles em lote (visíveis somente quando 1 ou mais estiverem marcados) -->
+      <div id="editLocaisBatchBar" style="display:none;flex-direction:column;gap:8px;padding-top:8px;border-top:1px dashed #2a1f45">
+        <div style="font-size:0.7rem;font-weight:800;color:#a78bfa;text-transform:uppercase;letter-spacing:0.04em">⚡ Aplicar aos corredores selecionados:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <!-- Sexo em lote -->
+          <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.03);padding:3px 6px;border-radius:8px;border:1px solid #2a1f45">
+            <span style="font-size:.65rem;font-weight:800;color:#94a3b8">SEXO:</span>
+            <button type="button" onclick="editLocaisApplyGender('MASCULINO')" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #3b82f6;background:rgba(59,130,246,.15);color:#60a5fa">♂ Masc</button>
+            <button type="button" onclick="editLocaisApplyGender('FEMININO')" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #ec4899;background:rgba(236,72,153,.15);color:#f472b6">♀ Fem</button>
+          </div>
+          <!-- Origem em lote -->
+          <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.03);padding:3px 6px;border-radius:8px;border:1px solid #2a1f45">
+            <span style="font-size:.65rem;font-weight:800;color:#94a3b8">ORIGEM:</span>
+            <button type="button" onclick="editLocaisApplyOrigem(true)" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #22c55e;background:rgba(34,197,94,.15);color:#4ade80">🏠 Local</button>
+            <button type="button" onclick="editLocaisApplyOrigem(false)" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #64748b;background:rgba(255,255,255,.05);color:#cbd5e1">🧳 Visitante</button>
+          </div>
+          <!-- Faixa / Condição em lote -->
+          <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.03);padding:3px 6px;border-radius:8px;border:1px solid #2a1f45">
+            <span style="font-size:.65rem;font-weight:800;color:#94a3b8">FAIXA:</span>
+            <button type="button" onclick="editLocaisApplyCondition('')" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #2a1f45;background:rgba(255,255,255,.04);color:#94a3b8">Geral</button>
+            <button type="button" onclick="editLocaisApplyCondition('45-49')" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#fbbf24">45-49</button>
+            <button type="button" onclick="editLocaisApplyCondition('+50')" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #14b8a6;background:rgba(20,184,166,.15);color:#2dd4bf">+50</button>
+            <button type="button" onclick="editLocaisApplyCondition('PCD')" style="padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #a855f7;background:rgba(168,85,247,.15);color:#c084fc">PCD</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Corredores com Rolagem -->
+    <div id="editLocaisList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
+
+    <!-- Rodapé -->
+    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:6px;border-top:1px solid #2a1f45">
+      <button onclick="closeEditLocais()" style="padding:10px 24px;border-radius:12px;background:linear-gradient(135deg, #7c3aed, #9333ea);color:#fff;font-weight:800;font-size:.88rem;cursor:pointer;border:none;box-shadow:0 4px 14px rgba(124,58,237,0.35);transition:all .15s">✓ Concluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Edição de Nome do Corredor (Padrão visual do sistema) -->
+<div id="editRunnerNameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center" onclick="if(event.target===this)closeEditRunnerNameModal()">
+  <div style="background:#151026;border:1px solid #2a1f45;border-radius:16px;padding:22px;max-width:440px;width:92%;box-shadow:0 20px 40px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:16px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(124,58,237,0.2);border:1px solid #7c3aed;display:flex;align-items:center;justify-content:center;color:#c4b5fd;font-size:.9rem">
+          <i class="fa-solid fa-user-pen"></i>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:1rem;font-weight:800;color:#fff" id="editRunnerNameModalTitle">Identificar Corredor</h3>
+          <span style="font-size:0.75rem;color:#a78bfa;font-family:monospace;font-weight:700" id="editRunnerNameModalSubtitle">Nº Peito: #000</span>
+        </div>
+      </div>
+      <button type="button" onclick="closeEditRunnerNameModal()" style="background:rgba(255,255,255,.06);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;padding:5px 11px;cursor:pointer;font-size:.8rem;transition:all .15s" title="Fechar">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label for="editRunnerNameInput" style="font-size:0.75rem;font-weight:700;color:#cbd5e1;text-transform:uppercase;letter-spacing:0.04em">Nome Completo</label>
+      <input
+        type="text"
+        id="editRunnerNameInput"
+        placeholder="Digite o nome do corredor..."
+        autocomplete="off"
+        style="width:100%;box-sizing:border-box;background:#0B0813;border:2px solid rgba(168,85,247,0.4);border-radius:12px;padding:12px 14px;font-size:.95rem;font-weight:600;color:#fff;outline:none;transition:all 0.2s"
+        onfocus="this.style.borderColor='#a855f7';this.style.boxShadow='0 0 12px rgba(168,85,247,0.3)'"
+        onblur="this.style.borderColor='rgba(168,85,247,0.4)';this.style.boxShadow='none'"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();submitEditRunnerNameModal();}else if(event.key==='Escape'){closeEditRunnerNameModal();}"
+      />
+      <span style="font-size:0.72rem;color:#64748b">O nome será exibido no ranking geral, no telão e na consulta do atleta.</span>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px">
+      <button type="button" onclick="closeEditRunnerNameModal()" style="padding:10px 18px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #2a1f45;color:#94a3b8;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all .15s">Cancelar</button>
+      <button type="button" id="btnSaveRunnerName" onclick="submitEditRunnerNameModal()" style="padding:10px 20px;border-radius:10px;background:linear-gradient(135deg, #7c3aed, #ec4899);border:none;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.4);transition:all .15s;display:flex;align-items:center;gap:6px">
+        <i class="fa-solid fa-check"></i> Salvar Nome
+      </button>
+    </div>
   </div>
 </div>
 
@@ -921,6 +1021,10 @@ function canFocusBibInput() {
   if (!bibInput) return false;
   if (bibInput.disabled) return false;
   if (raceFinished) return false;
+  const nameModal = document.getElementById('editRunnerNameModal');
+  if (nameModal && nameModal.style.display === 'flex') return false;
+  const locaisModal = document.getElementById('editLocaisModal');
+  if (locaisModal && locaisModal.style.display === 'flex') return false;
   return true;
 }
 
@@ -1372,7 +1476,7 @@ function getCatLabel(cat){
 
 function rkFilter(cat){
   rkActiveFilter=cat;
-  const allKeys=['ALL','MASCULINO','FEMININO','LOCAL MASC','LOCAL FEM','PCD_50','AGE_45_49'];
+  const allKeys=['ALL','MASCULINO','FEMININO','LOCAL MASC','LOCAL FEM','PCD','AGE_50','AGE_45_49'];
   allKeys.forEach(k=>{
     const btn=document.getElementById('rkTab-'+k);
     if(!btn)return;
@@ -1385,7 +1489,8 @@ function rkFilter(cat){
     'FEMININO':'CLASSIFICAÇÃO FEMININO',
     'LOCAL MASC':'CLASSIFICAÇÃO LOCAL MASCULINO',
     'LOCAL FEM':'CLASSIFICAÇÃO LOCAL FEMININO',
-    'PCD_50':'CLASSIFICAÇÃO PCD / +50',
+    'PCD':'CLASSIFICAÇÃO PCD',
+    'AGE_50':'CLASSIFICAÇÃO +50',
     'AGE_45_49':'CLASSIFICAÇÃO 45-49'
   };
   document.getElementById('rkSectionLabel').textContent=labels[cat]||'CLASSIFICAÇÃO';
@@ -1409,7 +1514,8 @@ function renderRankingTable(){
     if(rkActiveFilter==='FEMININO')return isFem;
     if(rkActiveFilter==='LOCAL MASC')return isLocal&&isMasc;
     if(rkActiveFilter==='LOCAL FEM')return isLocal&&isFem;
-    if(rkActiveFilter==='PCD_50')return hasSpecial('PCD')||hasSpecial('+50')||hasSpecial('50');
+    if(rkActiveFilter==='PCD')return hasSpecial('PCD');
+    if(rkActiveFilter==='AGE_50')return (hasSpecial('+50')||hasSpecial('50'))&&!hasSpecial('PCD');
     if(rkActiveFilter==='AGE_45_49')return hasSpecial('45-49')||hasSpecial('45 A 49');
     return false;
   }
@@ -1496,21 +1602,45 @@ function registerArrival(directBib){
   const runner=getRunnerByBib(digitsOnly);
   const activeRaceId = getActiveRaceId();
 
-  if(!runner){
-    showToast('Corredor não cadastrado nesta corrida. Não é permitido registrar chegada.',true);
-    scheduleBibInputFocus();
-    return;
-  }
-
-  if(activeRaceId && runner.raceId && runner.raceId !== activeRaceId){
+  if(runner && activeRaceId && runner.raceId && runner.raceId !== activeRaceId){
     showToast('Corredor pertence a outra corrida. Leitura bloqueada.',true);
     scheduleBibInputFocus();
     return;
   }
 
+  const fallbackRunnerId = activeRaceId ? `${activeRaceId}_bib_${cleanBib}` : `bib_${cleanBib}`;
+  const effectiveRunnerId = runner?.id || fallbackRunnerId;
+  const runnerName = (runner?.name && runner.name !== '-' && runner.name !== '—') ? runner.name : 'Sem nome';
+  const runnerCat = runner?.category || 'GERAL';
+
+  let effectiveRunner = runner;
+  if (!effectiveRunner) {
+    effectiveRunner = {
+      id: effectiveRunnerId,
+      name: 'Sem nome',
+      number: cleanBib,
+      category: runnerCat,
+      raceId: activeRaceId || ''
+    };
+    try {
+      if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+        window.fbSetDoc(window.fbDoc(window.fbDb, 'runners', effectiveRunnerId), effectiveRunner, { merge: true });
+      }
+    } catch(e) {}
+    try {
+      const raw = localStorage.getItem('pwa-qr-timing:runners-lookup');
+      const list = raw ? JSON.parse(raw) : [];
+      const exists = list.some(r => String(r.id) === String(effectiveRunnerId) || (r.number && String(parseInt(r.number, 10)) === cleanBib && (!r.raceId || r.raceId === activeRaceId)));
+      if (!exists) {
+        list.push(effectiveRunner);
+        localStorage.setItem('pwa-qr-timing:runners-lookup', JSON.stringify(list));
+      }
+    } catch(e) {}
+  }
+
   const existing=arrivals.find(a=>
     String(parseInt(a.bib,10))===cleanBib ||
-    (runner?.id && a.runnerId && String(a.runnerId)===String(runner.id))
+    (effectiveRunnerId && a.runnerId && String(a.runnerId)===String(effectiveRunnerId))
   );
   if(existing){
     showToast('O Nº ' + existing.bib + ' (' + existing.name + ') já cruzou a chegada! (' + existing.time + ')',true);
@@ -1518,22 +1648,30 @@ function registerArrival(directBib){
     return;
   }
 
-  const runnerName=runner?runner.name:'-';
-  const runnerCat=runner?.category?runner.category:'GERAL';
   const currentTime=timerDisplay.textContent + millisDisplay.textContent;
   const totalGeral=arrivals.length+1;
   const posCat=arrivals.filter(a=>a.category===runnerCat).length+1;
-  const newArrival={id:Date.now(),arrivalMs:Date.now(),runnerId:runner?.id||null,posGeral:totalGeral,category:runnerCat,bib:digitsOnly.padStart(3,'0'),name:runnerName,posCat,time:currentTime};
+  const newArrival={
+    id:Date.now(),
+    arrivalMs:Date.now(),
+    runnerId:effectiveRunnerId,
+    posGeral:totalGeral,
+    category:runnerCat,
+    bib:digitsOnly.padStart(3,'0'),
+    name:runnerName,
+    posCat,
+    time:currentTime
+  };
   arrivals.unshift(newArrival);
   arrivals=recomputeArrivalsPositions(arrivals);
   saveArrivalsCache(getActiveRaceId(), arrivals);
   renderArrivals();
-  showToast('Nº ' + newArrival.bib + (runnerName!=='-'?' - '+runnerName:'') + ' registrado!');
+  showToast('Nº ' + newArrival.bib + (runnerName !== 'Sem nome' ? ' - ' + runnerName : ' (Sem nome)') + ' registrado!');
   triggerArrivalFeedback(newArrival, 1);
   scheduleBibInputFocus();
 
   // Sincroniza em tempo real com o Telão/TV e Firebase incluindo tempo decorrido
-  syncArrival(digitsOnly, runnerName, runner, currentTime, elapsedTime);
+  syncArrival(digitsOnly, runnerName, effectiveRunner, currentTime, elapsedTime);
 }
 
 async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs) {
@@ -1544,16 +1682,8 @@ async function syncArrival(bibNumber, runnerName, runner, currentTime, elapsedMs
   }
 
   const raceId = getActiveRaceId();
-  if (!runner?.id) {
-    console.warn('Chegada ignorada no sync: corredor não cadastrado na corrida ativa.');
-    return;
-  }
-  if (raceId && runner.raceId && runner.raceId !== raceId) {
-    console.warn('Chegada ignorada no sync: corredor pertence a outra corrida.');
-    return;
-  }
-
-  const runnerId = runner?.id || `bib_${bibNumber}`;
+  const cleanBib = String(parseInt(bibNumber, 10));
+  const runnerId = runner?.id || (raceId ? `${raceId}_bib_${cleanBib}` : `bib_${cleanBib}`);
   const now = new Date();
 
   // 1. Post to parent window (se estiver dentro do iframe)
@@ -1666,7 +1796,11 @@ window.startFirebaseListening = function(forceRestart=false) {
     sortedDocs.forEach((res, index) => {
       const runner = getRunnerByBib(res._cleanBib);
       const runnerCat = runner?.category || 'GERAL';
-      const runnerName = res.runnerName || runner?.name || '—';
+      const runnerName = (runner?.name && runner.name !== '-' && runner.name !== 'Sem nome' && runner.name !== '—')
+        ? runner.name
+        : (res.runnerName && res.runnerName !== '-' && res.runnerName !== '—' ? res.runnerName : 'Sem nome');
+      const cleanBib = String(parseInt(res._cleanBib, 10));
+      const runnerId = res.barcode || runner?.id || (activeRaceId ? `${activeRaceId}_bib_${cleanBib}` : `bib_${cleanBib}`);
 
       // Tempo de cronômetro priorizado
       let displayTime = res.time || null;
@@ -1862,73 +1996,163 @@ function editLocaisRefreshAfterUpdate() {
   openEditLocais();
 }
 
-function openEditLocais() {
-  const modal = document.getElementById('editLocaisModal');
-  const list = document.getElementById('editLocaisList');
-  const sorted = [...arrivals].sort((a, b) => a.posGeral - b.posGeral);
+let _currentEditRunner = null;
 
-  // Mantém a seleção apenas para corredores ainda presentes na lista.
-  const presentIds = new Set(sorted.map(a => String(a.runnerId)));
-  editLocaisSelected.forEach(id => { if (!presentIds.has(String(id))) editLocaisSelected.delete(id); });
+function editRunnerNamePrompt(runnerId, bib) {
+  const cleanBib = String(parseInt(bib, 10));
+  _currentEditRunner = { runnerId, bib: cleanBib };
+  const match = arrivals.find(a => String(a.runnerId) === String(runnerId) || String(parseInt(a.bib, 10)) === cleanBib);
+  const currentName = (match && match.name && match.name !== '-' && match.name !== 'Sem nome' && match.name !== '—') ? match.name : '';
+  
+  const titleEl = document.getElementById('editRunnerNameModalTitle');
+  const subEl = document.getElementById('editRunnerNameModalSubtitle');
+  const inputEl = document.getElementById('editRunnerNameInput');
+  
+  if (titleEl) titleEl.textContent = currentName ? 'Editar Nome do Corredor' : 'Identificar Corredor';
+  if (subEl) subEl.textContent = 'Nº Peito: #' + cleanBib.padStart(3, '0');
+  if (inputEl) inputEl.value = currentName;
 
-  editLocaisSyncToolbar(sorted.length);
-
-  list.innerHTML = sorted.map(a => {
-    const cat = String(a.category || '').toUpperCase();
-    const isLocal = cat.includes('LOCAL');
-    const isFem = cat.includes('FEM');
-    const genderLabel = isFem ? '♀ Fem' : '♂ Masc';
-    const special = cat.includes('PCD') ? ' · PCD' : (cat.includes('45-49') ? ' · 45-49' : (cat.includes('+50') || cat.includes('50')) ? ' · +50' : '');
-    const checked = editLocaisSelected.has(String(a.runnerId)) ? 'checked' : '';
-    return `
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0d0920;border:1px solid #2a1f45;border-radius:12px">
-      <input type="checkbox" ${checked} onchange="editLocaisToggleSelect('${a.runnerId}', this.checked)" style="width:16px;height:16px;flex-shrink:0" />
-      <span style="font-family:monospace;font-weight:800;color:#fff;font-size:.85rem;min-width:44px">#${a.bib}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.82rem;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</div>
-        <div style="font-size:.7rem;color:#94a3b8;font-weight:600">${genderLabel}${special}</div>
-      </div>
-      <button type="button" onclick="toggleRunnerLocal('${a.runnerId}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:800;cursor:pointer;transition:all .15s;border:1.5px solid ${isLocal ? '#22c55e' : '#2a1f45'};background:${isLocal ? 'rgba(34,197,94,0.18)' : 'rgba(255,255,255,0.03)'};color:${isLocal ? '#4ade80' : '#94a3b8'}">
-        <i class="fa-solid fa-house" style="font-size:.7rem"></i>
-        <span>${isLocal ? 'LOCAL' : 'NÃO LOCAL'}</span>
-        ${isLocal ? '<i class="fa-solid fa-check" style="font-size:.65rem"></i>' : ''}
-      </button>
-    </div>`;
-  }).join('');
-  modal.style.display = 'flex';
+  const modal = document.getElementById('editRunnerNameModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.select();
+      }
+    }, 60);
+  }
 }
 
-// Atualiza o contador, o checkbox "selecionar todos" e habilita/desabilita os
-// botões de ação em lote conforme existir (ou não) algum corredor marcado.
-function editLocaisSyncToolbar(totalCount) {
-  const countEl = document.getElementById('editLocaisSelectedCount');
-  if (countEl) countEl.textContent = `${editLocaisSelected.size} selecionado(s)`;
-  const selectAllBox = document.getElementById('editLocaisSelectAllBox');
-  if (selectAllBox) selectAllBox.checked = totalCount > 0 && editLocaisSelected.size === totalCount;
+function closeEditRunnerNameModal() {
+  const modal = document.getElementById('editRunnerNameModal');
+  if (modal) modal.style.display = 'none';
+  _currentEditRunner = null;
+}
 
-  const hasSelection = editLocaisSelected.size > 0;
-  const btnIds = ['editLocaisBtnOrigemLocal', 'editLocaisBtnOrigemVisitante', 'editLocaisBtnCondPcd', 'editLocaisBtnCond50', 'editLocaisBtnCond4549', 'editLocaisBtnCondNone'];
-  btnIds.forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.disabled = !hasSelection;
-    btn.style.opacity = hasSelection ? '1' : '.4';
-    btn.style.cursor = hasSelection ? 'pointer' : 'not-allowed';
+async function submitEditRunnerNameModal() {
+  if (!_currentEditRunner) return;
+  const inputEl = document.getElementById('editRunnerNameInput');
+  const rawValue = inputEl ? inputEl.value.trim() : '';
+  const newName = rawValue || 'Sem nome';
+  const { runnerId, bib } = _currentEditRunner;
+  closeEditRunnerNameModal();
+  await updateRunnerName(runnerId, bib, newName);
+}
+
+async function updateRunnerName(runnerId, bib, newName) {
+  const cleanBib = String(parseInt(bib, 10));
+  const raceId = getActiveRaceId();
+  const effectiveId = runnerId || (raceId ? `${raceId}_bib_${cleanBib}` : `bib_${cleanBib}`);
+
+  // 1. Atualiza na lista de chegadas em memória
+  arrivals.forEach(a => {
+    if (String(a.runnerId) === String(runnerId) || String(parseInt(a.bib, 10)) === cleanBib) {
+      a.name = newName;
+      if (!a.runnerId) a.runnerId = effectiveId;
+    }
   });
-}
 
-function editLocaisToggleSelect(runnerId, checked) {
-  const key = String(runnerId);
-  if (checked) editLocaisSelected.add(key);
-  else editLocaisSelected.delete(key);
-  editLocaisSyncToolbar(arrivals.length);
-}
+  // 2. Salva no cache local de chegadas
+  try { saveArrivalsCache(raceId, arrivals); } catch(e) {}
 
-function editLocaisSelectAll(checked) {
-  editLocaisSelected = checked
-    ? new Set(arrivals.map(a => String(a.runnerId)))
-    : new Set();
+  // 3. Atualiza ou cria na coleção 'runners' do Firestore
+  try {
+    if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+      await window.fbSetDoc(window.fbDoc(window.fbDb, 'runners', String(effectiveId)), {
+        name: newName,
+        number: cleanBib,
+        raceId: raceId || ''
+      }, { merge: true });
+    }
+  } catch (err) {
+    console.warn('Erro ao salvar nome em runners no Firestore:', err);
+  }
+
+  // 4. Atualiza o runners-lookup do localStorage
+  try {
+    const raw = localStorage.getItem('pwa-qr-timing:runners-lookup');
+    if (raw) {
+      const list = JSON.parse(raw);
+      const idx = list.findIndex(r => String(r.id) === String(effectiveId) || (r.number && String(parseInt(r.number, 10)) === cleanBib && (!r.raceId || r.raceId === raceId)));
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], name: newName };
+      } else {
+        list.push({ id: effectiveId, name: newName, number: cleanBib, category: 'GERAL', raceId: raceId || '' });
+      }
+      localStorage.setItem('pwa-qr-timing:runners-lookup', JSON.stringify(list));
+    }
+  } catch (e) {}
+
+  // 5. Atualiza os documentos da coleção 'results' no Firestore desta corrida
+  try {
+    if (window.fbDb && window.fbQuery && window.fbCollection && window.fbWhere && window.fbGetDocs && window.fbSetDoc && raceId) {
+      const q = window.fbQuery(
+        window.fbCollection(window.fbDb, 'results'),
+        window.fbWhere('raceId', '==', raceId)
+      );
+      const snap = await window.fbGetDocs(q);
+      for (const d of snap.docs) {
+        const data = d.data();
+        const rNum = String(parseInt(data.runnerNumber || data.bib || '', 10));
+        if (rNum === cleanBib || data.barcode === effectiveId) {
+          await window.fbSetDoc(d.ref, { runnerName: newName }, { merge: true });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao atualizar nome nos resultados do Firestore:', err);
+  }
+
+  // 6. Atualiza a exibição da tela
+  renderArrivals();
+  renderRankingTable();
   openEditLocais();
+  showToast(`Nome do Nº ${cleanBib} atualizado para "${newName}"!`);
+}
+
+let editLocaisSearchQuery = '';
+
+function editLocaisOnSearch(query) {
+  editLocaisSearchQuery = (query || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('editLocaisSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = editLocaisSearchQuery ? 'inline-flex' : 'none';
+  renderEditLocaisList();
+}
+
+function editLocaisClearSearch() {
+  editLocaisSearchQuery = '';
+  const inp = document.getElementById('editLocaisSearchInput');
+  if (inp) inp.value = '';
+  const clearBtn = document.getElementById('editLocaisSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  renderEditLocaisList();
+}
+
+// Ações diretas de 1 toque por corredor:
+async function setRunnerGender(runnerId, gender) {
+  await editLocaisUpdateRunnerCategory(runnerId, { gender });
+  editLocaisRefreshAfterUpdate();
+}
+
+async function setRunnerOrigem(runnerId, isLocal) {
+  await editLocaisUpdateRunnerCategory(runnerId, { isLocal });
+  editLocaisRefreshAfterUpdate();
+}
+
+async function setRunnerCondition(runnerId, special) {
+  await editLocaisUpdateRunnerCategory(runnerId, { special });
+  editLocaisRefreshAfterUpdate();
+}
+
+// Ações em lote:
+async function editLocaisApplyGender(gender) {
+  if (editLocaisSelected.size === 0) return;
+  for (const runnerId of editLocaisSelected) {
+    await editLocaisUpdateRunnerCategory(runnerId, { gender });
+  }
+  editLocaisRefreshAfterUpdate();
+  showToast(`Sexo alterado para ${editLocaisSelected.size} corredor(es)!`);
 }
 
 async function editLocaisApplyOrigem(isLocal) {
@@ -1937,6 +2161,7 @@ async function editLocaisApplyOrigem(isLocal) {
     await editLocaisUpdateRunnerCategory(runnerId, { isLocal });
   }
   editLocaisRefreshAfterUpdate();
+  showToast(`Origem alterada para ${editLocaisSelected.size} corredor(es)!`);
 }
 
 async function editLocaisApplyCondition(special) {
@@ -1945,19 +2170,178 @@ async function editLocaisApplyCondition(special) {
     await editLocaisUpdateRunnerCategory(runnerId, { special });
   }
   editLocaisRefreshAfterUpdate();
+  showToast(`Faixa/Condição alterada para ${editLocaisSelected.size} corredor(es)!`);
 }
 
-async function toggleRunnerLocal(runnerId) {
-  const match = arrivals.find(a => String(a.runnerId) === String(runnerId));
-  if (!match) return;
-  const isCurrentlyLocal = String(match.category || '').toUpperCase().includes('LOCAL');
-  await editLocaisUpdateRunnerCategory(runnerId, { isLocal: !isCurrentlyLocal });
-  editLocaisRefreshAfterUpdate();
+function renderEditLocaisList() {
+  const list = document.getElementById('editLocaisList');
+  if (!list) return;
+
+  const sorted = [...arrivals].sort((a, b) => a.posGeral - b.posGeral);
+
+  // Filtra por número, nome ou categoria
+  const filtered = !editLocaisSearchQuery ? sorted : sorted.filter(a => {
+    const bibStr = String(a.bib || '');
+    const cleanBib = String(parseInt(a.bib, 10));
+    const nameStr = String(a.name || '').toLowerCase();
+    const catStr = String(a.category || '').toLowerCase();
+    const q = editLocaisSearchQuery;
+    return bibStr.includes(q) || cleanBib === q || nameStr.includes(q) || catStr.includes(q);
+  });
+
+  const filterStats = document.getElementById('editLocaisFilterStats');
+  if (filterStats) {
+    if (editLocaisSearchQuery) {
+      filterStats.textContent = `Mostrando ${filtered.length} de ${sorted.length}`;
+    } else {
+      filterStats.textContent = `${sorted.length} atleta(s)`;
+    }
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:36px 16px;color:#64748b;font-size:0.85rem">
+        <i class="fa-solid fa-magnifying-glass" style="font-size:1.6rem;margin-bottom:8px;color:#334155;display:block"></i>
+        Nenhum atleta encontrado para "<strong>${editLocaisSearchQuery}</strong>".
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = filtered.map(a => {
+    const parts = editLocaisParseCat(a.category);
+    const isLocal = parts.isLocal;
+    const isFem = parts.gender === 'FEMININO';
+    const special = parts.special; // '', 'PCD', '45-49', '+50'
+    const checked = editLocaisSelected.has(String(a.runnerId)) ? 'checked' : '';
+    const hasName = a.name && a.name !== '-' && a.name !== 'Sem nome' && a.name !== '—';
+    const displayName = hasName ? a.name : 'Sem nome';
+    const nameColor = hasName ? '#ffffff' : '#f59e0b';
+
+    return `
+    <div style="display:flex;flex-direction:column;gap:8px;padding:11px 13px;background:#0d0920;border:1.5px solid ${checked ? '#7c3aed' : '#2a1f45'};border-radius:13px;transition:all .15s">
+      
+      <!-- Topo: Checkbox, Número, Nome e Botão de Editar Nome -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+          <input type="checkbox" ${checked} onchange="editLocaisToggleSelect('${a.runnerId}', this.checked)" style="width:17px;height:17px;accent-color:#7c3aed;cursor:pointer;flex-shrink:0" />
+          <span style="font-family:monospace;font-weight:900;color:#c084fc;font-size:.95rem;letter-spacing:0.02em;flex-shrink:0">#${a.bib}</span>
+          <div style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden">
+            <span style="font-size:.88rem;font-weight:700;color:${nameColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${displayName}</span>
+            <button type="button" onclick="editRunnerNamePrompt('${a.runnerId}', '${a.bib}')" style="background:rgba(124,58,237,0.22);border:1px solid rgba(124,58,237,0.45);color:#c4b5fd;padding:2px 7px;border-radius:6px;font-size:0.68rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;flex-shrink:0" title="Alterar nome do atleta">
+              <i class="fa-solid fa-pen" style="font-size:0.6rem"></i>
+              <span>${hasName ? 'Editar' : 'Dar nome'}</span>
+            </button>
+          </div>
+        </div>
+        <!-- Categoria Resumida -->
+        <span style="font-size:0.66rem;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,0.06);color:#a78bfa;border:1px solid #2a1f45;white-space:nowrap">${a.category || 'GERAL'}</span>
+      </div>
+
+      <!-- Controles de 1 Toque: Sexo | Origem | Faixa -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.04)">
+        
+        <!-- Sexo -->
+        <div style="display:inline-flex;border-radius:8px;background:#151026;border:1px solid #2a1f45;padding:2px">
+          <button type="button" onclick="setRunnerGender('${a.runnerId}', 'MASCULINO')" style="padding:3px 8px;border-radius:6px;font-size:.72rem;font-weight:800;cursor:pointer;border:none;transition:all .15s;${!isFem ? 'background:#3b82f6;color:#fff;box-shadow:0 2px 8px rgba(59,130,246,0.35)' : 'background:transparent;color:#64748b'}">
+            ♂ Masc
+          </button>
+          <button type="button" onclick="setRunnerGender('${a.runnerId}', 'FEMININO')" style="padding:3px 8px;border-radius:6px;font-size:.72rem;font-weight:800;cursor:pointer;border:none;transition:all .15s;${isFem ? 'background:#ec4899;color:#fff;box-shadow:0 2px 8px rgba(236,72,153,0.35)' : 'background:transparent;color:#64748b'}">
+            ♀ Fem
+          </button>
+        </div>
+
+        <!-- Origem -->
+        <div style="display:inline-flex;border-radius:8px;background:#151026;border:1px solid #2a1f45;padding:2px">
+          <button type="button" onclick="setRunnerOrigem('${a.runnerId}', true)" style="padding:3px 8px;border-radius:6px;font-size:.72rem;font-weight:800;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:3px;${isLocal ? 'background:#22c55e;color:#fff;box-shadow:0 2px 8px rgba(34,197,94,0.35)' : 'background:transparent;color:#64748b'}">
+            <span>🏠 Local</span>
+          </button>
+          <button type="button" onclick="setRunnerOrigem('${a.runnerId}', false)" style="padding:3px 8px;border-radius:6px;font-size:.72rem;font-weight:800;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:3px;${!isLocal ? 'background:rgba(255,255,255,0.12);color:#e2e8f0' : 'background:transparent;color:#64748b'}">
+            <span>🧳 Visitante</span>
+          </button>
+        </div>
+
+        <!-- Faixa / Condição -->
+        <div style="display:inline-flex;border-radius:8px;background:#151026;border:1px solid #2a1f45;padding:2px">
+          <button type="button" onclick="setRunnerCondition('${a.runnerId}', '')" style="padding:3px 7px;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;border:none;transition:all .15s;${!special ? 'background:rgba(168,85,247,0.25);color:#c084fc;border:1px solid #7c3aed' : 'background:transparent;color:#64748b'}">
+            Geral
+          </button>
+          <button type="button" onclick="setRunnerCondition('${a.runnerId}', '45-49')" style="padding:3px 7px;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;border:none;transition:all .15s;${special === '45-49' ? 'background:#f59e0b;color:#000;font-weight:800;box-shadow:0 2px 8px rgba(245,158,11,0.35)' : 'background:transparent;color:#64748b'}">
+            45-49
+          </button>
+          <button type="button" onclick="setRunnerCondition('${a.runnerId}', '+50')" style="padding:3px 7px;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;border:none;transition:all .15s;${special === '+50' ? 'background:#14b8a6;color:#000;font-weight:800;box-shadow:0 2px 8px rgba(20,184,166,0.35)' : 'background:transparent;color:#64748b'}">
+            +50
+          </button>
+          <button type="button" onclick="setRunnerCondition('${a.runnerId}', 'PCD')" style="padding:3px 7px;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;border:none;transition:all .15s;${special === 'PCD' ? 'background:#a855f7;color:#fff;font-weight:800;box-shadow:0 2px 8px rgba(168,85,247,0.35)' : 'background:transparent;color:#64748b'}">
+            PCD
+          </button>
+        </div>
+
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEditLocais() {
+  const modal = document.getElementById('editLocaisModal');
+  const sorted = [...arrivals].sort((a, b) => a.posGeral - b.posGeral);
+
+  // Mantém a seleção apenas para corredores ainda presentes na lista.
+  const presentIds = new Set(sorted.map(a => String(a.runnerId)));
+  editLocaisSelected.forEach(id => { if (!presentIds.has(String(id))) editLocaisSelected.delete(id); });
+
+  editLocaisSyncToolbar(sorted.length);
+  renderEditLocaisList();
+
+  if (modal) modal.style.display = 'flex';
+}
+
+function editLocaisSyncToolbar(totalCount) {
+  const countEl = document.getElementById('editLocaisSelectedCount');
+  const batchBar = document.getElementById('editLocaisBatchBar');
+  const hasSelection = editLocaisSelected.size > 0;
+  
+  if (countEl) {
+    countEl.textContent = hasSelection 
+      ? `${editLocaisSelected.size} selecionado(s)` 
+      : `Selecionar todos (${totalCount} atletas)`;
+  }
+  
+  const selectAllBox = document.getElementById('editLocaisSelectAllBox');
+  if (selectAllBox) {
+    selectAllBox.checked = totalCount > 0 && editLocaisSelected.size === totalCount;
+  }
+
+  if (batchBar) {
+    batchBar.style.display = hasSelection ? 'flex' : 'none';
+  }
+}
+
+function editLocaisToggleSelect(runnerId, checked) {
+  const key = String(runnerId);
+  if (checked) editLocaisSelected.add(key);
+  else editLocaisSelected.delete(key);
+  editLocaisSyncToolbar(arrivals.length);
+  renderEditLocaisList();
+}
+
+function editLocaisSelectAll(checked) {
+  editLocaisSelected = checked
+    ? new Set(arrivals.map(a => String(a.runnerId)))
+    : new Set();
+  editLocaisSyncToolbar(arrivals.length);
+  renderEditLocaisList();
 }
 
 function closeEditLocais(){
   editLocaisSelected = new Set();
-  document.getElementById('editLocaisModal').style.display='none';
+  editLocaisSearchQuery = '';
+  const inp = document.getElementById('editLocaisSearchInput');
+  if (inp) inp.value = '';
+  const clearBtn = document.getElementById('editLocaisSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const modal = document.getElementById('editLocaisModal');
+  if (modal) modal.style.display = 'none';
 }
 
 // ── Export CSV ──

@@ -78,9 +78,9 @@ export default function PublicRankingPage() {
       if (categoryFilter === 'FEMININO') return cat.includes('FEM')
       if (categoryFilter === 'LOCAL') return cat.includes('LOCAL')
       if (categoryFilter === 'VISITANTE') return !cat.includes('LOCAL')
-      if (categoryFilter === 'PCD_AGE') {
-        return cat.includes('PCD') || cat.includes('+50') || cat.includes('50') || cat.includes('45-49') || cat.includes('45 A 49')
-      }
+      if (categoryFilter === 'PCD') return cat.includes('PCD')
+      if (categoryFilter === 'AGE_50') return (cat.includes('+50') || cat.includes('50')) && !cat.includes('PCD')
+      if (categoryFilter === 'AGE_45_49') return cat.includes('45-49') || cat.includes('45 A 49')
       return true
     })
     .map((item, index) => ({
@@ -130,7 +130,9 @@ export default function PublicRankingPage() {
             <option value="FEMININO">Feminino</option>
             <option value="LOCAL">Local</option>
             <option value="VISITANTE">Visitante</option>
-            <option value="PCD_AGE">PCD / +50 / 45-49</option>
+            <option value="PCD">PCD</option>
+            <option value="AGE_50">+50</option>
+            <option value="AGE_45_49">45-49</option>
           </select>
           <RaceChronometer startTime={race?.startTime} endTime={race?.endTime} className="public-ranking-chronometer" />
           {race?.endTime ? (
