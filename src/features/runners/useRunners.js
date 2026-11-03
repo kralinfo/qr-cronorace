@@ -130,20 +130,27 @@ export function useRunners(raceId) {
     }
 
     try {
-      let sequenceNumber = currentRaceRunners.length + 1
-      if (raceId !== effectiveRaceId && currentRaceRunners.length === 0) {
-        const raceRunners = await getRunnersByRace(effectiveRaceId)
-        sequenceNumber = raceRunners.length + 1
+      // Busca a contagem real no Firestore (não confia no estado local, que pode
+      // estar desatualizado em cadastros rápidos em sequência) para evitar gerar
+      // um id já usado e sobrescrever um corredor existente.
+      const raceRunners = await getRunnersByRace(effectiveRaceId)
+      let sequenceNumber = raceRunners.length + 1
+      let runnerId = generateRunnerId(effectiveRaceId, sequenceNumber)
+      const usedIds = new Set(raceRunners.map(r => r.id))
+      while (usedIds.has(runnerId)) {
+        sequenceNumber += 1
+        runnerId = generateRunnerId(effectiveRaceId, sequenceNumber)
       }
 
       const runner = {
-        id: generateRunnerId(effectiveRaceId, sequenceNumber),
+        id: runnerId,
         number: formattedNumber,
         cpf: formattedCpf,
-        birthDate: trimmedBirthDate !== '' ? trimmedBirthDate : undefined,
         name: formattedName,
         category: trimmedCategory,
-        raceId: effectiveRaceId
+        raceId: effectiveRaceId,
+        // Firestore rejeita campos com valor `undefined`; omite a chave quando vazio.
+        ...(trimmedBirthDate !== '' ? { birthDate: trimmedBirthDate } : {})
       }
 
       await addRunner(runner)
@@ -271,18 +278,20 @@ export function useRunners(raceId) {
     } catch (e) {}
 
     try {
-      const currentRaceRunners = raceId === effectiveRaceId
-        ? runners
-        : runners.filter(r => r.raceId === effectiveRaceId)
-      let sequenceNumber = currentRaceRunners.length + 1
-      if (raceId !== effectiveRaceId && currentRaceRunners.length === 0) {
-        const raceRunners = await getRunnersByRace(effectiveRaceId)
-        sequenceNumber = raceRunners.length + 1
-      }
+      // Busca a contagem real no Firestore (não confia no estado local) para evitar
+      // gerar ids já usados e sobrescrever corredores existentes.
+      const raceRunners = await getRunnersByRace(effectiveRaceId)
+      const usedIds = new Set(raceRunners.map(r => r.id))
+      let sequenceNumber = raceRunners.length + 1
 
-      const runnerDocs = runnersList.map((item, idx) => {
-        const seq = sequenceNumber + idx
-        const id = generateRunnerId(effectiveRaceId, seq)
+      const runnerDocs = runnersList.map((item) => {
+        let id = generateRunnerId(effectiveRaceId, sequenceNumber)
+        while (usedIds.has(id)) {
+          sequenceNumber += 1
+          id = generateRunnerId(effectiveRaceId, sequenceNumber)
+        }
+        usedIds.add(id)
+        sequenceNumber += 1
         return {
           id,
           number: formatRunnerNumber(item.number),

@@ -175,7 +175,7 @@ function RegisterForm({ race }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const result = await createRunner(name, number, cpf, race.id, category)
+    const result = await createRunner(name, number, cpf, '', race.id, category)
     if (result) {
       setName('')
       setNumber('')
@@ -246,4 +246,3 @@ function RegisterForm({ race }) {
     </div>
   )
 }
-

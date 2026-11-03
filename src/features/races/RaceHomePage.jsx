@@ -165,7 +165,7 @@ function RunnerForm({ activeRace, onEnsureActiveRace }) {
         return
       }
 
-      const result = await createRunner(name, number, '', targetRace.id, '')  // category stored separately; passed as empty string since effectiveRaceId uses targetRace.id
+      const result = await createRunner(name, number, '', '', targetRace.id, buildCategory())
       if (result) {
         setName('')
         setNumber('')
@@ -354,7 +354,7 @@ function RegisteredRunnersList({ runners, onSelectRunner }) {
 export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const { activeRace, clearActiveRace, selectRace } = useActiveRace()
   const { races, setStartTime, finishRace, reopenRace, editRace, removeRace, createRace } = useRaces()
-  const { runners, createRunner, removeRunner } = useRunners(activeRace?.id)
+  const { runners, createRunner, removeRunner, error: runnerError } = useRunners(activeRace?.id)
   const { runners: allRunners } = useRunners('ALL')
   const { placements } = useResults(activeRace?.id)
 
@@ -681,8 +681,7 @@ useEffect(() => {
     try {
       const base = maleIsLocal ? 'LOCAL MASC' : 'MASCULINO'
       const cat = maleSpecial ? `${base} | ${maleSpecial}` : base
-      // Category stored separately; raceId passed as 5th param, category as 6th (empty for now)
-      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, '')
+      const created = await createRunner(trimmedName, trimmedNumber, '', '', targetRace.id, cat)
       if (created) {
         setMaleName('')
         setMaleNumber('')
@@ -690,8 +689,6 @@ useEffect(() => {
         setMaleSpecial('')
         setSelectedRunner(created.runner || created)
         maleNameRef.current?.focus()
-      } else {
-        alert('Não foi possível cadastrar o corredor. Verifique se o número já está em uso.')
       }
     } catch (err) {
       console.error(err)
@@ -745,8 +742,7 @@ useEffect(() => {
     try {
       const base = femaleIsLocal ? 'LOCAL FEM' : 'FEMININO'
       const cat = femaleSpecial ? `${base} | ${femaleSpecial}` : base
-      // Category stored separately; raceId passed as 5th param, category as 6th (empty for now)
-      const created = await createRunner(trimmedName, trimmedNumber, '', targetRace.id, '')
+      const created = await createRunner(trimmedName, trimmedNumber, '', '', targetRace.id, cat)
       if (created) {
         setFemaleName('')
         setFemaleNumber('')
@@ -754,8 +750,6 @@ useEffect(() => {
         setFemaleSpecial('')
         setSelectedRunner(created.runner || created)
         femaleNameRef.current?.focus()
-      } else {
-        alert('Não foi possível cadastrar a corredora. Verifique se o número já está em uso.')
       }
     } catch (err) {
       console.error(err)
@@ -1258,6 +1252,7 @@ useEffect(() => {
               </div>
             </section>
           </div>
+          {runnerError && <div className="runner-form-error" role="alert">{runnerError}</div>}
 
           {/* Botão Iniciar Cronômetro / Ver Informações */}
           {activeRace?.endTime ? (
@@ -1577,4 +1572,3 @@ useEffect(() => {
     </div>
   )
 }
-

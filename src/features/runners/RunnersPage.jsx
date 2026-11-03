@@ -187,7 +187,7 @@ export default function RunnersPage() {
     clearError()
     setSubmitting(true)
     try {
-      const result = await createRunner(name, number, cpf, targetRaceId, category)
+      const result = await createRunner(name, number, cpf, '', targetRaceId, category)
       if (result) {
         setName('')
         setNumber('')
