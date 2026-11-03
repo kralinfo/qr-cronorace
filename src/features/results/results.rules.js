@@ -41,7 +41,14 @@ export const deduplicateByEarliestReading = deduplicateByLatestReading
  */
 export function sortByPlacement(results, startTime) {
   return deduplicateByLatestReading(results, startTime)
-    .sort((a, b) => toComparableTime(a) - toComparableTime(b))
+    .sort((a, b) => {
+      const posA = (typeof a.posGeral === 'number' && Number.isFinite(a.posGeral)) ? a.posGeral : null
+      const posB = (typeof b.posGeral === 'number' && Number.isFinite(b.posGeral)) ? b.posGeral : null
+      if (posA !== null && posB !== null && posA !== posB) {
+        return posA - posB
+      }
+      return toComparableTime(a) - toComparableTime(b)
+    })
     .map((result, index) => ({ ...result, position: index + 1 }))
 }
 
