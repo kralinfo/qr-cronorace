@@ -5,6 +5,7 @@ import { useActiveRace } from '../races/ActiveRaceContext.jsx'
 import RunnerQRItem from './RunnerQRItem.jsx'
 import RunnerHistoryModal from './RunnerHistoryModal.jsx'
 import EditRunnerModal from './EditRunnerModal.jsx'
+import BulkCategoryEditModal from './BulkCategoryEditModal.jsx'
 import ImportRunnersModal from './ImportRunnersModal.jsx'
 import BluetoothPrinterModal from './BluetoothPrinterModal.jsx'
 import ConfirmDialog from '../../shared/ConfirmDialog.jsx'
@@ -13,6 +14,7 @@ import { buildQRFilename } from './qr-filename.service.js'
 import { printRunnerQRCode, printRunnersQRCodeBatch } from './print.service.js'
 import { formatDateOnlyBR } from '../races/date-only.formatter.js'
 import { getAllRunners, normalizeComparable } from './runners.repository.js'
+import { parseCategory, buildCategory } from './runner-category.service.js'
 import { useDialog } from '../../shared/DialogProvider.jsx'
 import { maskCpf, normalizeCpf } from './runner-formatter.service.js'
 import {
@@ -100,6 +102,7 @@ export default function RunnersPage() {
   // Modais de edição e exclusão de corredor
   const [editingRunner, setEditingRunner] = useState(null)
   const [deletingRunner, setDeletingRunner] = useState(null)
+  const [bulkCategoryModalOpen, setBulkCategoryModalOpen] = useState(false)
 
   // Modal de histórico do atleta
   const [historyRunnerName, setHistoryRunnerName] = useState(null)
@@ -238,6 +241,29 @@ export default function RunnersPage() {
     () => runners.filter((r) => selectedIds.has(r.id)),
     [runners, selectedIds]
   )
+
+  // Aplica sexo/origem/condição especial escolhidos a todos os corredores selecionados de uma vez,
+  // mantendo o que já estava salvo em cada campo deixado como "Não alterar".
+  const handleApplyBulkCategory = async (overrides) => {
+    let updated = 0
+    let failed = 0
+    for (const runner of selectedRunners) {
+      const parts = parseCategory(runner.category)
+      const nextCategory = buildCategory({
+        gender: overrides.gender ?? parts.gender,
+        isLocal: overrides.isLocal ?? parts.isLocal,
+        special: overrides.special !== undefined ? overrides.special : parts.special
+      })
+      if (nextCategory === (runner.category || '')) continue
+      try {
+        await editRunner(runner.id, { category: nextCategory })
+        updated += 1
+      } catch (e) {
+        failed += 1
+      }
+    }
+    return { updated, failed, total: selectedRunners.length }
+  }
 
   const handlePrintSelectedSystem = async () => {
     if (selectedRunners.length === 0) return
@@ -635,6 +661,13 @@ export default function RunnersPage() {
                 <span className="runners-batch-count">{selectedIds.size} selecionado(s)</span>
                 <button
                   type="button"
+                  className="secondary-btn"
+                  onClick={() => setBulkCategoryModalOpen(true)}
+                >
+                  🏷 Editar categoria
+                </button>
+                <button
+                  type="button"
                   className="primary-btn"
                   onClick={handlePrintSelectedSystem}
                   disabled={printingBatch}
@@ -759,6 +792,14 @@ export default function RunnersPage() {
           onClose={() => setEditingRunner(null)}
         />
       )}
+
+      {/* Modal de Edição de Categoria em Lote */}
+      <BulkCategoryEditModal
+        isOpen={bulkCategoryModalOpen}
+        count={selectedIds.size}
+        onApply={handleApplyBulkCategory}
+        onClose={() => setBulkCategoryModalOpen(false)}
+      />
 
       {/* Confirmação de Exclusão de Corredor */}
       {deletingRunner && (

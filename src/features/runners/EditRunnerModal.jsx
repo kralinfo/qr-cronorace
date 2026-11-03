@@ -1,13 +1,14 @@
 // UI only: modal para edição de dados do corredor com fluxo Continuar -> Sim/Não.
 import React, { useState } from 'react'
 import { maskCpf } from './runner-formatter.service.js'
+import { parseCategory, buildCategory } from './runner-category.service.js'
 import { IconClose } from '../../shared/Icons.jsx'
 
 /**
  * @param {{
  *   runner: import('./runners.types.js').Runner,
  *   races: Array<import('../races/races.types.js').Race>,
- *   onSave: (id: string, updates: { name: string, number: string, cpf?: string, raceId: string }) => Promise<boolean|null|undefined>,
+ *   onSave: (id: string, updates: { name: string, number: string, cpf?: string, category?: string, raceId: string }) => Promise<boolean|null|undefined>,
  *   onClose: () => void
  * }} props
  */
@@ -15,11 +16,16 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
   const [name, setName] = useState(runner.name || '')
   const [number, setNumber] = useState(runner.number || '')
   const [cpf, setCpf] = useState(runner.cpf || '')
-  const [category, setCategory] = useState(runner.category || '')
+  const initialCategory = parseCategory(runner.category)
+  const [gender, setGender] = useState(initialCategory.gender)
+  const [isLocal, setIsLocal] = useState(initialCategory.isLocal)
+  const [special, setSpecial] = useState(initialCategory.special)
   const [raceId, setRaceId] = useState(runner.raceId || '')
   const [confirming, setConfirming] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+
+  const category = buildCategory({ gender, isLocal, special })
 
   const handleNumberKeyDown = (e) => {
     if (
@@ -80,7 +86,7 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
         name: name.trim(),
         number: number.trim(),
         cpf: cpf.trim() || undefined,
-        category: category.trim() || undefined,
+        category,
         raceId
       })
       if (success) {
@@ -135,6 +141,7 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
               <p><strong>Nome:</strong> {name}</p>
               <p><strong>Número:</strong> {number}</p>
               {cpf && <p><strong>CPF:</strong> {cpf}</p>}
+              <p><strong>Categoria:</strong> {category}</p>
               <p><strong>Corrida:</strong> {targetRaceName}</p>
             </div>
 
@@ -233,19 +240,68 @@ export default function EditRunnerModal({ runner, races, onSave, onClose }) {
             </div>
 
             <div className="edit-runner-field">
-              <label htmlFor="edit-runner-category">
-                Categoria:
-              </label>
-              <select
-                id="edit-runner-category"
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-              >
-                <option value="">Selecione (opcional)</option>
-                <option value="MASCULINO">MASCULINO</option>
-                <option value="FEMININO">FEMININO</option>
-                <option value="PCD">PCD</option>
-              </select>
+              <label>Categoria:</label>
+
+              <div className="runner-gender-tabs" style={{ marginBottom: 8 }}>
+                <button
+                  type="button"
+                  className={`runner-gender-tab runner-gender-tab--masc ${gender === 'MASCULINO' ? 'active' : ''}`}
+                  onClick={() => setGender('MASCULINO')}
+                >
+                  <span className="gender-icon">♂</span>
+                  <span>MASCULINO</span>
+                </button>
+                <button
+                  type="button"
+                  className={`runner-gender-tab runner-gender-tab--fem ${gender === 'FEMININO' ? 'active' : ''}`}
+                  onClick={() => setGender('FEMININO')}
+                >
+                  <span className="gender-icon">♀</span>
+                  <span>FEMININO</span>
+                </button>
+              </div>
+
+              <div className="cat-group">
+                <button
+                  type="button"
+                  className={`cat-toggle ${isLocal ? 'cat-toggle--active' : ''}`}
+                  style={isLocal ? { background: '#f59e0b33', borderColor: '#f59e0b', color: '#f59e0b' } : {}}
+                  onClick={() => setIsLocal(p => !p)}
+                >
+                  {isLocal ? 'Local ✓' : 'Local (não marcado = Visitante)'}
+                </button>
+              </div>
+
+              <div className="cat-group" style={{ marginTop: 6 }}>
+                <button
+                  type="button"
+                  className={`cat-toggle ${special === 'PCD' ? 'cat-toggle--active' : ''}`}
+                  style={special === 'PCD' ? { background: '#a855f733', borderColor: '#a855f7', color: '#a855f7' } : {}}
+                  onClick={() => setSpecial(p => p === 'PCD' ? '' : 'PCD')}
+                >
+                  PCD
+                </button>
+                <button
+                  type="button"
+                  className={`cat-toggle ${special === '+50' ? 'cat-toggle--active' : ''}`}
+                  style={special === '+50' ? { background: '#14b8a633', borderColor: '#14b8a6', color: '#14b8a6' } : {}}
+                  onClick={() => setSpecial(p => p === '+50' ? '' : '+50')}
+                >
+                  +50
+                </button>
+                <button
+                  type="button"
+                  className={`cat-toggle ${special === '45-49' ? 'cat-toggle--active' : ''}`}
+                  style={special === '45-49' ? { background: '#f59e0b33', borderColor: '#f59e0b', color: '#f59e0b' } : {}}
+                  onClick={() => setSpecial(p => p === '45-49' ? '' : '45-49')}
+                >
+                  45-49
+                </button>
+              </div>
+
+              <div className="cat-preview">
+                Categoria: <strong>{category}</strong>
+              </div>
             </div>
 
             {error && <p className="error">{error}</p>}
