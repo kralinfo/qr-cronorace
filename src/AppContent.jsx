@@ -6,7 +6,7 @@ import RaceSetupPage from './features/races/RaceSetupPage.jsx'
 import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import { useRunners } from './features/runners/useRunners.js'
-import { addResult } from './features/results/results.repository.js'
+import { addResult, deleteAllResultsByRace } from './features/results/results.repository.js'
 import { getStoredActiveRaceId } from './features/races/active-race.storage.js'
 import { isBatchPrintActive } from './features/races/batch-print.controller.js'
 import BottomNav from './shared/BottomNav.jsx'
@@ -177,6 +177,10 @@ function InnerAppContent() {
           } catch (e) {}
         }
       } else if (event.data?.type === 'RACE_RESET') {
+        const resetRaceId = event.data?.raceId || activeRace?.id
+        if (resetRaceId) {
+          deleteAllResultsByRace(resetRaceId).catch(err => console.error('Erro ao deletar resultados Firestore no reset:', err))
+        }
         if (activeRace) {
           selectRace({ ...activeRace, startTime: null, endTime: null })
         }

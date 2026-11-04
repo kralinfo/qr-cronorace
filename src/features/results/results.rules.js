@@ -13,7 +13,7 @@ export function deduplicateByLatestReading(results, startTime) {
   const startMs = startTime ? Date.parse(startTime) : NaN
   const latestByBarcode = new Map()
 
-  for (const result of results) {
+  for (const result of (results || [])) {
     const arrivalMs = toComparableTime(result)
     // Se a corrida tem largada definida, descarta leituras feitas antes da largada atual
     if (Number.isFinite(startMs) && arrivalMs < (startMs - 2000)) {
@@ -43,7 +43,7 @@ export function sortByPlacement(results, startTime) {
   return deduplicateByLatestReading(results, startTime)
     .sort((a, b) => {
       const posA = (typeof a.posGeral === 'number' && Number.isFinite(a.posGeral)) ? a.posGeral : null
-      const posB = (typeof b.posGeral === 'number' && Number.isFinite(b.posGeral)) ? b.posGeral : null
+      const posB = (typeof b.posGeral === 'number' && Number.isFinite(b.posB)) ? b.posGeral : null
       if (posA !== null && posB !== null && posA !== posB) {
         return posA - posB
       }
@@ -70,7 +70,7 @@ function toComparableTime(result) {
  */
 export function withElapsedTime(placements, startTime) {
   const startMs = startTime ? Date.parse(startTime) : NaN
-  return placements.map(p => {
+  return (placements || []).map(p => {
     // Se já veio com elapsedMs gravado pelo cronômetro
     if (typeof p.elapsedMs === 'number' && Number.isFinite(p.elapsedMs)) {
       return p

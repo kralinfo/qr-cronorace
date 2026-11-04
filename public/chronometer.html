@@ -1436,15 +1436,14 @@ async function deleteAllResultsForRace() {
     const snap = await window.fbGetDocs(q);
     if (snap.empty) return;
 
-    // Firestore writeBatch suporta até 500 operações por lote
-    const batchSize = 400;
-    let ops = [];
-    const batch = window.fbWriteBatch(window.fbDb);
-    snap.docs.forEach((d, i) => {
-      batch.delete(d.ref);
-      ops.push(i);
-    });
-    await batch.commit();
+    const docs = snap.docs;
+    const CHUNK_SIZE = 400;
+    for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
+      const chunk = docs.slice(i, i + CHUNK_SIZE);
+      const batch = window.fbWriteBatch(window.fbDb);
+      chunk.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
   } catch(err) {
     console.warn('Erro ao limpar resultados no Firestore:', err);
   }

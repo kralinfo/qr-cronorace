@@ -19,8 +19,9 @@ export default function PublicRankingPage() {
   const [race, setRace] = useState(null)
   const [notFound, setNotFound] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('ALL')
-  const { placements: rawPlacements, loading } = useResults(raceId)
+  const { placements: rawPlacements, loading } = useResults(raceId, race?.startTime)
   const { runners } = useRunners(raceId)
+  const [liveOverrides, setLiveOverrides] = useState([])
 
   useEffect(() => {
     if (!raceId) {
@@ -34,7 +35,76 @@ export default function PublicRankingPage() {
     return unsubscribe
   }, [raceId])
 
-  const placements = withElapsedTime(rawPlacements, race?.startTime)
+  // Escuta chegadas em tempo real instantâneo e resets via BroadcastChannel / postMessage
+  useEffect(() => {
+    const handleArrivalData = (data) => {
+      if (data?.type === 'RECORD_ARRIVAL') {
+        if (!data.raceId || data.raceId === raceId) {
+          setLiveOverrides(prev => {
+            const cleanBib = data.bib ? String(parseInt(data.bib, 10)) : ''
+            const incomingBarcode = data.barcode || (raceId ? `${raceId}_bib_${cleanBib}` : `bib_${cleanBib}`)
+            const newItem = {
+              barcode: incomingBarcode,
+              runnerNumber: data.bib,
+              runnerName: data.runnerName,
+              time: data.time || null,
+              elapsedMs: typeof data.elapsedMs === 'number' ? data.elapsedMs : null,
+              dateTime: new Date().toISOString(),
+              timestamp: String(Date.now()),
+              raceId: data.raceId || raceId
+            }
+            const exists = prev.find(p => p.barcode === incomingBarcode)
+            if (exists) {
+              return prev.map(p => p.barcode === incomingBarcode ? { ...p, ...newItem } : p)
+            }
+            return [...prev, newItem]
+          })
+        }
+      } else if (data?.type === 'RACE_RESET') {
+        if (!data.raceId || data.raceId === raceId) {
+          setLiveOverrides([])
+        }
+      }
+    }
+
+    let bc = null
+    try {
+      bc = new BroadcastChannel('qr-cronorace-channel')
+      bc.onmessage = (e) => handleArrivalData(e.data)
+    } catch(err) {}
+
+    const onWindowMsg = (e) => handleArrivalData(e.data)
+    window.addEventListener('message', onWindowMsg)
+
+    return () => {
+      if (bc) bc.close()
+      window.removeEventListener('message', onWindowMsg)
+    }
+  }, [raceId])
+
+  // Quando o Firestore esvazia rawPlacements (após reset), zera também liveOverrides
+  useEffect(() => {
+    if (rawPlacements && rawPlacements.length === 0) {
+      setLiveOverrides([])
+    }
+  }, [rawPlacements])
+
+  // Combina chegadas do Firestore com mensagens em tempo real
+  const combinedList = React.useMemo(() => {
+    const map = new Map()
+    for (const p of (rawPlacements || [])) {
+      if (p.barcode) map.set(p.barcode, p)
+    }
+    for (const r of liveOverrides) {
+      if (r.barcode) {
+        const existing = map.get(r.barcode)
+        map.set(r.barcode, { ...existing, ...r })
+      }
+    }
+    return Array.from(map.values())
+  }, [rawPlacements, liveOverrides])
+
+  const placements = withElapsedTime(combinedList, race?.startTime)
   const arrivedBarcodes = new Set(placements.map(p => p.barcode).filter(Boolean))
   const arrivedCount = arrivedBarcodes.size
   const runnersStillRunning = runners.filter(r => !arrivedBarcodes.has(r.id))
@@ -48,9 +118,9 @@ export default function PublicRankingPage() {
     const runner = runnersById[p.barcode] ?? null
 
     seenArrivalIds.add(p.barcode)
-    const displayTime = p.elapsedMs != null
-      ? formatDuration(p.elapsedMs)
-      : formatDateTimeBR(p.dateTime)
+    const displayTime = p.time
+      ? (String(p.time).includes('.') ? String(p.time).split('.')[0] : String(p.time))
+      : (p.elapsedMs != null ? formatDuration(p.elapsedMs) : formatTimeOnlyBR(p.dateTime))
     const arrivalTime = formatTimeOnlyBR(p.dateTime)
     allRankedArrivals.push({
       runner: runnersById[p.barcode] ?? null,
@@ -169,7 +239,7 @@ export default function PublicRankingPage() {
         <section className="public-ranking-side-list arrived">
           <h2>Ranking de chegada</h2>
           {rankedArrivals.length === 0 ? (
-            <p>Ainda sem chegadas.</p>
+            <p>{!race?.startTime ? 'Aguardando largada...' : 'Ainda sem chegadas.'}</p>
           ) : (
             <div className="public-ranking-arrived-scroll">
               <div className="public-ranking-arrived-table" role="table" aria-label="Ranking de chegada">
