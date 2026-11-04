@@ -1,7 +1,7 @@
 import { generateRunnerThermalLabel } from './barcode.service.js'
 
-const THERMAL_LABEL_WIDTH_MM = '85mm'
-const THERMAL_LABEL_HEIGHT_MM = '48mm'
+const THERMAL_LABEL_WIDTH_MM = '80mm'
+const THERMAL_LABEL_HEIGHT_MM = '50mm'
 
 // Responsabilidade única: abrir janela/iframe de impressão formatada especialmente para impressoras térmicas e etiquetas adesivas de 8.5 cm (85mm x 48mm) ou PDF.
 

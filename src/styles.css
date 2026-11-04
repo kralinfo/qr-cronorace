@@ -5546,3 +5546,174 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   box-shadow: none;
   background: transparent;
 }
+
+
+/* =====================================
+   PRINTER LABEL CALIBRATION PANEL
+   ===================================== */
+.printer-label-calibration-box {
+  background: rgba(168, 85, 247, 0.05);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.printer-calibration-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.printer-calibration-header p {
+  margin: 3px 0 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.printer-calibration-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.calibration-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calibration-field label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.calibration-value-badge {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.calibration-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.calibration-stepper button {
+  background: transparent;
+  border: none;
+  width: 34px;
+  height: 32px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.calibration-stepper button:hover {
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.calibration-stepper span {
+  font-size: 0.86rem;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.calibration-stepper span.text-pos {
+  color: #34d399;
+}
+
+.calibration-stepper span.text-neg {
+  color: #f87171;
+}
+
+.printer-calibration-actions {
+  margin-top: 8px;
+}
+
+.calibration-test-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  transition: all 0.15s;
+}
+
+.calibration-test-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.calibration-test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calibration-tip {
+  margin: 10px 0 0;
+  font-size: 0.77rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+
+.calibration-quick-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.calibration-quick-buttons .quick-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.calibration-quick-buttons button {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.calibration-quick-buttons button:hover {
+  background: rgba(168, 85, 247, 0.25);
+}
+
+.calibration-quick-buttons button.quick-btn-reset {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--border);
+  color: var(--text-secondary);
+  margin-left: auto;
+}

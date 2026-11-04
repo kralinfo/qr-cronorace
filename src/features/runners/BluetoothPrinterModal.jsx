@@ -6,8 +6,14 @@ import {
   getPrinterStatus,
   isBluetoothSupported,
   printTestToBluetooth,
+  printCalibrationTestToBluetooth,
   subscribePrinterStatus
 } from './bluetooth-printer.service.js'
+import {
+  getThermalLabelSettings,
+  saveThermalLabelSettings,
+  subscribeThermalLabelSettings
+} from './thermal-label-settings.service.js'
 import { IconClose, IconBluetooth, IconPrinter, IconSearch } from '../../shared/Icons.jsx'
 
 /**
@@ -20,7 +26,31 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
   const [status, setStatus] = useState(getPrinterStatus())
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState(null)
+  const [labelSettings, setLabelSettings] = useState(getThermalLabelSettings())
   const supported = isBluetoothSupported()
+
+  useEffect(() => {
+    const unsub = subscribeThermalLabelSettings(setLabelSettings)
+    return unsub
+  }, [])
+
+  const handleUpdateSetting = (patch) => {
+    const updated = saveThermalLabelSettings(patch)
+    setLabelSettings(updated)
+  }
+
+  const handleTestCalibration = async () => {
+    setLoading(true)
+    setFeedback(null)
+    try {
+      await printCalibrationTestToBluetooth()
+      setFeedback({ type: 'success', message: '2 etiquetas de calibração enviadas! Verifique se a impressão alinhou perfeitamente com os adesivos.' })
+    } catch (err) {
+      setFeedback({ type: 'error', message: `Falha ao imprimir teste: ${err.message || 'Erro de comunicação.'}` })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isOpen) {
@@ -150,6 +180,96 @@ export default function BluetoothPrinterModal({ isOpen, onClose }) {
                     </button>
                   </div>
                 )}
+              </div>
+
+              {/* Painel de Calibração da Etiqueta Adesiva */}
+              <div className="printer-label-calibration-box">
+                <div className="printer-calibration-header">
+                  <div>
+                    <h4>⚙️ Calibração do Adesivo (80 x 50 mm)</h4>
+                    <p>Ajuste milimétrico do vão entre adesivos para evitar deslocamento cumulativo no lote.</p>
+                  </div>
+                </div>
+
+                <div className="printer-calibration-grid">
+                  <div className="calibration-field">
+                    <label>Largura do Adesivo</label>
+                    <div className="calibration-value-badge">50 mm (Bobina 55mm)</div>
+                  </div>
+
+                  <div className="calibration-field">
+                    <label>Comprimento do Adesivo</label>
+                    <div className="calibration-value-badge">80 mm</div>
+                  </div>
+
+                  <div className="calibration-field">
+                    <label>Espaço entre Adesivos (GAP)</label>
+                    <div className="calibration-stepper">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateSetting({ gapMm: Math.max(0, Number((labelSettings.gapMm - 0.5).toFixed(1))) })}
+                        title="Diminuir 0.5mm"
+                      >
+                        -
+                      </button>
+                      <span>{labelSettings.gapMm} mm</span>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateSetting({ gapMm: Number((labelSettings.gapMm + 0.5).toFixed(1)) })}
+                        title="Aumentar 0.5mm"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                                    <div className="calibration-field">
+                    <label>Ajuste Fino de Avanço</label>
+                    <div className="calibration-stepper">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateSetting({ feedAdjustMm: Number((labelSettings.feedAdjustMm - 0.5).toFixed(1)) })}
+                        title="Avançar menos (-0.5mm)"
+                      >
+                        -
+                      </button>
+                      <span className={labelSettings.feedAdjustMm > 0 ? 'text-pos' : labelSettings.feedAdjustMm < 0 ? 'text-neg' : ''}>
+                        {labelSettings.feedAdjustMm > 0 ? `+${labelSettings.feedAdjustMm}` : labelSettings.feedAdjustMm} mm
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateSetting({ feedAdjustMm: Number((labelSettings.feedAdjustMm + 0.5).toFixed(1)) })}
+                        title="Avançar mais (+0.5mm)"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="calibration-quick-buttons">
+                  <span className="quick-label">Avanço rápido:</span>
+                  <button type="button" onClick={() => handleUpdateSetting({ feedAdjustMm: Number((labelSettings.feedAdjustMm + 1.0).toFixed(1)) })}>+1 mm</button>
+                  <button type="button" onClick={() => handleUpdateSetting({ feedAdjustMm: Number((labelSettings.feedAdjustMm + 2.0).toFixed(1)) })}>+2 mm</button>
+                  <button type="button" onClick={() => handleUpdateSetting({ feedAdjustMm: Number((labelSettings.feedAdjustMm + 3.0).toFixed(1)) })}>+3 mm</button>
+                  <button type="button" className="quick-btn-reset" onClick={() => handleUpdateSetting({ feedAdjustMm: 0 })}>Zerar</button>
+                </div>
+
+                <div className="printer-calibration-actions">
+                  <button
+                    type="button"
+                    className="calibration-test-btn"
+                    onClick={handleTestCalibration}
+                    disabled={loading || !status.connected}
+                    title={!status.connected ? 'Conecte a impressora primeiro' : 'Imprime 2 etiquetas sequenciais para conferir o picote'}
+                  >
+                    🏷️ Imprimir 2 Etiquetas de Teste (Conferir Alinhamento)
+                  </button>
+                </div>
+
+                <p className="calibration-tip">
+                  💡 <strong>Como calibrar:</strong> Imprima o teste de 2 etiquetas. Se o segundo adesivo começar um pouco adiantado (já dentro do adesivo), diminua o ajuste fino em <strong>-1 mm</strong>. Se ficar recuado antes do corte, aumente em <strong>+1 mm</strong>.
+                </p>
               </div>
 
               <div className="printer-help-guide">

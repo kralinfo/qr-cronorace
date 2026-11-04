@@ -1,5 +1,5 @@
 // Responsabilidade única: gerenciar a conexão Web Bluetooth BLE com impressoras térmicas ESC/POS e enviar dados em blocos (chunks).
-import { buildRunnerEscPosReceipt, buildTestEscPosReceipt } from './escpos.service.js'
+import { buildRunnerEscPosReceipt, buildTestEscPosReceipt, buildCalibrationTestLabels } from './escpos.service.js'
 
 // UUIDs de serviços comuns em mini impressoras térmicas Bluetooth (ESC/POS)
 const COMMON_THERMAL_SERVICES = [
@@ -197,6 +197,20 @@ export async function printTestToBluetooth() {
 
   const printerName = getPrinterStatus().deviceName || 'Impressora Térmica'
   const testBytes = buildTestEscPosReceipt(printerName)
+  await sendDataInChunks(testBytes)
+  return true
+}
+
+/**
+ * Imprime 2 etiquetas sequenciais para calibrar o alinhamento e o corte entre adesivos.
+ * @returns {Promise<boolean>}
+ */
+export async function printCalibrationTestToBluetooth() {
+  if (!getPrinterStatus().connected) {
+    await connectBluetoothPrinter()
+  }
+
+  const testBytes = await buildCalibrationTestLabels()
   await sendDataInChunks(testBytes)
   return true
 }

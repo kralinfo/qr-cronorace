@@ -1,5 +1,6 @@
 // Responsabilidade única: gerar comandos ESC/POS e converter imagens (Barcode / Etiqueta) em bitmaps monocromáticos para impressoras térmicas (58mm/80mm).
 import { generateRunnerThermalLabel } from './barcode.service.js'
+import { getThermalLabelSettings } from './thermal-label-settings.service.js'
 
 /**
  * Normaliza textos removendo acentos para evitar caracteres corrompidos em impressoras térmicas ESC/POS.
@@ -135,7 +136,8 @@ export function concatByteArrays(arrays) {
  * @param {string} [raceName] - Nome da corrida.
  * @returns {Promise<Uint8Array>}
  */
-export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName = '') {
+export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName = '', customSettings = null) {
+  const settings = customSettings || getThermalLabelSettings()
   const commands = []
 
   // 1. Inicializar impressora (ESC @)
@@ -144,19 +146,41 @@ export async function buildRunnerEscPosReceipt(qrDataUrl, runner, raceName = '')
   // 2. Alinhamento central (ESC a 1)
   commands.push(new Uint8Array([0x1B, 0x61, 0x01]))
 
-  // 3. Gera a etiqueta adesiva completa de ~8.8 cm (700 dots) rotacionada 90° para a fita de 58mm
+  // 3. Gera a etiqueta adesiva rotacionada 90° para a bobina de 58mm (adesivo 50x80mm)
   const labelDataUrl = runner
-    ? await generateRunnerThermalLabel(runner, { rotatedForThermal: true })
+    ? await generateRunnerThermalLabel(runner, { rotatedForThermal: true, settings })
     : qrDataUrl
 
-  // Largura de 380 dots (ocupa toda a largura útil do rolo de 58mm)
-  const labelBitmapBytes = await convertImageToEscPosBitmap(labelDataUrl, 360)
+  // Largura útil da bobina de 58mm = 384 dots (48 bytes por linha)
+  const targetWidth = 384
+  const labelBitmapBytes = await convertImageToEscPosBitmap(labelDataUrl, targetWidth)
   commands.push(labelBitmapBytes)
 
-  // 4. Avanco exato de 15 mm (120 dots em 203 DPI) para alcancar a navalha de corte\n  commands.push(new Uint8Array([0x1B, 0x4A, 120]))\n\n  // 5. Corte parcial (GS V 66 0) exatamente no picote do adesivo
-  commands.push(new Uint8Array([0x1D, 0x56, 0x42, 0x00]))
+  // 4. Se a impressora usar sensor de marca negra / GAP (form feed), envia FF (0x0C)
+  if (settings.useGapSensor) {
+    commands.push(new Uint8Array([0x0C]))
+  }
 
   return concatByteArrays(commands)
+}
+
+/**
+ * Constrói o buffer ESC/POS para 2 etiquetas de calibração sequenciais.
+ * @param {typeof import('./thermal-label-settings.service.js').DEFAULT_THERMAL_SETTINGS} [customSettings]
+ * @returns {Promise<Uint8Array>}
+ */
+export async function buildCalibrationTestLabels(customSettings = null) {
+  const settings = customSettings || getThermalLabelSettings()
+  const runners = [
+    { id: 'calib_1', number: '0001', name: 'TESTE ALINHAMENTO 1', category: '80x50mm' },
+    { id: 'calib_2', number: '0002', name: 'TESTE ALINHAMENTO 2', category: '80x50mm' }
+  ]
+  const buffers = []
+  for (const runner of runners) {
+    const bytes = await buildRunnerEscPosReceipt(null, runner, 'Calibração', settings)
+    buffers.push(bytes)
+  }
+  return concatByteArrays(buffers)
 }
 
 /**
