@@ -30,6 +30,36 @@ export function ActiveRaceProvider({ children }) {
     return unsubscribe
   }, [activeRace?.id])
 
+
+  // Ouve eventos de reset vindos do cronômetro ou BroadcastChannel para zerar imediatamente
+  useEffect(() => {
+    const handleResetEvent = (e) => {
+      const data = e?.data
+      if (data?.type === 'RACE_RESET') {
+        setActiveRace(prev => {
+          if (!prev) return null
+          const reset = { ...prev, startTime: null, endTime: null, elapsedAtPause: 0 }
+          try {
+            localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(reset))
+          } catch (err) {}
+          return reset
+        })
+      }
+    }
+
+    window.addEventListener('message', handleResetEvent)
+    let bc = null
+    try {
+      bc = new BroadcastChannel('qr-cronorace-channel')
+      bc.onmessage = handleResetEvent
+    } catch (err) {}
+
+    return () => {
+      window.removeEventListener('message', handleResetEvent)
+      if (bc) bc.close()
+    }
+  }, [])
+
   const selectRace = useCallback((race) => {
     setStoredActiveRaceId(race.id)
     setActiveRace(race)

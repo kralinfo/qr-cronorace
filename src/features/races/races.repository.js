@@ -51,7 +51,8 @@ export async function reopenRace(raceId, mode = 'resume') {
 
   await updateDoc(doc(db, COLLECTIONS.races, raceId), {
     startTime: newStartTime,
-    endTime: null
+    endTime: null,
+    elapsedAtPause: 0
   })
 }
 
@@ -73,13 +74,13 @@ export async function deleteRace(raceId) {
 /** @returns {Promise<Array<import('./races.types.js').Race>>} */
 export async function getAllRaces() {
   const snap = await getDocs(query(collection(db, COLLECTIONS.races), orderBy('createdAt', 'desc')))
-  return snap.docs.map(d => d.data())
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /** @param {string} id @returns {Promise<import('./races.types.js').Race | undefined>} */
 export async function getRaceById(id) {
   const snap = await getDoc(doc(db, COLLECTIONS.races, id))
-  return snap.exists() ? snap.data() : undefined
+  return snap.exists() ? ({ id: snap.id, ...snap.data() }) : undefined
 }
 
 /**
@@ -91,8 +92,17 @@ export async function getRaceById(id) {
  */
 export function subscribeToRace(raceId, onChange) {
   return onSnapshot(doc(db, COLLECTIONS.races, raceId), (snap) => {
-    onChange(snap.exists() ? snap.data() : undefined)
+    onChange(snap.exists() ? ({ id: snap.id, ...snap.data() }) : undefined)
   })
 }
 
 
+
+/** @param {string} raceId */
+export async function resetRaceToPending(raceId) {
+  await updateDoc(doc(db, COLLECTIONS.races, raceId), {
+    startTime: null,
+    endTime: null,
+    elapsedAtPause: 0
+  })
+}

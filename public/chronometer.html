@@ -1312,6 +1312,15 @@ function goBack(){
 }
 
 function goToHome(){
+  try{
+    const activeId = getActiveRaceId();
+    const race = getActiveRaceSafe();
+    if (!raceFinished && (!race || (!race.startTime && !race.endTime))) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'RACE_RESET', raceId: race?.id || activeId }, '*');
+      }
+    }
+  }catch(e){}
   try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'NAVIGATE',tab:'home'},'*');return;}}catch(e){}
   window.location.href='/';
 }

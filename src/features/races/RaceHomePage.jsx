@@ -965,7 +965,7 @@ useEffect(() => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsReopenModalOpen(true)}
+                onClick={() => setReopenModalOpen(true)}
                 style={{
                   background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
                   color: '#fff',
@@ -1561,6 +1561,20 @@ useEffect(() => {
           }
         }}
       />
+
+      {/* Modal de Reabrir Corrida Encerrada */}
+      {reopenModalOpen && activeRace && (
+        <ReopenRaceModal
+          race={activeRace}
+          onReopen={async (mode) => {
+            const ok = await reopenRace(activeRace.id, mode)
+            if (ok) {
+              setReopenModalOpen(false)
+            }
+          }}
+          onClose={() => setReopenModalOpen(false)}
+        />
+      )}
 
       {/* Modal de Inscrição em Lote de Corredores via Planilha */}
       {importModalOpen && (
