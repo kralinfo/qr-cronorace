@@ -2073,7 +2073,13 @@
       }
     }
 
+    let _toggleTimerBusy = false;
+
+
     function toggleTimer() {
+      if (_toggleTimerBusy) return;
+      _toggleTimerBusy = true;
+      setTimeout(() => { _toggleTimerBusy = false; }, 400);
       if (!isRunning) {
         startTime = Date.now() - elapsedTime;
         timer = setInterval(updateTimer, 10);
@@ -2093,7 +2099,8 @@
             const patch = {
               startTime: newStartIso,
               pauseTime: null,
-              elapsedAtPause: null
+              elapsedAtPause: null,
+              endTime: null
             };
             if (!race.originalStartTime) {
               patch.originalStartTime = race.startTime || newStartIso;
@@ -2220,7 +2227,7 @@
           race.startTime = null;
           race.endTime = null;
           race.pauseTime = null;
-          race.elapsedAtPause = 0;
+          race.elapsedAtPause = null;
           race.originalStartTime = null;
           localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
 
@@ -2229,7 +2236,7 @@
               startTime: null,
               endTime: null,
               pauseTime: null,
-              elapsedAtPause: 0,
+              elapsedAtPause: null,
               originalStartTime: null
             }, { merge: true });
           }
@@ -2259,6 +2266,8 @@
     async function executeFinish() {
       closeConfirmFinishModal();
       if (isRunning) { clearInterval(timer); isRunning = false; }
+      // Captura o tempo EXATO do encerramento ANTES de qualquer operação async
+      const finalElapsedMs = elapsedTime;
       const nowIso = new Date().toISOString();
       statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
       statusText.textContent = 'ENCERRADA';
@@ -2269,31 +2278,35 @@
       bibInput.placeholder = 'Corrida Encerrada';
       if (runnerPreview) runnerPreview.classList.add('hidden');
 
+      const race = getActiveRaceSafe() || {};
+      const raceId = race.id || getActiveRaceId();
+      const safeStartTime = race.startTime || (startTime ? new Date(startTime).toISOString() : null);
+      const safeOriginalStart = race.originalStartTime || safeStartTime;
+
+      race.endTime = nowIso;
+      race.elapsedAtPause = finalElapsedMs;
+      if (safeStartTime && !race.startTime) race.startTime = safeStartTime;
+      if (safeOriginalStart && !race.originalStartTime) race.originalStartTime = safeOriginalStart;
+
       try {
-        const race = getActiveRaceSafe();
-        if (race) {
-          const safeStartTime = race.startTime || (startTime ? new Date(startTime).toISOString() : null);
-          const safeOriginalStart = race.originalStartTime || safeStartTime;
-          race.endTime = nowIso;
-          race.elapsedAtPause = elapsedTime;
-          if (safeStartTime && !race.startTime) {
-            race.startTime = safeStartTime;
-          }
-          if (safeOriginalStart && !race.originalStartTime) {
-            race.originalStartTime = safeOriginalStart;
-          }
-          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
-          setRaceEndedMarker(race.id, nowIso);
-          setRaceElapsedMarker(race.id, elapsedTime);
-          if (window.fbDb && window.fbSetDoc && window.fbDoc && race.id) {
-            const patch = { endTime: nowIso, elapsedAtPause: elapsedTime };
-            if (safeStartTime) patch.startTime = safeStartTime;
-            if (safeOriginalStart) patch.originalStartTime = safeOriginalStart;
-            await window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
-          }
+        localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+        setRaceEndedMarker(raceId, nowIso);
+        setRaceElapsedMarker(raceId, finalElapsedMs);
+      } catch(e){}
+
+      // Atualiza o Firestore imediatamente (essencial para sincronizar todos os dispositivos/PWA)
+      if (window.fbDb && window.fbSetDoc && window.fbDoc && raceId) {
+        const patch = {
+          endTime: nowIso,
+          elapsedAtPause: finalElapsedMs
+        };
+        if (race.startTime) patch.startTime = race.startTime;
+        if (race.originalStartTime) patch.originalStartTime = race.originalStartTime;
+        try {
+          await window.fbSetDoc(window.fbDoc(window.fbDb, 'races', raceId), patch, { merge: true });
+        } catch (err) {
+          console.warn('Erro ao atualizar corrida encerrada no Firestore:', err);
         }
-      } catch (e) {
-        console.warn('Erro ao salvar término:', e);
       }
 
       lblStart.textContent = 'ENCERRADA';
@@ -2302,24 +2315,26 @@
       btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-purple-900/40 text-purple-300 border border-purple-500/30 cursor-not-allowed opacity-80';
 
       const btn = document.getElementById('btnFinish');
-      btn.innerHTML = '📊 Ver Classificação';
-      btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
-      btn.onclick = showRankingView;
+      if (btn) {
+        btn.innerHTML = '📊 Ver Classificação';
+        btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
+        btn.onclick = showRankingView;
+      }
+
       // Notifica o app React imediatamente sobre o encerramento
       try {
-        const finishedRaceSafe = getActiveRaceSafe() || {};
-        const finishedRaceId = finishedRaceSafe?.id;
         const msg = {
           type: 'RACE_FINISHED',
-          raceId: finishedRaceId,
+          raceId: raceId,
           endTime: nowIso,
-          startTime: finishedRaceSafe.startTime,
-          originalStartTime: finishedRaceSafe.originalStartTime,
-          elapsedAtPause: elapsedTime
+          startTime: race.startTime,
+          originalStartTime: race.originalStartTime,
+          elapsedAtPause: finalElapsedMs
         };
         if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
         const bcf = new BroadcastChannel('qr-cronorace-channel'); bcf.postMessage(msg); bcf.close();
       } catch (e) { }
+
       showToast('Corrida finalizada!');
     }
 
@@ -3005,6 +3020,15 @@
         isLoadingArrivals = false;
         let raceObj = getActiveRaceSafe();
         const startMs = raceObj?.startTime ? Date.parse(raceObj.startTime) : NaN;
+
+        // Se a corrida NÃO começou ainda (startTime nulo ou não iniciado), NUNCA carrega chegadas antigas!
+        if (!Number.isFinite(startMs)) {
+          arrivals = [];
+          clearArrivalsCache(raceId);
+          renderArrivals();
+          updateRankingViewIfActive();
+          return;
+        }
 
         const allDocs = snap.docs.map(d => d.data());
 
@@ -4240,26 +4264,24 @@
     function applyLiveRaceState(race) {
       if (!race) return;
       const raceId = race.id || getActiveRaceId();
-      const endedMarker = getRaceEndedMarker(raceId);
-      const effectiveEndTime = race.endTime || endedMarker;
-      const elapsedMarker = getRaceElapsedMarker(raceId);
 
-      // CASO 0: CORRIDA ENCERRADA (permanece encerrada até reset explícito do usuário)
-      if (effectiveEndTime) {
-        setRaceEndedMarker(raceId, effectiveEndTime);
+      // CASO 0: CORRIDA ENCERRADA
+      if (race.endTime) {
         if (isRunning) {
           clearInterval(timer);
           isRunning = false;
         }
         raceFinished = true;
         const startMs = Date.parse(race.startTime) || 0;
-        const endMs = Date.parse(effectiveEndTime) || 0;
-        if (startMs && endMs && endMs >= startMs) {
-          elapsedTime = endMs - startMs;
-        } else if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
+        const endMs = Date.parse(race.endTime) || 0;
+
+        // Prioridade 1: elapsedAtPause registrado no momento exato em que o cronômetro foi parado!
+        if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
           elapsedTime = race.elapsedAtPause;
-        } else if (elapsedMarker > 0) {
-          elapsedTime = elapsedMarker;
+        } else if (startMs && endMs && endMs >= startMs) {
+          elapsedTime = endMs - startMs;
+        } else {
+          elapsedTime = 0;
         }
         formatTime(elapsedTime);
 
@@ -4287,6 +4309,12 @@
 
       // CASO 1: CORRIDA NÃO INICIADA OU REINICIADA (startTime é nulo) -> SEMPRE ZERA EM 00:00:00
       if (!race.startTime) {
+        clearRaceEndedMarker(raceId);
+        clearArrivalsCache(raceId);
+        arrivals = [];
+        renderArrivals();
+        updateRankingViewIfActive();
+
         if (isRunning) {
           clearInterval(timer);
           isRunning = false;
@@ -4423,19 +4451,17 @@
 
     function initRaceState() {
       try {
-        restoreArrivalsFromCache();
         const race = getActiveRaceSafe();
         if (!race) return;
         const raceId = race.id || getActiveRaceId();
-        const endedAtMarker = getRaceEndedMarker(raceId);
-        const elapsedMarker = getRaceElapsedMarker(raceId);
 
-        if (endedAtMarker) {
-          race.endTime = race.endTime || endedAtMarker;
-          if (elapsedMarker > 0 && (!race.elapsedAtPause || race.elapsedAtPause <= 0)) {
-            race.elapsedAtPause = elapsedMarker;
-          }
-          try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race)); } catch(e){}
+        // Só restaura chegadas se a corrida já tiver largado ou finalizado!
+        if (race.startTime || race.endTime) {
+          restoreArrivalsFromCache();
+        } else {
+          arrivals = [];
+          clearArrivalsCache(raceId);
+          renderArrivals();
         }
 
         if (race.endTime) {
@@ -4443,12 +4469,12 @@
           if (isRunning) { clearInterval(timer); isRunning = false; }
           const startMs = Date.parse(race.startTime) || 0;
           const endMs = Date.parse(race.endTime) || 0;
-          if (startMs && endMs && endMs >= startMs) {
-            elapsedTime = endMs - startMs;
-          } else if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
+
+          // Prioridade 1: tempo exato congelado no encerramento (elapsedAtPause)
+          if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
             elapsedTime = race.elapsedAtPause;
-          } else if (elapsedMarker > 0) {
-            elapsedTime = elapsedMarker;
+          } else if (startMs && endMs && endMs >= startMs) {
+            elapsedTime = endMs - startMs;
           } else {
             elapsedTime = 0;
           }

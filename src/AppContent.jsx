@@ -209,12 +209,9 @@ function InnerAppContent() {
           })
         }
       } else if (event.data?.type === 'RACE_RESET') {
-        const resetRaceId = event.data?.raceId || activeRace?.id
-        if (resetRaceId) {
-          deleteAllResultsByRace(resetRaceId).catch(err => console.error('Erro ao deletar resultados Firestore no reset:', err))
-        }
+        // NÃO deletamos resultados aqui - chronometer.html já faz isso (evitar race condition)
         if (activeRace) {
-          selectRace({ ...activeRace, startTime: null, endTime: null })
+          selectRace({ ...activeRace, startTime: null, endTime: null, elapsedAtPause: null, pauseTime: null })
         }
       }
     }
@@ -237,7 +234,7 @@ function InnerAppContent() {
           }
         } else if (event.data?.type === 'RACE_RESET') {
           if (activeRace) {
-            selectRace({ ...activeRace, startTime: null, endTime: null })
+            selectRace({ ...activeRace, startTime: null, endTime: null, elapsedAtPause: null, pauseTime: null })
           }
         }
       }

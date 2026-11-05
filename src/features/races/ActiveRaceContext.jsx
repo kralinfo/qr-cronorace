@@ -1,6 +1,6 @@
 // Responsabilidade única: prover e gerenciar a corrida ativa em toda a aplicação.
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { getRaceById, subscribeToRace } from './races.repository.js'
+import { getAllRaces, getRaceById, subscribeToRace } from './races.repository.js'
 import { getStoredActiveRaceId, setStoredActiveRaceId, clearStoredActiveRaceId } from './active-race.storage.js'
 
 const ActiveRaceContext = createContext(null)
@@ -11,17 +11,29 @@ export function ActiveRaceProvider({ children }) {
 
   useEffect(() => {
     (async () => {
+      let race = null
       const storedId = getStoredActiveRaceId()
       if (storedId) {
-        const race = await getRaceById(storedId)
-        if (race) {
-          // Enriquece com endTime do localStorage caso Firestore ainda não tenha sincronizado
-          const endedKey = `pwa-qr-timing:race-ended-at:${race.id}`
-          const storedEnd = (() => { try { return localStorage.getItem(endedKey) } catch { return null } })()
-          if (!race.endTime && storedEnd) race.endTime = storedEnd
-          setActiveRace(race)
+        race = await getRaceById(storedId)
+      }
+      // Se não encontrou corrida pelo storedId (primeiro acesso no PWA/celular/Vercel),
+      // busca automaticamente a corrida mais recente cadastrada no Firestore!
+      if (!race) {
+        try {
+          const all = await getAllRaces()
+          if (all && all.length > 0) {
+            race = all[0]
+          }
+        } catch (e) {
+          console.warn('Erro ao carregar corridas iniciais:', e)
         }
-        else clearStoredActiveRaceId()
+      }
+      if (race) {
+        setStoredActiveRaceId(race.id)
+        setActiveRace(race)
+        try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race)) } catch (e) {}
+      } else {
+        clearStoredActiveRaceId()
       }
       setLoading(false)
     })()
@@ -32,13 +44,24 @@ export function ActiveRaceProvider({ children }) {
     if (!activeRace?.id) return
     const unsubscribe = subscribeToRace(activeRace.id, (race) => {
       if (race) {
-        const endedKey = `pwa-qr-timing:race-ended-at:${race.id}`
-        const storedEnd = (() => { try { return localStorage.getItem(endedKey) } catch { return null } })()
-        // Se a corrida foi encerrada (no Firestore ou marcador local), ela PERMANECE encerrada até reset explícito!
-        if (storedEnd) {
-          race.endTime = race.endTime || storedEnd
-        }
         setActiveRace(race)
+        try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race)) } catch(e){}
+        // Se a corrida no Firestore está resetada (startTime e endTime nulos), limpa marcadores locais
+        if (!race.endTime && !race.startTime) {
+          try {
+            localStorage.removeItem(`pwa-qr-timing:race-ended-at:${race.id}`)
+            localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${race.id}`)
+            localStorage.removeItem(`pwa-qr-timing:chronometer-arrivals:${race.id}`)
+            localStorage.removeItem(`pwa-qr-timing:arrivals-cache:${race.id}`)
+          } catch(e){}
+        } else if (race.endTime) {
+          try {
+            localStorage.setItem(`pwa-qr-timing:race-ended-at:${race.id}`, race.endTime)
+            if (typeof race.elapsedAtPause === 'number') {
+              localStorage.setItem(`pwa-qr-timing:race-elapsed-ms:${race.id}`, String(race.elapsedAtPause))
+            }
+          } catch(e){}
+        }
       }
     })
     return unsubscribe
@@ -52,7 +75,7 @@ export function ActiveRaceProvider({ children }) {
       if (data?.type === 'RACE_RESET') {
         setActiveRace(prev => {
           if (!prev) return null
-          const reset = { ...prev, startTime: null, endTime: null, elapsedAtPause: 0 }
+          const reset = { ...prev, startTime: null, endTime: null, elapsedAtPause: null, pauseTime: null }
           try {
             localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(reset))
             if (prev.id) {

@@ -1258,22 +1258,7 @@ useEffect(() => {
 
           {/* Botão Iniciar Cronômetro / Ver Informações */}
           {(() => {
-            // Checa se a corrida está encerrada no estado React, no marcador localStorage ou no objeto da corrida persistida
-            const raceId = activeRace?.id
-            const endedFromCtx = Boolean(activeRace?.endTime)
-            const endedFromStorage = (() => {
-              try {
-                return Boolean(raceId && localStorage.getItem(`pwa-qr-timing:race-ended-at:${raceId}`))
-              } catch { return false }
-            })()
-            const endedFromActiveRace = (() => {
-              try {
-                const raw = localStorage.getItem('pwa-qr-timing:active-race')
-                const parsed = raw ? JSON.parse(raw) : null
-                return parsed?.id === raceId && Boolean(parsed?.endTime)
-              } catch { return false }
-            })()
-            const isRaceEnded = endedFromCtx || endedFromStorage || endedFromActiveRace
+            const isRaceEnded = Boolean(activeRace?.endTime)
             return isRaceEnded ? (
             <button
               type="button"
@@ -1292,8 +1277,12 @@ useEffect(() => {
             <button
               type="button"
               className="race-config-start-btn"
-              onClick={() => {
-                if (!activeRace?.id) {
+              onClick={async () => {
+                let targetRace = activeRace
+                if (!targetRace?.id) {
+                  targetRace = await handleEnsureActiveRace()
+                }
+                if (!targetRace?.id) {
                   alert('Confirme a corrida antes de ir para o cronômetro.')
                   return
                 }
@@ -1304,7 +1293,7 @@ useEffect(() => {
                 onNavigate?.('chronometer')
               }}
             >
-              <IconPlay size={20} /> INICIAR CRONÔMETRO
+              <IconPlay size={20} /> {activeRace?.startTime ? 'CONTINUAR CRONÔMETRO' : 'INICIAR CRONÔMETRO'}
             </button>
           )
           })()}
