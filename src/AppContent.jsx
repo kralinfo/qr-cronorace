@@ -24,7 +24,15 @@ const TAB_TITLES = {
 function InnerAppContent() {
   const { activeRace, loading, clearActiveRace, selectRace } = useActiveRace()
   const { runners } = useRunners(activeRace?.id)
-  const [tab, setTabState] = useState('home')
+  const [tab, setTabState] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('pwa-qr-timing:active-tab')
+      const VALID_TABS = ['home', 'chronometer', 'results', 'runners', 'races', 'scanner']
+      return (stored && VALID_TABS.includes(stored)) ? stored : 'home'
+    } catch {
+      return 'home'
+    }
+  })
   const [isNavMinimized, setIsNavMinimized] = useState(() => {
     try {
       return localStorage.getItem('pwa-qr-timing:nav-minimized') === 'true'
@@ -33,8 +41,22 @@ function InnerAppContent() {
     }
   })
 
-  const [navHistory, setNavHistory] = useState(['home'])
+  const [navHistory, setNavHistory] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('pwa-qr-timing:active-tab')
+      const VALID_TABS = ['home', 'chronometer', 'results', 'runners', 'races', 'scanner']
+      const restoredTab = (stored && VALID_TABS.includes(stored)) ? stored : 'home'
+      return restoredTab === 'home' ? ['home'] : ['home', restoredTab]
+    } catch {
+      return ['home']
+    }
+  })
   const chronometerFrameRef = useRef(null)
+
+  const setTab = useCallback((newTab) => {
+    setTabState(newTab)
+    try { sessionStorage.setItem('pwa-qr-timing:active-tab', newTab) } catch {}
+  }, [])
 
   const focusChronometerFrame = useCallback(() => {
     const frame = chronometerFrameRef.current
@@ -63,7 +85,7 @@ function InnerAppContent() {
       if (!confirmed) return
     }
     setNavHistory(prev => [...prev, newTab])
-    setTabState(newTab)
+    setTab(newTab)
   }
 
   const handleBack = () => {
@@ -76,9 +98,9 @@ function InnerAppContent() {
       nextHistory.pop()
       const prevTab = nextHistory[nextHistory.length - 1]
       setNavHistory(nextHistory)
-      setTabState(prevTab)
+      setTab(prevTab)
     } else {
-      setTabState('home')
+      setTab('home')
     }
   }
 
@@ -88,7 +110,8 @@ function InnerAppContent() {
       if (!confirmed) return
     }
     try { sessionStorage.removeItem('qr-cronorace:auth-v1') } catch {}
-    setTabState('home')
+    try { sessionStorage.removeItem('pwa-qr-timing:active-tab') } catch {}
+    setTab('home')
     setNavHistory(['home'])
   }
 
@@ -264,7 +287,7 @@ function InnerAppContent() {
         {tab === 'chronometer' && (
           <iframe
             ref={chronometerFrameRef}
-            src="/chronometer.html"
+            src={`/chronometer.html?t=${activeRace?.id || "live"}`}
             title="Cronômetro"
             allow="vibrate; autoplay"
             scrolling="no"

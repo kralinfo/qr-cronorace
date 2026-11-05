@@ -1312,15 +1312,7 @@ function goBack(){
 }
 
 function goToHome(){
-  try{
-    const activeId = getActiveRaceId();
-    const race = getActiveRaceSafe();
-    if (!raceFinished && (!race || (!race.startTime && !race.endTime))) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'RACE_RESET', raceId: race?.id || activeId }, '*');
-      }
-    }
-  }catch(e){}
+  // NUNCA disparar RACE_RESET ao voltar para a home!
   try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'NAVIGATE',tab:'home'},'*');return;}}catch(e){}
   window.location.href='/';
 }
@@ -1380,18 +1372,33 @@ function toggleTimer(){
     statusText.textContent='Em Andamento';
     scheduleBibInputFocus();
 
-    // Salva startTime na corrida se ainda não tiver; retomada: limpa pauseTime
+    // Salva startTime na corrida ao iniciar/retomar e limpa pauseTime
     try {
       const race = getActiveRaceSafe();
       if (race?.id) {
-        const patch = { pauseTime: null, elapsedAtPause: null };
-        if (!race.startTime) {
-          patch.startTime = new Date(startTime).toISOString();
+        const newStartIso = new Date(startTime).toISOString();
+        const patch = {
+          startTime: newStartIso,
+          pauseTime: null,
+          elapsedAtPause: null
+        };
+        if (!race.originalStartTime) {
+          patch.originalStartTime = race.startTime || newStartIso;
         }
         localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
         if (window.fbDb && window.fbSetDoc && window.fbDoc) {
           window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
         }
+        try {
+          const startMsg = {
+            type: 'RACE_STARTED',
+            raceId: race.id,
+            startTime: patch.startTime,
+            originalStartTime: patch.originalStartTime
+          };
+          if (window.parent && window.parent !== window) window.parent.postMessage(startMsg, '*');
+          const bcStart = new BroadcastChannel('qr-cronorace-channel'); bcStart.postMessage(startMsg); bcStart.close();
+        } catch(e) {}
       }
     } catch(e) {}
   }else{
@@ -1490,12 +1497,18 @@ async function resetTimer(){
     if (race) {
       race.startTime = null;
       race.endTime = null;
+      race.pauseTime = null;
+      race.elapsedAtPause = 0;
+      race.originalStartTime = null;
       localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
 
       if (window.fbDb && window.fbSetDoc && window.fbDoc && race.id) {
         await window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), {
           startTime: null,
-          endTime: null
+          endTime: null,
+          pauseTime: null,
+          elapsedAtPause: 0,
+          originalStartTime: null
         }, { merge: true });
       }
 
@@ -1534,15 +1547,21 @@ async function confirmFinish(){
     const race=getActiveRaceSafe();
     if(race){
       const safeStartTime = race.startTime || (startTime ? new Date(startTime).toISOString() : null);
+      const safeOriginalStart = race.originalStartTime || safeStartTime;
       race.endTime=nowIso;
+      race.elapsedAtPause=elapsedTime;
       if (safeStartTime && !race.startTime) {
         race.startTime = safeStartTime;
+      }
+      if (safeOriginalStart && !race.originalStartTime) {
+        race.originalStartTime = safeOriginalStart;
       }
       localStorage.setItem('pwa-qr-timing:active-race',JSON.stringify(race));
       setRaceEndedMarker(race.id, nowIso);
       if(window.fbDb&&window.fbSetDoc&&window.fbDoc&&race.id){
         const patch={endTime:nowIso, elapsedAtPause:elapsedTime};
         if (safeStartTime) patch.startTime = safeStartTime;
+        if (safeOriginalStart) patch.originalStartTime = safeOriginalStart;
         await window.fbSetDoc(window.fbDoc(window.fbDb,'races',race.id),patch,{merge:true});
       }
     }
@@ -1559,6 +1578,21 @@ async function confirmFinish(){
   btn.innerHTML='📊 Ver Classificação';
   btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
   btn.onclick=showRankingView;
+  // Notifica o app React imediatamente sobre o encerramento
+  try {
+    const finishedRaceSafe = getActiveRaceSafe() || {};
+    const finishedRaceId = finishedRaceSafe?.id;
+    const msg = {
+      type: 'RACE_FINISHED',
+      raceId: finishedRaceId,
+      endTime: nowIso,
+      startTime: finishedRaceSafe.startTime,
+      originalStartTime: finishedRaceSafe.originalStartTime,
+      elapsedAtPause: elapsedTime
+    };
+    if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+    const bcf = new BroadcastChannel('qr-cronorace-channel'); bcf.postMessage(msg); bcf.close();
+  } catch(e) {}
   showToast('Corrida finalizada!');
 }
 
@@ -3145,7 +3179,7 @@ function applyLiveRaceState(race) {
   if (!race) return;
   const raceId = race.id || getActiveRaceId();
 
-  // CASO 0: CORRIDA ENCERRADA (prioritário para evitar regressão quando startTime ainda não sincronizou)
+  // CASO 0: CORRIDA ENCERRADA
   if (race.endTime) {
     setRaceEndedMarker(raceId, race.endTime);
     if (isRunning) {
@@ -3158,10 +3192,8 @@ function applyLiveRaceState(race) {
     if (startMs && endMs && endMs >= startMs) {
       elapsedTime = endMs - startMs;
     } else if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
-      // Fallback: usa tempo salvo ao encerrar quando startTime está ausente/inválido
       elapsedTime = race.elapsedAtPause;
     }
-    // Se nenhum dos dois funcionar, mantém elapsedTime atual (evita zerar)
     formatTime(elapsedTime);
 
     statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
@@ -3186,16 +3218,16 @@ function applyLiveRaceState(race) {
     return;
   }
 
-  // CASO 1: CORRIDA REINICIADA / ZERADA (startTime é nulo)
-  if (!race.startTime) {
+  // CASO 1: startTime é nulo E sem pausa (corrida zerada aguardando largada)
+  if (!race.startTime && (!race.elapsedAtPause || race.elapsedAtPause <= 0) && !race.pauseTime) {
     clearRaceEndedMarker(raceId);
     if (isRunning) {
       clearInterval(timer);
       isRunning = false;
     }
     raceFinished = false;
-    elapsedTime = 0;
     startTime = 0;
+    elapsedTime = 0;
     formatTime(0);
 
     lblStart.textContent = 'INICIAR';
@@ -3219,17 +3251,19 @@ function applyLiveRaceState(race) {
     return;
   }
 
-  // CASO 3a: CORRIDA PAUSADA (startTime existe, pauseTime existe, !endTime)
-  if (race.startTime && race.pauseTime && !race.endTime) {
+  // CASO 3a: CORRIDA PAUSADA (pauseTime existe, ou elapsedAtPause com corrida não zerada)
+  if (!race.endTime && (race.pauseTime || (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0))) {
     clearRaceEndedMarker(raceId);
     raceFinished = false;
     if (isRunning) { clearInterval(timer); isRunning = false; }
 
-    // Usa elapsedAtPause se disponível para sincronizar exatamente onde parou
-    if (typeof race.elapsedAtPause === 'number') {
+    if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
       elapsedTime = race.elapsedAtPause;
+    } else if (race.startTime && race.pauseTime) {
+      elapsedTime = Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime));
     }
     formatTime(elapsedTime);
+    startTime = Date.now() - elapsedTime;
 
     lblStart.textContent = 'CONTINUAR';
     iconStart.className = 'fa-solid fa-play';
@@ -3237,7 +3271,7 @@ function applyLiveRaceState(race) {
     btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
 
     statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase';
-    statusText.textContent = 'Pausado';
+    statusText.textContent = 'PAUSADO';
 
     bibInput.disabled = false;
     btnBibSubmit.disabled = false;
@@ -3253,7 +3287,7 @@ function applyLiveRaceState(race) {
   }
 
   // CASO 3b: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime nem pauseTime)
-  if (race.startTime && !race.endTime) {
+  if (race.startTime && !race.endTime && !race.pauseTime) {
     clearRaceEndedMarker(raceId);
     raceFinished = false;
     const startMs = Date.parse(race.startTime);
@@ -3324,15 +3358,17 @@ window.startRaceDocumentListening = function(forceRestart=false) {
 };
 
 function initRaceState(){
-
   try{
     const race=getActiveRaceSafe();
     if(!race)return;
     const endedAtMarker = getRaceEndedMarker(race.id || getActiveRaceId());
-    if (!race.endTime && endedAtMarker) {
+    if (race.endTime === null) {
+      clearRaceEndedMarker(race.id || getActiveRaceId());
+    } else if (!race.endTime && endedAtMarker) {
       race.endTime = endedAtMarker;
       localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
     }
+
     if(race.endTime){
       raceFinished=true;
       const startMs=Date.parse(race.startTime)||0;
@@ -3340,7 +3376,6 @@ function initRaceState(){
       if(startMs&&endMs&&endMs>=startMs){
         elapsedTime=endMs-startMs;
       }else if(typeof race.elapsedAtPause==='number'&&race.elapsedAtPause>0){
-        // Fallback: usa tempo salvo ao encerrar quando startTime está ausente/inválido
         elapsedTime=race.elapsedAtPause;
       }else{
         elapsedTime=0;
@@ -3363,22 +3398,53 @@ function initRaceState(){
       const btn=document.getElementById('btnFinish');
       if(btn){
         btn.innerHTML='📊 Ver Classificação';
-  btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
-  btn.onclick=showRankingView;
+        btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
+        btn.onclick=showRankingView;
       }
-    }else if(race.startTime){
-      const startMs=Date.parse(race.startTime);
-      if(startMs){
-        elapsedTime=Math.max(0,Date.now()-startMs);
+    }else if(!race.endTime && (race.pauseTime || (typeof race.elapsedAtPause==='number' && race.elapsedAtPause>0))){
+      // CASO PAUSADO: "Continuar de onde parou" ou pausada no cronômetro
+      raceFinished = false;
+      if (isRunning) { clearInterval(timer); isRunning = false; }
+      elapsedTime = typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0
+        ? race.elapsedAtPause
+        : (race.startTime && race.pauseTime ? Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime)) : 0);
+      formatTime(elapsedTime);
+      startTime = Date.now() - elapsedTime;
+      isRunning = false;
+
+      lblStart.textContent = 'CONTINUAR';
+      iconStart.className = 'fa-solid fa-play';
+      btnStart.disabled = false;
+      btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
+      statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase';
+      statusText.textContent = 'PAUSADO';
+
+      bibInput.disabled = false;
+      btnBibSubmit.disabled = false;
+      bibInput.placeholder = 'Nº Peito';
+
+      const btnPause = document.getElementById('btnFinish');
+      if (btnPause) {
+        btnPause.textContent = '🏁 ENCERRAR';
+        btnPause.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+        btnPause.onclick = confirmFinish;
+      }
+    }else if(race.startTime && !race.endTime && !race.pauseTime){
+      // CASO EM ANDAMENTO: "Continuar em Tempo Real" ou largada normal
+      raceFinished = false;
+      const startMs = Date.parse(race.startTime);
+      if (startMs) {
+        elapsedTime = Math.max(0, Date.now() - startMs);
         formatTime(elapsedTime);
-        startTime=Date.now()-elapsedTime;
-        timer=setInterval(updateTimer,10);
-        isRunning=true;
-        lblStart.textContent='PAUSAR';
-        iconStart.className='fa-solid fa-pause';
-        btnStart.className='w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';
-        statusBadge.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
-        statusText.textContent='Em Andamento';
+        startTime = Date.now() - elapsedTime;
+        timer = setInterval(updateTimer, 10);
+        isRunning = true;
+        lblStart.textContent = 'PAUSAR';
+        iconStart.className = 'fa-solid fa-pause';
+        btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20 active:scale-95';
+        statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase';
+        statusText.textContent = 'Em Andamento';
       }
     }
   }catch(e){
@@ -3487,11 +3553,65 @@ let clearScanBuffer = null;
 })();
 // ─────────────────────────────────────────────────────────────────────────────
 
+function handleExternalReset(resetRaceId) {
+  const currentRaceId = getActiveRaceId();
+  if (resetRaceId && currentRaceId && resetRaceId !== currentRaceId) return;
+
+  if (isRunning) { clearInterval(timer); isRunning = false; }
+  backToChrono();
+  elapsedTime = 0; formatTime(0); startTime = null;
+  arrivals = []; renderArrivals();
+  clearRaceEndedMarker(currentRaceId);
+  clearArrivalsCache(currentRaceId);
+  bibInput.value = '';
+  bibInput.disabled = false;
+  btnBibSubmit.disabled = false;
+  bibInput.placeholder = 'Nº Peito';
+  if (runnerPreview) runnerPreview.classList.add('hidden');
+
+  lblStart.textContent = 'INICIAR';
+  iconStart.className = 'fa-solid fa-play';
+  btnStart.disabled = false;
+  btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
+  statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
+  statusText.textContent = 'AGUARDANDO';
+  raceFinished = false;
+
+  const btn = document.getElementById('btnFinish');
+  if (btn) {
+    btn.textContent = '🏁 ENCERRAR';
+    btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+    btn.onclick = confirmFinish;
+  }
+}
+
 window.addEventListener('message', (event) => {
   if (event?.data?.type === 'FOCUS_BIB_INPUT') {
     scheduleBibInputFocus();
+  } else if (event?.data?.type === 'RACE_RESET') {
+    handleExternalReset(event?.data?.raceId);
+  } else if (event?.data?.type === 'RACE_REOPENED') {
+    const updated = event?.data?.race || event?.data?.patch;
+    if (updated) {
+      applyLiveRaceState(updated);
+    }
   }
 });
+
+try {
+  const bcExternal = new BroadcastChannel('qr-cronorace-channel');
+  bcExternal.onmessage = (event) => {
+    if (event?.data?.type === 'RACE_RESET') {
+      handleExternalReset(event?.data?.raceId);
+    } else if (event?.data?.type === 'RACE_REOPENED') {
+      const updated = event?.data?.race || event?.data?.patch;
+      if (updated) {
+        applyLiveRaceState(updated);
+      }
+    }
+  };
+} catch(e) {}
 
 window.addEventListener('focus', () => {
   if (typeof window.startFirebaseListening === 'function') {

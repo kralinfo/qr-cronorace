@@ -63,31 +63,29 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
               onClick={() => handleAction('resume')}
               disabled={submitting}
             >
-              <div className="reopen-option-icon"><IconRunner size={22} /></div>
+              <div className="reopen-option-icon"><IconClock size={22} /></div>
               <div className="reopen-option-text">
-                <strong>Continuar sem interrupção (Tempo Real)</strong>
+                <strong>Continuar em Tempo Real (Recomendado)</strong>
                 <span>
-                  Remove o encerramento. O cronômetro continua contando normalmente desde a largada original, como se a corrida nunca tivesse sido parada.
+                  Conta o tempo corrido desde a primeira largada, como se a corrida nunca tivesse sido encerrada. Mantém todos os corredores registrados.
                 </span>
               </div>
             </button>
 
-            {pausedMs >= 15000 && (
-              <button
-                type="button"
-                className="reopen-option-card"
-                onClick={() => handleAction('compensate')}
-                disabled={submitting}
-              >
-                <div className="reopen-option-icon"><IconClock size={22} /></div>
-                <div className="reopen-option-text">
-                  <strong>Descontar tempo parado ({pausedText})</strong>
-                  <span>
-                    Corrige o horário de largada para não penalizar os atletas pelo tempo em que o app esteve parado.
-                  </span>
-                </div>
-              </button>
-            )}
+            <button
+              type="button"
+              className="reopen-option-card"
+              onClick={() => handleAction('compensate')}
+              disabled={submitting}
+            >
+              <div className="reopen-option-icon"><IconRunner size={22} /></div>
+              <div className="reopen-option-text">
+                <strong>Continuar de onde parou</strong>
+                <span>
+                  Retoma a contagem exatamente no segundo em que foi encerrada. Mantém intactos todos os corredores e chegadas já registrados.
+                </span>
+              </div>
+            </button>
 
             <button
               type="button"
@@ -97,9 +95,9 @@ export default function ReopenRaceModal({ race, onReopen, onClose }) {
             >
               <div className="reopen-option-icon"><IconRefresh size={22} /></div>
               <div className="reopen-option-text">
-                <strong>Zerar cronômetro e reiniciar agora</strong>
+                <strong>Zerar cronômetro e corredores</strong>
                 <span>
-                  Zera o tempo de prova para 00:00:00 e define um novo horário de largada a partir deste momento.
+                  Zera o cronômetro para 00:00:00 e apaga os corredores que já passaram. A contagem só iniciará quando der a largada no cronômetro.
                 </span>
               </div>
             </button>

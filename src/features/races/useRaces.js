@@ -75,16 +75,16 @@ export function useRaces() {
     }
   }, [loadRaces])
 
-  const reopenRace = useCallback(async (raceId, mode = 'resume') => {
+  const reopenRace = useCallback(async (raceId, mode = 'resume', fallbackData = {}) => {
     setError(null)
     try {
       // No modo 'reset', apaga todos os resultados da corrida antes de relançar
       if (mode === 'reset') {
         await deleteAllResultsByRace(raceId)
       }
-      await repoReopenRace(raceId, mode)
+      const patch = await repoReopenRace(raceId, mode, fallbackData)
       await loadRaces()
-      return true
+      return patch || true
     } catch (e) {
       setError('Falha ao reabrir a corrida.')
       return false

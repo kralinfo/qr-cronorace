@@ -32,28 +32,132 @@ export async function updateRaceEndTime(raceId, endTime) {
  *   - 'compensate': desconta o intervalo em que esteve parada (ajusta startTime)
  *   - 'reset': zera o tempo e relarga neste instante
  */
-export async function reopenRace(raceId, mode = 'resume') {
-  const snap = await getDoc(doc(db, COLLECTIONS.races, raceId))
-  if (!snap.exists()) throw new Error('RACE_NOT_FOUND')
-  const current = snap.data()
-
-  const now = Date.now()
-  let newStartTime = current.startTime
-
-  if (mode === 'reset') {
-    newStartTime = new Date(now).toISOString()
-  } else if (mode === 'compensate' && current.endTime && current.startTime) {
-    const endMs = Date.parse(current.endTime)
-    const pausedMs = Math.max(0, now - endMs)
-    const originalStartMs = Date.parse(current.startTime)
-    newStartTime = new Date(originalStartMs + pausedMs).toISOString()
+export async function reopenRace(raceId, mode = 'resume', fallbackData = {}) {
+  let current = {}
+  try {
+    const snap = await getDoc(doc(db, COLLECTIONS.races, raceId))
+    if (snap.exists()) current = snap.data() || {}
+  } catch (e) {
+    console.warn('Erro ao buscar dados da corrida no Firestore:', e)
   }
 
-  await updateDoc(doc(db, COLLECTIONS.races, raceId), {
-    startTime: newStartTime,
-    endTime: null,
-    elapsedAtPause: 0
-  })
+  // Mescla com fallback do estado local / localStorage
+  let localStored = {}
+  try {
+    const raw = localStorage.getItem('pwa-qr-timing:active-race')
+    if (raw) localStored = JSON.parse(raw)
+  } catch (e) {}
+
+  const merged = { ...localStored, ...fallbackData, ...current }
+  const now = Date.now()
+
+  // 1. Descobrir o tempo acumulado antes do encerramento (elapsedBefore)
+  let elapsedBefore = 0
+  if (typeof merged.elapsedAtPause === 'number' && merged.elapsedAtPause > 0) {
+    elapsedBefore = merged.elapsedAtPause
+  } else if (merged.endTime && (merged.startTime || merged.originalStartTime)) {
+    const base = merged.startTime || merged.originalStartTime
+    elapsedBefore = Math.max(0, Date.parse(merged.endTime) - Date.parse(base))
+  }
+
+  // 1.1 Resgate via cache local de chegadas
+  if (elapsedBefore === 0) {
+    try {
+      const arrRaw = localStorage.getItem('pwa-qr-timing:chronometer-arrivals:' + raceId)
+        || localStorage.getItem('pwa-qr-timing:arrivals-cache:' + raceId)
+      if (arrRaw) {
+        const arrList = JSON.parse(arrRaw)
+        if (Array.isArray(arrList) && arrList.length > 0) {
+          const maxMs = arrList.reduce((max, a) => {
+            const val = typeof a.elapsedMs === 'number' ? a.elapsedMs : 0
+            return val > max ? val : max
+          }, 0)
+          if (maxMs > 0) elapsedBefore = maxMs
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 1.2 Resgate via coleção 'results' do Firestore (para o caso do cache local estar vazio)
+  if (elapsedBefore === 0) {
+    try {
+      const resultsSnap = await getDocs(query(collection(db, COLLECTIONS.results), where('raceId', '==', raceId)))
+      if (!resultsSnap.empty) {
+        resultsSnap.forEach(docSnap => {
+          const r = docSnap.data()
+          if (typeof r.elapsedMs === 'number' && r.elapsedMs > elapsedBefore) {
+            elapsedBefore = r.elapsedMs
+          } else if (typeof r.time === 'string') {
+            const parts = r.time.split(':')
+            if (parts.length >= 2) {
+              const h = parts.length === 3 ? parseFloat(parts[0]) : 0
+              const m = parts.length === 3 ? parseFloat(parts[1]) : parseFloat(parts[0])
+              const s = parts.length === 3 ? parseFloat(parts[2]) : parseFloat(parts[1])
+              const ms = Math.round((h * 3600 + m * 60 + s) * 1000)
+              if (ms > elapsedBefore) elapsedBefore = ms
+            }
+          }
+        })
+      }
+    } catch (e) {
+      console.warn('Erro ao resgatar tempo das chegadas no Firestore:', e)
+    }
+  }
+
+  // 2. Descobrir a largada original da corrida (originalStart)
+  let originalStart = merged.originalStartTime || merged.startTime
+  if (!originalStart && merged.endTime && elapsedBefore > 0) {
+    originalStart = new Date(Date.parse(merged.endTime) - elapsedBefore).toISOString()
+  } else if (!originalStart && elapsedBefore > 0) {
+    originalStart = new Date(now - elapsedBefore).toISOString()
+  } else if (!originalStart) {
+    originalStart = new Date(now).toISOString()
+  }
+
+  let patch
+
+  if (mode === 'reset') {
+    // Zera tudo: cronômetro em 00:00:00, aguardando nova largada; corredores apagados
+    patch = {
+      startTime: null,
+      originalStartTime: null,
+      endTime: null,
+      pauseTime: null,
+      elapsedAtPause: 0
+    }
+
+  } else if (mode === 'compensate') {
+    // "Continuar de onde parou":
+    // O cronômetro fica PAUSADO no tempo exato em que a corrida encerrou.
+    // startTime ajustado para refletir exatamente o tempo decorrido congelado
+    const pausedStartTime = new Date(now - elapsedBefore).toISOString()
+    patch = {
+      startTime: pausedStartTime,
+      originalStartTime: originalStart,
+      endTime: null,
+      pauseTime: new Date(now).toISOString(),
+      elapsedAtPause: elapsedBefore
+    }
+
+  } else {
+    // mode === 'resume': "Continuar em Tempo Real (Recomendado)"
+    // O cronômetro já inicia RODANDO automaticamente, contando a partir da largada original,
+    // como se a corrida NUNCA tivesse sido encerrada. Corredores preservados.
+    patch = {
+      startTime: originalStart,
+      originalStartTime: originalStart,
+      endTime: null,
+      pauseTime: null,
+      elapsedAtPause: 0
+    }
+  }
+
+  try {
+    await updateDoc(doc(db, COLLECTIONS.races, raceId), patch)
+  } catch (e) {
+    console.warn('Erro ao atualizar corrida no Firestore durante reopen:', e)
+  }
+  return patch
 }
 
 

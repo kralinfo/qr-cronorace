@@ -358,7 +358,7 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const { runners: allRunners } = useRunners('ALL')
   const { placements } = useResults(activeRace?.id)
 
-  const [raceTab, setRaceTab] = useState('registered')
+  const [raceTab, setRaceTab] = useState(() => activeRace?.id ? 'current' : 'registered')
   const [registeredPage, setRegisteredPage] = useState(0)
   const [raceSearch, setRaceSearch] = useState('')
   const [name, setName] = useState(activeRace?.name || '')
@@ -942,6 +942,7 @@ useEffect(() => {
           </div>
 
           {/* ── Cards MASCULINO e FEMININO lado a lado ── */}
+          {/* [ARQUIVADO TEMPORARIAMENTE] Banner de aviso e botão de Reabrir Corrida
           {Boolean(activeRace?.endTime) && (
             <div style={{
               background: 'rgba(168, 85, 247, 0.12)',
@@ -982,6 +983,7 @@ useEffect(() => {
               </button>
             </div>
           )}
+          */}
           <div className="race-config-card tab-view-card">
             {/* Tab header inside the card */}
             <div className="race-config-gender-tabs">
@@ -1255,7 +1257,12 @@ useEffect(() => {
           {runnerError && <div className="runner-form-error" role="alert">{runnerError}</div>}
 
           {/* Botão Iniciar Cronômetro / Ver Informações */}
-          {activeRace?.endTime ? (
+          {(() => {
+            // Checa endTime no estado React E no localStorage (fallback para quando o Firestore ainda não sincronizou)
+            const endedFromCtx = Boolean(activeRace?.endTime)
+            const endedFromStorage = (() => { try { const k = `pwa-qr-timing:race-ended-at:${activeRace?.id}`; return activeRace?.id && Boolean(localStorage.getItem(k)) } catch { return false } })()
+            const isRaceEnded = endedFromCtx || endedFromStorage
+            return isRaceEnded ? (
             <button
               type="button"
               className="race-config-start-btn race-config-start-btn--finished"
@@ -1277,7 +1284,8 @@ useEffect(() => {
             >
               <IconPlay size={20} /> INICIAR CRONÔMETRO
             </button>
-          )}
+          )
+          })()}
 
           {/* Link para abrir modal com todos os corredores */}
           <div className="race-config-view-all-row">
@@ -1562,19 +1570,46 @@ useEffect(() => {
         }}
       />
 
-      {/* Modal de Reabrir Corrida Encerrada */}
+      {/* [ARQUIVADO TEMPORARIAMENTE] Modal de Reabrir Corrida Encerrada
       {reopenModalOpen && activeRace && (
         <ReopenRaceModal
           race={activeRace}
           onReopen={async (mode) => {
-            const ok = await reopenRace(activeRace.id, mode)
-            if (ok) {
+            const patch = await reopenRace(activeRace.id, mode, activeRace)
+            if (patch) {
+              try { localStorage.removeItem("pwa-qr-timing:race-ended-at:" + activeRace.id) } catch {}
+              if (mode === 'reset') {
+                try {
+                  localStorage.removeItem("pwa-qr-timing:chronometer-arrivals:" + activeRace.id)
+                  localStorage.removeItem("pwa-qr-timing:arrivals-cache:" + activeRace.id)
+                } catch {}
+                const msg = { type: 'RACE_RESET', raceId: activeRace.id }
+                window.postMessage(msg, '*')
+                try {
+                  const bc = new BroadcastChannel('qr-cronorace-channel')
+                  bc.postMessage(msg)
+                  bc.close()
+                } catch (e) {}
+                selectRace({ ...activeRace, startTime: null, originalStartTime: null, endTime: null, pauseTime: null, elapsedAtPause: 0 })
+              } else {
+                const patchObj = (typeof patch === 'object') ? patch : {}
+                const updatedRace = { ...activeRace, ...patchObj, endTime: null }
+                selectRace(updatedRace)
+                const msg = { type: 'RACE_REOPENED', raceId: activeRace.id, race: updatedRace, patch: patchObj }
+                window.postMessage(msg, '*')
+                try {
+                  const bc = new BroadcastChannel('qr-cronorace-channel')
+                  bc.postMessage(msg)
+                  bc.close()
+                } catch (e) {}
+              }
               setReopenModalOpen(false)
             }
           }}
           onClose={() => setReopenModalOpen(false)}
         />
       )}
+      */}
 
       {/* Modal de Inscrição em Lote de Corredores via Planilha */}
       {importModalOpen && (

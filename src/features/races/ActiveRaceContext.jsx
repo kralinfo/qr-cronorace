@@ -14,7 +14,13 @@ export function ActiveRaceProvider({ children }) {
       const storedId = getStoredActiveRaceId()
       if (storedId) {
         const race = await getRaceById(storedId)
-        if (race) setActiveRace(race)
+        if (race) {
+          // Enriquece com endTime do localStorage caso Firestore ainda não tenha sincronizado
+          const endedKey = `pwa-qr-timing:race-ended-at:${race.id}`
+          const storedEnd = (() => { try { return localStorage.getItem(endedKey) } catch { return null } })()
+          if (!race.endTime && storedEnd) race.endTime = storedEnd
+          setActiveRace(race)
+        }
         else clearStoredActiveRaceId()
       }
       setLoading(false)
@@ -25,7 +31,18 @@ export function ActiveRaceProvider({ children }) {
   useEffect(() => {
     if (!activeRace?.id) return
     const unsubscribe = subscribeToRace(activeRace.id, (race) => {
-      if (race) setActiveRace(race)
+      if (race) {
+        const endedKey = `pwa-qr-timing:race-ended-at:${race.id}`
+        if (race.endTime === null || race.endTime === undefined) {
+          // endTime explicitamente nulo no Firestore (corrida reaberta) → limpar marcador
+          try { localStorage.removeItem(endedKey) } catch {}
+        } else if (!race.endTime) {
+          // campo ausente — usar marcador como fallback
+          const storedEnd = (() => { try { return localStorage.getItem(endedKey) } catch { return null } })()
+          if (storedEnd) race.endTime = storedEnd
+        }
+        setActiveRace(race)
+      }
     })
     return unsubscribe
   }, [activeRace?.id])
@@ -41,9 +58,43 @@ export function ActiveRaceProvider({ children }) {
           const reset = { ...prev, startTime: null, endTime: null, elapsedAtPause: 0 }
           try {
             localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(reset))
+            if (prev.id) localStorage.removeItem(`pwa-qr-timing:race-ended-at:${prev.id}`)
           } catch (err) {}
           return reset
         })
+      } else if (data?.type === 'RACE_FINISHED') {
+        // Atualiza endTime e dados de cronometragem imediatamente sem esperar Firestore
+        setActiveRace(prev => {
+          if (!prev) return null
+          const updated = {
+            ...prev,
+            endTime: data.endTime || new Date().toISOString(),
+            startTime: data.startTime || prev.startTime,
+            originalStartTime: data.originalStartTime || prev.originalStartTime,
+            elapsedAtPause: typeof data.elapsedAtPause === 'number' ? data.elapsedAtPause : prev.elapsedAtPause
+          }
+          try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(updated)) } catch (err) {}
+          return updated
+        })
+      } else if (data?.type === 'RACE_STARTED') {
+        setActiveRace(prev => {
+          if (!prev) return null
+          const updated = {
+            ...prev,
+            startTime: data.startTime || prev.startTime,
+            originalStartTime: data.originalStartTime || prev.originalStartTime || data.startTime,
+            endTime: null,
+            pauseTime: null,
+            elapsedAtPause: null
+          }
+          try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(updated)) } catch (err) {}
+          return updated
+        })
+      } else if (data?.type === 'RACE_REOPENED') {
+        if (data.race) {
+          setActiveRace(data.race)
+          try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(data.race)) } catch (err) {}
+        }
       }
     }
 
@@ -63,6 +114,9 @@ export function ActiveRaceProvider({ children }) {
   const selectRace = useCallback((race) => {
     setStoredActiveRaceId(race.id)
     setActiveRace(race)
+    try {
+      localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race))
+    } catch (e) {}
   }, [])
 
   const clearActiveRace = useCallback(() => {
