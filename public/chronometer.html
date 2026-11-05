@@ -1807,6 +1807,9 @@
     if (typeof window.startRaceDocumentListening === 'function') {
       window.startRaceDocumentListening();
     }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening();
+      }
   </script>
 
   <script>
@@ -2872,7 +2875,7 @@
       const fallbackRunnerId = activeRaceId ? `${activeRaceId}_bib_${cleanBib}` : `bib_${cleanBib}`;
       const effectiveRunnerId = runner?.id || fallbackRunnerId;
       const runnerName = (runner?.name && runner.name !== '-' && runner.name !== '—') ? runner.name : 'Sem nome';
-      const runnerCat = runner?.category || 'GERAL';
+      const runnerCat = res.category || runner?.category || 'GERAL';
 
       let effectiveRunner = runner;
       if (!effectiveRunner) {
@@ -3142,6 +3145,9 @@
       window.startFirebaseListening();
       if (typeof window.startRaceDocumentListening === 'function') {
         window.startRaceDocumentListening();
+      }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening();
       }
     }
 
@@ -3650,9 +3656,30 @@
     // Aplica mudanças de categoria a um corredor (id do documento na coleção 'runners'),
     // atualizando a lista de chegadas em memória, o cache local e persistindo no Firestore
     // (sem isso a edição parecia funcionar na hora, mas era perdida ao recarregar a página).
-    async function editLocaisUpdateRunnerCategory(runnerId, overrides) {
-      const matches = arrivals.filter(a => String(a.runnerId) === String(runnerId));
+        async function editLocaisUpdateRunnerCategory(runnerId, overrides) {
+      const targetRunnerId = String(runnerId);
+      let targetBib = null;
+      let matches = arrivals.filter(a => {
+        if (String(a.runnerId) === targetRunnerId) {
+          targetBib = String(parseInt(a.bib, 10));
+          return true;
+        }
+        return false;
+      });
+
+      // Se não encontrou por runnerId exato, tenta encontrar pelo número de peito
+      if (matches.length === 0) {
+        arrivals.forEach(a => {
+          const clean = String(parseInt(a.bib, 10));
+          if (targetRunnerId.includes(`bib_${clean}`) || targetRunnerId === clean) {
+            targetBib = clean;
+            matches.push(a);
+          }
+        });
+      }
+
       if (matches.length === 0) return null;
+      if (!targetBib) targetBib = String(parseInt(matches[0].bib, 10));
 
       const parts = editLocaisParseCat(matches[0].category);
       const nextCategory = editLocaisBuildCat({
@@ -3663,28 +3690,85 @@
 
       matches.forEach(a => {
         a.category = nextCategory;
-        a.isLocal = nextCategory.includes('LOCAL');
+        a.isLocal = nextCategory.toUpperCase().includes('LOCAL');
       });
 
+      const raceId = getActiveRaceId();
+
+      // 1. Atualiza cache local de chegadas
       try {
-        saveArrivalsCache(getActiveRaceId(), arrivals);
+        saveArrivalsCache(raceId, arrivals);
       } catch (e) { }
 
-      try {
-        if (window.fbDb && window.fbSetDoc && window.fbDoc) {
-          await window.fbSetDoc(window.fbDoc(window.fbDb, 'runners', String(runnerId)), { category: nextCategory }, { merge: true });
-        }
-      } catch (err) {
-        console.warn('Erro ao salvar categoria no Firestore:', err);
-      }
-
+      // 2. Descobre o ID real do documento na coleção 'runners'
+      let realRunnerDocId = targetRunnerId;
       try {
         const raw = localStorage.getItem('pwa-qr-timing:runners-lookup');
         if (raw) {
           const list = JSON.parse(raw);
-          const idx = list.findIndex(r => String(r.id) === String(runnerId));
-          if (idx !== -1) {
-            list[idx] = { ...list[idx], category: nextCategory };
+          const found = list.find(r => {
+            if (String(r.id) === targetRunnerId) return true;
+            return String(parseInt(r.number, 10)) === targetBib;
+          });
+          if (found?.id) realRunnerDocId = String(found.id);
+        }
+      } catch (e) { }
+
+      // 3. Atualiza o documento na coleção 'runners' no Firestore
+      try {
+        if (window.fbDb && window.fbSetDoc && window.fbDoc && realRunnerDocId) {
+          await window.fbSetDoc(window.fbDoc(window.fbDb, 'runners', realRunnerDocId), { category: nextCategory }, { merge: true });
+        }
+      } catch (err) {
+        console.warn('Erro ao salvar categoria no Firestore (runners):', err);
+      }
+
+      // 4. Atualiza os documentos da chegada deste corredor na coleção 'results' no Firestore
+      // Isso faz o snapshot de resultados disparar em tempo real em todos os outros aparelhos (PC, telão, celular)!
+      try {
+        if (window.fbDb && window.fbGetDocs && window.fbQuery && window.fbCollection && window.fbWhere && raceId && targetBib) {
+          const qResults = window.fbQuery(
+            window.fbCollection(window.fbDb, 'results'),
+            window.fbWhere('raceId', '==', raceId)
+          );
+          const snapResults = await window.fbGetDocs(qResults);
+          if (!snapResults.empty) {
+            const batch = window.fbWriteBatch ? window.fbWriteBatch(window.fbDb) : null;
+            let batchCount = 0;
+            snapResults.docs.forEach(d => {
+              const rData = d.data();
+              const rBib = String(rData.runnerNumber || '').replace(/\D/g, '');
+              if (rBib && String(parseInt(rBib, 10)) === targetBib) {
+                if (batch) {
+                  batch.update(d.ref, { category: nextCategory });
+                  batchCount++;
+                } else if (window.fbSetDoc) {
+                  window.fbSetDoc(d.ref, { category: nextCategory }, { merge: true });
+                }
+              }
+            });
+            if (batch && batchCount > 0) {
+              await batch.commit();
+            }
+          }
+        }
+      } catch (errRes) {
+        console.warn('Erro ao sincronizar categoria na coleção results:', errRes);
+      }
+
+      // 5. Atualiza o cache local de corredores
+      try {
+        const raw = localStorage.getItem('pwa-qr-timing:runners-lookup');
+        if (raw) {
+          const list = JSON.parse(raw);
+          let updatedList = false;
+          list.forEach(r => {
+            if (String(r.id) === realRunnerDocId || String(parseInt(r.number, 10)) === targetBib) {
+              r.category = nextCategory;
+              updatedList = true;
+            }
+          });
+          if (updatedList) {
             localStorage.setItem('pwa-qr-timing:runners-lookup', JSON.stringify(list));
           }
         }
@@ -4421,6 +4505,72 @@
       }
     }
 
+    
+    let unsubscribeRunnersListener = null;
+    let listeningRunnersRaceId = null;
+
+    window.startRunnersListening = function (forceRestart = false) {
+      const raceId = getActiveRaceId();
+      if (!raceId || !window.fbDb || !window.fbOnSnapshot || !window.fbCollection || !window.fbQuery || !window.fbWhere) return false;
+
+      if (!forceRestart && unsubscribeRunnersListener && listeningRunnersRaceId === raceId) {
+        return true;
+      }
+
+      if (unsubscribeRunnersListener) {
+        try { unsubscribeRunnersListener(); } catch (e) { }
+        unsubscribeRunnersListener = null;
+      }
+
+      listeningRunnersRaceId = raceId;
+
+      const q = window.fbQuery(
+        window.fbCollection(window.fbDb, 'runners'),
+        window.fbWhere('raceId', '==', raceId)
+      );
+
+      unsubscribeRunnersListener = window.fbOnSnapshot(q, (snap) => {
+        const runnersList = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        
+        try {
+          localStorage.setItem('pwa-qr-timing:runners-lookup', JSON.stringify(runnersList));
+        } catch (e) { }
+
+        let hasChanges = false;
+        arrivals.forEach(a => {
+          const cleanBib = String(parseInt(a.bib, 10));
+          const runner = runnersList.find(r => {
+            if (String(r.id) === String(a.runnerId)) return true;
+            return String(parseInt(r.number, 10)) === cleanBib;
+          });
+          if (runner) {
+            const newCat = runner.category || 'GERAL';
+            if (a.category !== newCat) {
+              a.category = newCat;
+              a.isLocal = newCat.toUpperCase().includes('LOCAL');
+              hasChanges = true;
+            }
+            if (runner.name && a.name !== runner.name && runner.name !== '-' && runner.name !== 'Sem nome') {
+              a.name = runner.name;
+              hasChanges = true;
+            }
+          }
+        });
+
+        if (hasChanges) {
+          saveArrivalsCache(raceId, arrivals);
+          renderArrivals();
+          updateRankingViewIfActive();
+          const editModal = document.getElementById('editLocaisModal');
+          if (editModal && editModal.style.display === 'flex') {
+            renderEditLocaisList();
+          }
+        }
+      });
+
+      return true;
+    };
+
     window.startRaceDocumentListening = function (forceRestart = false) {
       const raceId = getActiveRaceId();
       if (!raceId || !window.fbDb || !window.fbOnSnapshot || !window.fbDoc) return false;
@@ -4785,6 +4935,9 @@
       if (typeof window.startRaceDocumentListening === 'function') {
         window.startRaceDocumentListening(true);
       }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening(true);
+      }
       scheduleBibInputFocus();
     });
 
@@ -4796,6 +4949,9 @@
         if (typeof window.startRaceDocumentListening === 'function') {
           window.startRaceDocumentListening(true);
         }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening(true);
+      }
         scheduleBibInputFocus();
       }
     });
@@ -4809,6 +4965,9 @@
         if (typeof window.startRaceDocumentListening === 'function') {
           window.startRaceDocumentListening(true);
         }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening(true);
+      }
       }
     });
 
@@ -4832,6 +4991,9 @@
       if (typeof window.startRaceDocumentListening === 'function') {
         window.startRaceDocumentListening();
       }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening();
+      }
     }, 150);
 
     setTimeout(() => {
@@ -4840,6 +5002,9 @@
       }
       if (typeof window.startRaceDocumentListening === 'function') {
         window.startRaceDocumentListening();
+      }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening();
       }
     }, 800);
 
@@ -4857,6 +5022,9 @@
         if (typeof window.startRaceDocumentListening === 'function') {
           window.startRaceDocumentListening(true);
         }
+      if (typeof window.startRunnersListening === 'function') {
+        window.startRunnersListening(true);
+      }
       }
     }, 1500);
 
