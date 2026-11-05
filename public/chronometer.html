@@ -3218,8 +3218,8 @@ function applyLiveRaceState(race) {
     return;
   }
 
-  // CASO 1: startTime é nulo E sem pausa (corrida zerada aguardando largada)
-  if (!race.startTime && (!race.elapsedAtPause || race.elapsedAtPause <= 0) && !race.pauseTime) {
+  // CASO 1: CORRIDA NÃO INICIADA OU REINICIADA (startTime é nulo) -> SEMPRE ZERA EM 00:00:00
+  if (!race.startTime) {
     clearRaceEndedMarker(raceId);
     if (isRunning) {
       clearInterval(timer);
@@ -3251,15 +3251,15 @@ function applyLiveRaceState(race) {
     return;
   }
 
-  // CASO 3a: CORRIDA PAUSADA (pauseTime existe, ou elapsedAtPause com corrida não zerada)
-  if (!race.endTime && (race.pauseTime || (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0))) {
+  // CASO 2: CORRIDA PAUSADA (startTime existe e pauseTime existe)
+  if (race.startTime && race.pauseTime && !race.endTime) {
     clearRaceEndedMarker(raceId);
     raceFinished = false;
     if (isRunning) { clearInterval(timer); isRunning = false; }
 
     if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
       elapsedTime = race.elapsedAtPause;
-    } else if (race.startTime && race.pauseTime) {
+    } else {
       elapsedTime = Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime));
     }
     formatTime(elapsedTime);
@@ -3286,7 +3286,7 @@ function applyLiveRaceState(race) {
     return;
   }
 
-  // CASO 3b: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime nem pauseTime)
+  // CASO 3: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime nem pauseTime)
   if (race.startTime && !race.endTime && !race.pauseTime) {
     clearRaceEndedMarker(raceId);
     raceFinished = false;
@@ -3401,13 +3401,40 @@ function initRaceState(){
         btn.className='flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
         btn.onclick=showRankingView;
       }
-    }else if(!race.endTime && (race.pauseTime || (typeof race.elapsedAtPause==='number' && race.elapsedAtPause>0))){
-      // CASO PAUSADO: "Continuar de onde parou" ou pausada no cronômetro
+    }else if(!race.startTime){
+      // CORRIDA NÃO INICIADA OU REINICIADA: ZERA SEMPRE EM 00:00:00
+      raceFinished = false;
+      if (isRunning) { clearInterval(timer); isRunning = false; }
+      elapsedTime = 0;
+      formatTime(0);
+      startTime = 0;
+      isRunning = false;
+
+      lblStart.textContent = 'INICIAR';
+      iconStart.className = 'fa-solid fa-play';
+      btnStart.disabled = false;
+      btnStart.className = 'w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 active:scale-95';
+
+      statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/30 uppercase';
+      statusText.textContent = 'AGUARDANDO';
+
+      bibInput.disabled = false;
+      btnBibSubmit.disabled = false;
+      bibInput.placeholder = 'Nº Peito';
+
+      const btnInit = document.getElementById('btnFinish');
+      if (btnInit) {
+        btnInit.textContent = '🏁 ENCERRAR';
+        btnInit.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
+        btnInit.onclick = confirmFinish;
+      }
+    }else if(race.startTime && race.pauseTime){
+      // CASO PAUSADO
       raceFinished = false;
       if (isRunning) { clearInterval(timer); isRunning = false; }
       elapsedTime = typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0
         ? race.elapsedAtPause
-        : (race.startTime && race.pauseTime ? Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime)) : 0);
+        : Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime));
       formatTime(elapsedTime);
       startTime = Date.now() - elapsedTime;
       isRunning = false;
@@ -3431,7 +3458,7 @@ function initRaceState(){
         btnPause.onclick = confirmFinish;
       }
     }else if(race.startTime && !race.endTime && !race.pauseTime){
-      // CASO EM ANDAMENTO: "Continuar em Tempo Real" ou largada normal
+      // CASO EM ANDAMENTO
       raceFinished = false;
       const startMs = Date.parse(race.startTime);
       if (startMs) {
