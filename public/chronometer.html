@@ -4319,6 +4319,7 @@
         arrivals = [];
         renderArrivals();
         updateRankingViewIfActive();
+        backToChrono();
 
         if (isRunning) {
           clearInterval(timer);
@@ -4779,10 +4780,10 @@
 
     window.addEventListener('focus', () => {
       if (typeof window.startFirebaseListening === 'function') {
-        window.startFirebaseListening();
+        window.startFirebaseListening(true);
       }
       if (typeof window.startRaceDocumentListening === 'function') {
-        window.startRaceDocumentListening();
+        window.startRaceDocumentListening(true);
       }
       scheduleBibInputFocus();
     });
@@ -4790,10 +4791,10 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         if (typeof window.startFirebaseListening === 'function') {
-          window.startFirebaseListening();
+          window.startFirebaseListening(true);
         }
         if (typeof window.startRaceDocumentListening === 'function') {
-          window.startRaceDocumentListening();
+          window.startRaceDocumentListening(true);
         }
         scheduleBibInputFocus();
       }

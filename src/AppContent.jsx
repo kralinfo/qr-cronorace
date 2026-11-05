@@ -304,7 +304,7 @@ function InnerAppContent() {
             ref={chronometerFrameRef}
             src={`/chronometer.html?t=${activeRace?.id || "live"}`}
             title="Cronômetro"
-            allow="vibrate; autoplay"
+            allow="autoplay"
             scrolling="no"
             tabIndex={0}
             onLoad={() => focusChronometerFrame()}
