@@ -33,13 +33,10 @@ export function ActiveRaceProvider({ children }) {
     const unsubscribe = subscribeToRace(activeRace.id, (race) => {
       if (race) {
         const endedKey = `pwa-qr-timing:race-ended-at:${race.id}`
-        if (race.endTime === null || race.endTime === undefined) {
-          // endTime explicitamente nulo no Firestore (corrida reaberta) → limpar marcador
-          try { localStorage.removeItem(endedKey) } catch {}
-        } else if (!race.endTime) {
-          // campo ausente — usar marcador como fallback
-          const storedEnd = (() => { try { return localStorage.getItem(endedKey) } catch { return null } })()
-          if (storedEnd) race.endTime = storedEnd
+        const storedEnd = (() => { try { return localStorage.getItem(endedKey) } catch { return null } })()
+        // Se a corrida foi encerrada (no Firestore ou marcador local), ela PERMANECE encerrada até reset explícito!
+        if (storedEnd) {
+          race.endTime = race.endTime || storedEnd
         }
         setActiveRace(race)
       }
@@ -58,17 +55,30 @@ export function ActiveRaceProvider({ children }) {
           const reset = { ...prev, startTime: null, endTime: null, elapsedAtPause: 0 }
           try {
             localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(reset))
-            if (prev.id) localStorage.removeItem(`pwa-qr-timing:race-ended-at:${prev.id}`)
+            if (prev.id) {
+              localStorage.removeItem(`pwa-qr-timing:race-ended-at:${prev.id}`)
+              localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${prev.id}`)
+            }
           } catch (err) {}
           return reset
         })
       } else if (data?.type === 'RACE_FINISHED') {
+        const finishedId = data.raceId || activeRace?.id
+        const endTime = data.endTime || new Date().toISOString()
+        if (finishedId) {
+          try {
+            localStorage.setItem(`pwa-qr-timing:race-ended-at:${finishedId}`, endTime)
+            if (typeof data.elapsedAtPause === 'number') {
+              localStorage.setItem(`pwa-qr-timing:race-elapsed-ms:${finishedId}`, String(data.elapsedAtPause))
+            }
+          } catch (err) {}
+        }
         // Atualiza endTime e dados de cronometragem imediatamente sem esperar Firestore
         setActiveRace(prev => {
           if (!prev) return null
           const updated = {
             ...prev,
-            endTime: data.endTime || new Date().toISOString(),
+            endTime,
             startTime: data.startTime || prev.startTime,
             originalStartTime: data.originalStartTime || prev.originalStartTime,
             elapsedAtPause: typeof data.elapsedAtPause === 'number' ? data.elapsedAtPause : prev.elapsedAtPause

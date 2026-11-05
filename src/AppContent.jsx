@@ -199,6 +199,15 @@ function InnerAppContent() {
             navigator.vibrate(pat)
           } catch (e) {}
         }
+      } else if (event.data?.type === 'RACE_FINISHED') {
+        if (activeRace) {
+          const endTime = event.data.endTime || new Date().toISOString()
+          selectRace({
+            ...activeRace,
+            endTime,
+            elapsedAtPause: typeof event.data.elapsedAtPause === 'number' ? event.data.elapsedAtPause : activeRace.elapsedAtPause
+          })
+        }
       } else if (event.data?.type === 'RACE_RESET') {
         const resetRaceId = event.data?.raceId || activeRace?.id
         if (resetRaceId) {
@@ -217,6 +226,15 @@ function InnerAppContent() {
       bc.onmessage = (event) => {
         if (event.data?.type === 'RECORD_ARRIVAL') {
           handleRecordArrival(event.data)
+        } else if (event.data?.type === 'RACE_FINISHED') {
+          if (activeRace) {
+            const endTime = event.data.endTime || new Date().toISOString()
+            selectRace({
+              ...activeRace,
+              endTime,
+              elapsedAtPause: typeof event.data.elapsedAtPause === 'number' ? event.data.elapsedAtPause : activeRace.elapsedAtPause
+            })
+          }
         } else if (event.data?.type === 'RACE_RESET') {
           if (activeRace) {
             selectRace({ ...activeRace, startTime: null, endTime: null })

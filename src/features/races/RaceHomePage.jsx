@@ -1258,18 +1258,30 @@ useEffect(() => {
 
           {/* Botão Iniciar Cronômetro / Ver Informações */}
           {(() => {
-            // Checa endTime no estado React E no localStorage (fallback para quando o Firestore ainda não sincronizou)
+            // Checa se a corrida está encerrada no estado React, no marcador localStorage ou no objeto da corrida persistida
+            const raceId = activeRace?.id
             const endedFromCtx = Boolean(activeRace?.endTime)
-            const endedFromStorage = (() => { try { const k = `pwa-qr-timing:race-ended-at:${activeRace?.id}`; return activeRace?.id && Boolean(localStorage.getItem(k)) } catch { return false } })()
-            const isRaceEnded = endedFromCtx || endedFromStorage
+            const endedFromStorage = (() => {
+              try {
+                return Boolean(raceId && localStorage.getItem(`pwa-qr-timing:race-ended-at:${raceId}`))
+              } catch { return false }
+            })()
+            const endedFromActiveRace = (() => {
+              try {
+                const raw = localStorage.getItem('pwa-qr-timing:active-race')
+                const parsed = raw ? JSON.parse(raw) : null
+                return parsed?.id === raceId && Boolean(parsed?.endTime)
+              } catch { return false }
+            })()
+            const isRaceEnded = endedFromCtx || endedFromStorage || endedFromActiveRace
             return isRaceEnded ? (
             <button
               type="button"
               className="race-config-start-btn race-config-start-btn--finished"
               onClick={() => {
                 try {
-                  sessionStorage.setItem('chrono_active_view', 'ranking')
-                  localStorage.setItem('chrono_active_view', 'ranking')
+                  sessionStorage.setItem('chrono_active_view', 'chrono')
+                  localStorage.setItem('chrono_active_view', 'chrono')
                 } catch(e){}
                 onNavigate?.('chronometer')
               }}

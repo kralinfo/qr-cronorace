@@ -1,6 +1,6 @@
 // Pagina publica isolada: corredor consulta sua colocacao por numero de peito.
-// Design 100% fiel a referencia original.
-import React, { useEffect, useState } from 'react'
+// Design 100% fiel a referencia original com identificacao precisa de Localidade e Genero.
+import React, { useEffect, useState, useMemo } from 'react'
 import { subscribeToRace } from '../races/races.repository.js'
 import { subscribeToResultsByRace } from './results.repository.js'
 import { useRunners } from '../runners/useRunners.js'
@@ -8,10 +8,45 @@ import { sortByPlacement, withElapsedTime } from './results.rules.js'
 import { formatDuration } from './duration.formatter.js'
 import './PublicResultLookupPage.css'
 
-/** Retorna o raceId da query string (?corrida=... ou ?raceId=...) */
+/** Retorna o raceId da query string (?corrida=... ou ?raceId=...) com fallback para a corrida ativa */
 function getRaceIdFromUrl() {
   const params = new URLSearchParams(window.location.search)
-  return params.get('corrida') || params.get('raceId') || null
+  const fromUrl = params.get('corrida') || params.get('raceId')
+  if (fromUrl) return fromUrl
+  try {
+    const byId = localStorage.getItem('pwa-qr-timing:active-race-id')
+    if (byId) return byId
+    const raw = localStorage.getItem('pwa-qr-timing:active-race')
+    const race = raw ? JSON.parse(raw) : null
+    return race?.id || null
+  } catch (e) {
+    return null
+  }
+}
+
+/** Carrega chegadas salvas no cache local do cronômetro para nunca ficar em branco e manter categorias atualizadas */
+function loadCachedArrivals(raceId) {
+  try {
+    if (!raceId) return []
+    const raw = localStorage.getItem('pwa-qr-timing:chronometer-arrivals:' + raceId)
+      || localStorage.getItem('pwa-qr-timing:arrivals-cache:' + raceId)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    const list = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.arrivals) ? parsed.arrivals : [])
+    return list.map((a, idx) => ({
+      id: a.id || idx,
+      barcode: a.runnerId || (raceId ? `${raceId}_bib_${a.bib}` : `bib_${a.bib}`),
+      runnerNumber: a.bib,
+      runnerName: a.name,
+      category: a.category || 'GERAL',
+      time: a.time,
+      elapsedMs: typeof a.elapsedMs === 'number' ? a.elapsedMs : null,
+      isLocal: a.isLocal,
+      gender: a.gender
+    }))
+  } catch (e) {
+    return []
+  }
 }
 
 export default function PublicResultLookupPage() {
@@ -26,29 +61,131 @@ export default function PublicResultLookupPage() {
   const [searching, setSearching] = useState(false)
   const [result, setResult] = useState(null)
 
+  // 1. Busca dados da corrida (Firestore com fallback para localStorage)
   useEffect(() => {
     if (!raceId) {
+      try {
+        const raw = localStorage.getItem('pwa-qr-timing:active-race')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed) {
+            setRace(parsed)
+            setNotFound(false)
+            return
+          }
+        }
+      } catch (e) {}
       setNotFound(true)
       return
     }
+
     const unsubRace = subscribeToRace(raceId, (found) => {
-      if (found) setRace(found)
-      else setNotFound(true)
+      if (found) {
+        setRace(found)
+        setNotFound(false)
+      } else {
+        try {
+          const raw = localStorage.getItem('pwa-qr-timing:active-race')
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed && (!parsed.id || parsed.id === raceId)) {
+              setRace(parsed)
+              setNotFound(false)
+              return
+            }
+          }
+        } catch (e) {}
+        setNotFound(true)
+      }
     })
     return unsubRace
   }, [raceId])
 
+  // 2. Busca resultados (Carrega do cache local imediatamente + escuta Firestore)
   useEffect(() => {
     if (!raceId) return
-    setLoadingResults(true)
+
+    const cached = loadCachedArrivals(raceId)
+    if (cached.length > 0) {
+      setAllPlacements(cached)
+    }
+
+    setLoadingResults(cached.length === 0)
     const unsubResults = subscribeToResultsByRace(raceId, (rows) => {
-      setAllPlacements(sortByPlacement(rows, race?.startTime))
+      if (Array.isArray(rows) && rows.length > 0) {
+        setAllPlacements(sortByPlacement(rows, race?.startTime))
+      } else {
+        const fallback = loadCachedArrivals(raceId)
+        if (fallback.length > 0) {
+          setAllPlacements(fallback)
+        }
+      }
       setLoadingResults(false)
     })
     return unsubResults
   }, [raceId, race?.startTime])
 
-  const runnersById = Object.fromEntries(runners.map((r) => [r.id, r]))
+  // 3. Mapeamento de corredores cadastrados (Firestore + runners-lookup local)
+  const allRunnersMap = useMemo(() => {
+    const map = new Map()
+    if (Array.isArray(runners)) {
+      runners.forEach(r => {
+        if (r.id) map.set(String(r.id), r)
+        if (r.number) {
+          const clean = String(parseInt(String(r.number).replace(/\D/g, ''), 10))
+          map.set(clean, r)
+        }
+      })
+    }
+    try {
+      const raw = localStorage.getItem('pwa-qr-timing:runners-lookup')
+      if (raw) {
+        const list = JSON.parse(raw)
+        if (Array.isArray(list)) {
+          list.forEach(r => {
+            if (r.id && !map.has(String(r.id))) map.set(String(r.id), r)
+            if (r.number) {
+              const clean = String(parseInt(String(r.number).replace(/\D/g, ''), 10))
+              if (!map.has(clean)) map.set(clean, r)
+            }
+          })
+        }
+      }
+    } catch (e) {}
+    return map
+  }, [runners])
+
+  // 4. Mapeamento do cache de chegadas para resgatar nomes e categorias atualizadas
+  const arrivalsCacheMap = useMemo(() => {
+    const map = new Map()
+    const cached = loadCachedArrivals(raceId)
+    cached.forEach(a => {
+      const clean = String(a.runnerNumber || a.bib || '').replace(/\D/g, '')
+      if (clean) {
+        map.set(String(parseInt(clean, 10)), a)
+      }
+    })
+    return map
+  }, [raceId, allPlacements])
+
+  // 5. Nome pré-visualizado em tempo real enquanto digita o número
+  const previewRunnerName = useMemo(() => {
+    const digits = bibInput.trim().replace(/\D/g, '')
+    if (!digits) return null
+    const targetKey = String(parseInt(digits, 10))
+
+    // 1. Prioridade: cache de chegadas do cronômetro
+    const fromCache = arrivalsCacheMap.get(targetKey)
+    if (fromCache?.runnerName && fromCache.runnerName !== 'Sem nome' && fromCache.runnerName !== '—') {
+      return fromCache.runnerName
+    }
+    // 2. Corredores cadastrados
+    const fromRunner = allRunnersMap.get(targetKey)
+    if (fromRunner?.name && fromRunner.name !== 'Sem nome') {
+      return fromRunner.name
+    }
+    return null
+  }, [bibInput, arrivalsCacheMap, allRunnersMap])
 
   function getEffectiveStartTime() {
     if (race?.startTime) return race.startTime
@@ -62,6 +199,7 @@ export default function PublicResultLookupPage() {
     return null
   }
 
+  // 6. Monta o ranking com identificação garantida de Localidade e Gênero
   function buildRanking() {
     const startTime = getEffectiveStartTime()
     const placementsWithTime = withElapsedTime(allPlacements, startTime)
@@ -69,9 +207,14 @@ export default function PublicResultLookupPage() {
     const seen = new Set()
 
     placementsWithTime.forEach((p) => {
-      if (!p.barcode || seen.has(p.barcode)) return
-      seen.add(p.barcode)
-      const runner = runnersById[p.barcode] ?? null
+      const cleanNum = String(p.runnerNumber || p.bib || '').replace(/\D/g, '')
+      const bibKey = cleanNum ? String(parseInt(cleanNum, 10)) : ''
+      const dedupeKey = bibKey || p.barcode
+      if (!dedupeKey || seen.has(dedupeKey)) return
+      seen.add(dedupeKey)
+
+      const runner = (bibKey ? allRunnersMap.get(bibKey) : null) || allRunnersMap.get(String(p.barcode))
+      const cachedArr = bibKey ? arrivalsCacheMap.get(bibKey) : null
 
       let displayTime = null
       if (p.time) {
@@ -81,13 +224,49 @@ export default function PublicResultLookupPage() {
       } else if (p.dateTime && startTime) {
         const diff = Math.max(0, Date.parse(p.dateTime) - Date.parse(startTime))
         displayTime = formatDuration(diff)
+      } else if (cachedArr?.time) {
+        displayTime = String(cachedArr.time).includes('.') ? String(cachedArr.time).split('.')[0] : String(cachedArr.time)
       }
+
+      // Determinação robusta de categoria / localidade / gênero
+      const catArrival = String(cachedArr?.category || p.category || '').toUpperCase()
+      const catRunner = String(runner?.category || '').toUpperCase()
+
+      const isLocal = Boolean(
+        cachedArr?.isLocal === true || cachedArr?.isLocal === 'true' ||
+        runner?.isLocal === true || runner?.isLocal === 'true' ||
+        p.isLocal === true || p.isLocal === 'true' ||
+        catArrival.includes('LOCAL') ||
+        catRunner.includes('LOCAL')
+      )
+
+      const isFem = Boolean(
+        runner?.gender === 'F' || runner?.gender === 'FEMININO' ||
+        catArrival.includes('FEM') ||
+        catRunner.includes('FEM')
+      )
+
+      // Regra estrita solicitada:
+      // Se local: LOCAL MASC ou LOCAL FEM
+      // Se visitante: MASCULINO ou FEMININO
+      let assignedCat = 'GERAL'
+      if (isLocal) {
+        assignedCat = isFem ? 'LOCAL FEM' : 'LOCAL MASC'
+      } else {
+        assignedCat = isFem ? 'FEMININO' : 'MASCULINO'
+      }
+
+      const runnerName = cachedArr?.runnerName || p.runnerName || runner?.name || p.name || 'Sem nome'
+      const runnerBib = cachedArr?.runnerNumber || runner?.number || p.runnerNumber || p.bib || bibKey || '?'
 
       allRanked.push({
         barcode: p.barcode,
-        bib: runner?.number ?? p.runnerNumber ?? '?',
-        name: p.runnerName ?? runner?.name ?? '\u2014',
-        category: runner?.category ?? 'GERAL',
+        bib: runnerBib,
+        bibKey,
+        name: runnerName,
+        category: assignedCat,
+        isLocal,
+        gender: isFem ? 'F' : 'M',
         displayTime: displayTime || '00:00:00',
         elapsedMs: p.elapsedMs,
         time: p.time,
@@ -99,6 +278,8 @@ export default function PublicResultLookupPage() {
     })
 
     const geralTotal = allRanked.length
+
+    // Calcula colocações separadas para cada categoria
     const catPositions = {}
     allRanked.forEach((item) => {
       const cat = item.category
@@ -114,16 +295,22 @@ export default function PublicResultLookupPage() {
     return allRanked
   }
 
+  // 7. Busca estritamente por número de peito
   function handleSearch(e) {
-    e.preventDefault()
-    const bib = bibInput.trim().replace(/\D/g, '')
-    if (!bib) return
+    if (e) e.preventDefault()
+    const digits = bibInput.trim().replace(/\D/g, '')
+    if (!digits) return
 
     setSearching(true)
     setResult(null)
 
+    const targetNum = parseInt(digits, 10)
     const ranked = buildRanking()
-    const found = ranked.find((item) => String(parseInt(item.bib, 10)) === String(parseInt(bib, 10)))
+
+    const found = ranked.find((item) => {
+      const itemNum = String(item.bib).replace(/\D/g, '')
+      return itemNum && parseInt(itemNum, 10) === targetNum
+    })
 
     setTimeout(() => {
       if (found) {
@@ -131,11 +318,11 @@ export default function PublicResultLookupPage() {
       } else {
         setResult({
           found: false,
-          error: 'N\u00famero de peito n\u00e3o encontrado nos resultados. Verifique se o n\u00famero est\u00e1 correto e se a sua chegada j\u00e1 foi registrada.'
+          error: `Número #${targetNum} não encontrado nos resultados desta corrida. Verifique o número digitado ou se a sua chegada já foi confirmada.`
         })
       }
       setSearching(false)
-    }, 250)
+    }, 180)
   }
 
   if (notFound) {
@@ -143,8 +330,8 @@ export default function PublicResultLookupPage() {
       <div className="plp-page">
         <div className="plp-card plp-card-center">
           <div className="plp-icon-warning">&#9888;</div>
-          <h2 className="plp-error-title">Corrida n\u00e3o encontrada</h2>
-          <p className="plp-error-desc">O link informado \u00e9 inv\u00e1lido ou a corrida n\u00e3o est\u00e1 mais dispon\u00edvel.</p>
+          <h2 className="plp-error-title">Corrida não encontrada</h2>
+          <p className="plp-error-desc">O link informado é inválido ou a corrida não está mais disponível.</p>
         </div>
       </div>
     )
@@ -181,6 +368,13 @@ export default function PublicResultLookupPage() {
           </div>
         </header>
 
+        {/* 2. Subtítulo 'CONSULTE SEU RESULTADO' com linhas */}
+        <div className="plp-section-divider">
+          <span className="plp-divider-line"></span>
+          <span className="plp-divider-text">CONSULTE SEU RESULTADO</span>
+          <span className="plp-divider-line"></span>
+        </div>
+
         {/* 3. Card Principal com Form e Resultados */}
         <main className="plp-main">
           <div className="plp-card">
@@ -205,7 +399,7 @@ export default function PublicResultLookupPage() {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 className="plp-input"
-                placeholder="Ex: 55"
+                placeholder="Ex: 15"
                 value={bibInput}
                 onChange={(e) => {
                   setBibInput(e.target.value.replace(/\D/g, ''))
@@ -214,10 +408,12 @@ export default function PublicResultLookupPage() {
                 autoFocus
               />
 
+
+
               <button
                 type="submit"
                 className="plp-btn"
-                disabled={searching || !bibInput.trim() || loadingResults}
+                disabled={searching || !bibInput.trim()}
               >
                 {searching ? (
                   <span>Buscando...</span>
@@ -230,13 +426,13 @@ export default function PublicResultLookupPage() {
               </button>
             </form>
 
-            {/* 4. Sub-card de resultado quando o corredor busca seu número */}
+            {/* 4. Sub-card de resultado com as DUAS opções exatas solicitadas */}
             {result?.found && (
               <div className="plp-result-box">
                 <div className="plp-runner-meta">
                   <span className="plp-bib-label">N&Uacute;MERO DE PEITO</span>
                   <span className="plp-bib-val"># {result.item.bib}</span>
-                  {result.item.name && result.item.name !== '\u2014' && (
+                  {result.item.name && result.item.name !== '—' && (
                     <span className="plp-runner-name">{result.item.name}</span>
                   )}
                 </div>
@@ -249,16 +445,7 @@ export default function PublicResultLookupPage() {
                 </div>
 
                 <div className="plp-stats-grid">
-                  <div className="plp-stat-col">
-                    <span className="plp-col-title">NA CATEGORIA</span>
-                    <div className="plp-stat-number">
-                      {result.item.posCat}
-                      <span className="plp-ord">&ordm;</span>
-                    </div>
-                    <span className="plp-col-sub">de {result.item.catTotal} atletas</span>
-                    <div className="plp-badge-cat">{result.item.category}</div>
-                  </div>
-
+                  {/* Opção 1: Classificação Geral (Sempre) */}
                   <div className="plp-stat-col">
                     <span className="plp-col-title">CLASSIFICA&Ccedil;&Atilde;O GERAL</span>
                     <div className="plp-stat-number">
@@ -268,11 +455,31 @@ export default function PublicResultLookupPage() {
                     <span className="plp-col-sub">de {result.item.geralTotal} atletas</span>
                     <div className="plp-badge-cat plp-badge-geral">GERAL</div>
                   </div>
+
+                  {/* Opção 2: Local (Masc/Fem) se local, ou Categoria (Masc/Fem) se visitante */}
+                  <div className="plp-stat-col">
+                    <span className="plp-col-title">{result.item.isLocal ? 'LOCAL' : 'CATEGORIA'}</span>
+                    <div className="plp-stat-number">
+                      {result.item.posCat}
+                      <span className="plp-ord">&ordm;</span>
+                    </div>
+                    <span className="plp-col-sub">de {result.item.catTotal} atletas</span>
+                    <div
+                      className="plp-badge-cat"
+                      style={result.item.isLocal ? {
+                        background: 'rgba(74, 222, 128, 0.15)',
+                        color: '#4ade80',
+                        border: '1px solid rgba(74, 222, 128, 0.4)'
+                      } : {}}
+                    >
+                      {result.item.category}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Mensagem de número não encontrado */}
+            {/* Mensagem de atleta não encontrado */}
             {result && !result.found && (
               <div className="plp-error-box">
                 <span className="plp-error-icon">&#9888;</span>

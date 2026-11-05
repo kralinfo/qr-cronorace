@@ -835,6 +835,33 @@
       text-align: right
     }
 
+    .rk-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(168, 85, 247, 0.2);
+      border-top-color: #a855f7;
+      border-radius: 50%;
+      animation: rkSpin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes rkSpin {
+      to { transform: rotate(360deg); }
+    }
+    .rk-loading-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 36px 16px;
+    }
+    .rk-loading-text {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #c084fc;
+      letter-spacing: 0.02em;
+    }
+
     .rk-empty {
       padding: 48px;
       text-align: center;
@@ -1170,8 +1197,12 @@
               </thead>
               <tbody id="arrivalsList" class="divide-y divide-[#2a1f45]/50 text-xs font-medium">
                 <tr>
-                  <td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o
-                    momento.</td>
+                  <td colspan="6" class="py-6 text-center">
+                    <div class="rk-loading-box">
+                      <div class="rk-spinner"></div>
+                      <span class="rk-loading-text">Carregando chegadas...</span>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -1279,7 +1310,12 @@
         </thead>
         <tbody id="rkTableBody">
           <tr>
-            <td colspan="6" class="rk-empty">Nenhum resultado registrado.</td>
+            <td colspan="6" style="padding: 24px 16px; text-align: center;">
+              <div class="rk-loading-box">
+                <div class="rk-spinner"></div>
+                <span class="rk-loading-text">Carregando classificação...</span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -1317,10 +1353,7 @@
       <button class="rk-btn rk-btn-ghost" onclick="backToChrono()">
         <i class="fa-solid fa-arrow-left"></i> Cronômetro
       </button>
-      <button class="rk-btn rk-btn-danger" onclick="resetTimer()"
-        title="Zerar chegadas e reabrir a corrida para nova largada">
-        <i class="fa-solid fa-rotate-left"></i> Reiniciar
-      </button>
+      
     </div>
 
   </div><!-- end rankingView -->
@@ -1388,6 +1421,74 @@
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ═══ Modal Personalizado: Encerrar Corrida ═══ -->
+  <div id="confirmFinishModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center"
+    onclick="if(event.target===this)closeConfirmFinishModal()">
+    <div
+      style="background:#151026;border:1.5px solid #7c3aed;border-radius:20px;padding:26px 24px 22px;max-width:420px;width:92%;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 50px rgba(0,0,0,0.85)"
+      onclick="event.stopPropagation()">
+      <!-- Título -->
+      <div>
+        <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:#fff">Encerrar Corrida</h3>
+        <span style="font-size:0.8rem;color:#94a3b8">Esta ação encerrará a corrida definitivamente</span>
+      </div>
+      <!-- Corpo -->
+      <div style="background:#0d0920;border:1px solid #2a1f45;border-radius:12px;padding:14px 16px">
+        <p style="margin:0;font-size:0.88rem;color:#cbd5e1;line-height:1.6">
+          Deseja realmente <strong style="color:#fff">encerrar esta corrida</strong>? O cronômetro será parado e a corrida passará para o status <strong style="color:#a78bfa">ENCERRADA</strong>.
+        </p>
+      </div>
+      <!-- Botões -->
+      <div style="display:flex;gap:10px">
+        <button onclick="closeConfirmFinishModal()"
+          style="flex:1;padding:11px 0;border-radius:12px;font-weight:700;font-size:.9rem;background:rgba(255,255,255,.06);border:1px solid #3b2d64;color:#94a3b8;cursor:pointer;transition:all .15s"
+          onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+          Cancelar
+        </button>
+        <button onclick="executeFinish()"
+          style="flex:1;padding:11px 0;border-radius:12px;font-weight:800;font-size:.9rem;background:linear-gradient(135deg,#dc2626,#9333ea);border:none;color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 16px rgba(220,38,38,0.35)"
+          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Encerrar Corrida
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Personalizado: Reiniciar Corrida ═══ -->
+  <div id="confirmResetModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center"
+    onclick="if(event.target===this)closeConfirmResetModal()">
+    <div
+      style="background:#151026;border:1.5px solid #d97706;border-radius:20px;padding:26px 24px 22px;max-width:420px;width:92%;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 50px rgba(0,0,0,0.85)"
+      onclick="event.stopPropagation()">
+      <!-- Título -->
+      <div>
+        <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:#fff">Reiniciar Corrida</h3>
+        <span style="font-size:0.8rem;color:#94a3b8">O cronômetro e o ranking serão zerados</span>
+      </div>
+      <!-- Corpo -->
+      <div style="background:#0d0920;border:1px solid #2a1f45;border-radius:12px;padding:14px 16px">
+        <p style="margin:0;font-size:0.88rem;color:#cbd5e1;line-height:1.6">
+          Deseja realmente <strong style="color:#fff">reiniciar o cronômetro</strong> e zerar todo o ranking de chegadas? A corrida ficará aberta para uma <strong style="color:#fbbf24">nova largada</strong>.
+        </p>
+      </div>
+      <!-- Botões -->
+      <div style="display:flex;gap:10px">
+        <button onclick="closeConfirmResetModal()"
+          style="flex:1;padding:11px 0;border-radius:12px;font-weight:700;font-size:.9rem;background:rgba(255,255,255,.06);border:1px solid #3b2d64;color:#94a3b8;cursor:pointer;transition:all .15s"
+          onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+          Cancelar
+        </button>
+        <button onclick="executeReset()"
+          style="flex:1;padding:11px 0;border-radius:12px;font-weight:800;font-size:.9rem;background:linear-gradient(135deg,#d97706,#b45309);border:none;color:#fff;cursor:pointer;transition:all .15s;box-shadow:0 4px 16px rgba(217,119,6,0.35)"
+          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Reiniciar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1711,6 +1812,7 @@
   <script>
     let timer = null, startTime = 0, elapsedTime = 0, isRunning = false, activeCategoryFilter = 'ALL', arrivals = [];
     let rkActiveFilter = 'ALL';
+    let isLoadingArrivals = true;
     let raceFinished = false;
     let unsubscribeResultsListener = null;
     let listeningResultsRaceId = null;
@@ -1790,8 +1892,12 @@
       }
     }
 
-    function getRaceEndMarkerKey(raceId) {
+        function getRaceEndMarkerKey(raceId) {
       return raceId ? `pwa-qr-timing:race-ended-at:${raceId}` : null;
+    }
+
+    function getRaceElapsedMarkerKey(raceId) {
+      return raceId ? `pwa-qr-timing:race-elapsed-ms:${raceId}` : null;
     }
 
     function setRaceEndedMarker(raceId, endTimeIso) {
@@ -1800,6 +1906,15 @@
         if (!key) return;
         if (!endTimeIso) return;
         localStorage.setItem(key, String(endTimeIso));
+      } catch (e) { }
+    }
+
+    function setRaceElapsedMarker(raceId, elapsedMs) {
+      try {
+        const key = getRaceElapsedMarkerKey(raceId);
+        if (!key) return;
+        if (!Number.isFinite(Number(elapsedMs))) return;
+        localStorage.setItem(key, String(elapsedMs));
       } catch (e) { }
     }
 
@@ -1813,11 +1928,23 @@
       }
     }
 
+    function getRaceElapsedMarker(raceId) {
+      try {
+        const key = getRaceElapsedMarkerKey(raceId);
+        if (!key) return 0;
+        const val = localStorage.getItem(key);
+        return val ? Number(val) : 0;
+      } catch (e) {
+        return 0;
+      }
+    }
+
     function clearRaceEndedMarker(raceId) {
       try {
         const key = getRaceEndMarkerKey(raceId);
-        if (!key) return;
-        localStorage.removeItem(key);
+        if (key) localStorage.removeItem(key);
+        const kElapsed = getRaceElapsedMarkerKey(raceId);
+        if (kElapsed) localStorage.removeItem(kElapsed);
       } catch (e) { }
     }
 
@@ -1860,13 +1987,31 @@
       } catch (e) { }
     }
 
+        
+    function updateRankingViewIfActive() {
+      const rankingView = document.getElementById('rankingView');
+      if (!rankingView || !rankingView.classList.contains('active')) return;
+      const name = getRaceName() || 'Corrida';
+      const nameEl = document.getElementById('rkRaceName');
+      if (nameEl) nameEl.textContent = name;
+      const totalEl = document.getElementById('rkTotalCount');
+      if (totalEl) totalEl.textContent = `${arrivals.length} corredor${arrivals.length !== 1 ? 'es' : ''}`;
+      const locals = arrivals.filter(a => isRunnerLocal(a)).length;
+      const localEl = document.getElementById('rkLocalCount');
+      if (localEl) localEl.textContent = `${locals} local${locals !== 1 ? 'is' : ''}`;
+      renderCategoryTabs();
+      rkFilter(rkActiveFilter || 'ALL');
+    }
     function restoreArrivalsFromCache() {
       const raceId = getActiveRaceId();
       if (!raceId) return false;
       const cached = loadArrivalsCache(raceId);
-      if (!cached) return false;
+      if (!cached || !cached.length) return false;
+      isLoadingArrivals = false;
       arrivals = recomputeArrivalsPositions(cached);
       renderArrivals();
+
+      updateRankingViewIfActive();
       return true;
     }
 
@@ -2026,8 +2171,13 @@
 
     async function resetTimer() {
       if (arrivals.length > 0 || raceFinished) {
-        if (!confirm('Deseja realmente reiniciar o cronômetro e zerar todo o ranking de chegadas? A corrida ficará aberta para uma nova largada.')) return;
+        openConfirmResetModal();
+        return;
       }
+      await _doReset();
+    }
+
+    async function _doReset() {
       if (isRunning) { clearInterval(timer); isRunning = false; }
       backToChrono();
       try {
@@ -2103,7 +2253,11 @@
       showToast('Corrida reiniciada! Pronta para uma nova largada.');
     }
     async function confirmFinish() {
-      if (!confirm('Deseja realmente encerrar esta corrida?')) return;
+      openConfirmFinishModal();
+    }
+
+    async function executeFinish() {
+      closeConfirmFinishModal();
       if (isRunning) { clearInterval(timer); isRunning = false; }
       const nowIso = new Date().toISOString();
       statusBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30 uppercase';
@@ -2130,6 +2284,7 @@
           }
           localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
           setRaceEndedMarker(race.id, nowIso);
+          setRaceElapsedMarker(race.id, elapsedTime);
           if (window.fbDb && window.fbSetDoc && window.fbDoc && race.id) {
             const patch = { endTime: nowIso, elapsedAtPause: elapsedTime };
             if (safeStartTime) patch.startTime = safeStartTime;
@@ -2169,6 +2324,9 @@
     }
 
     function showRankingView() {
+      if (arrivals.length === 0) {
+        restoreArrivalsFromCache();
+      }
       // Populate ranking header
       const name = getRaceName() || 'Corrida';
       document.getElementById('rkRaceName').textContent = name;
@@ -2204,6 +2362,31 @@
         }
       } catch (e) { }
     }
+
+    // ── Modais personalizados: Encerrar e Reiniciar ──────────────
+    function openConfirmFinishModal() {
+      const m = document.getElementById('confirmFinishModal');
+      m.style.display = 'flex';
+    }
+    function closeConfirmFinishModal() {
+      const m = document.getElementById('confirmFinishModal');
+      m.style.display = 'none';
+    }
+
+    function openConfirmResetModal() {
+      const m = document.getElementById('confirmResetModal');
+      m.style.display = 'flex';
+    }
+    function closeConfirmResetModal() {
+      const m = document.getElementById('confirmResetModal');
+      m.style.display = 'none';
+    }
+
+    async function executeReset() {
+      closeConfirmResetModal();
+      await _doReset();
+    }
+    // ─────────────────────────────────────────────────────────────
 
     function newRace() {
       if (!confirm('Iniciar uma nova corrida? Os dados atuais serão perdidos.')) return;
@@ -2255,16 +2438,16 @@
     }
 
     // ── Definições de Categorias e Filtros Configuráveis ──
-    const RK_STANDARD_CATEGORIES = [
+        const RK_STANDARD_CATEGORIES = [
       { key: 'ALL', label: 'GERAL', title: 'CLASSIFICAÇÃO GERAL', desc: 'Classificação geral com todos os corredores', defaultVisible: true },
       { key: 'MASCULINO', label: 'MASCULINO', title: 'CLASSIFICAÇÃO MASCULINO', desc: 'Todos os atletas masculinos (geral e local)', defaultVisible: true },
       { key: 'FEMININO', label: 'FEMININO', title: 'CLASSIFICAÇÃO FEMININO', desc: 'Todas as atletas femininas (geral e local)', defaultVisible: true },
       { key: 'LOCAL', label: 'LOCAL', title: 'CLASSIFICAÇÃO LOCAL', desc: 'Todos os atletas locais (homens e mulheres)', defaultVisible: true },
       { key: 'LOCAL MASC', label: 'LOCAL MASC', title: 'CLASSIFICAÇÃO LOCAL MASCULINO', desc: 'Atletas masculinos residentes no município', defaultVisible: true },
       { key: 'LOCAL FEM', label: 'LOCAL FEM', title: 'CLASSIFICAÇÃO LOCAL FEMININO', desc: 'Atletas femininas residentes no município', defaultVisible: true },
-      { key: 'PCD', label: 'PCD', title: 'CLASSIFICAÇÃO PCD', desc: 'Pessoas com Deficiência', defaultVisible: true },
-      { key: 'AGE_50', label: '+50', title: 'CLASSIFICAÇÃO +50', desc: 'Atletas com 50 anos ou mais', defaultVisible: true },
-      { key: 'AGE_45_49', label: '45-49', title: 'CLASSIFICAÇÃO 45-49', desc: 'Faixa etária de 45 a 49 anos', defaultVisible: true }
+      { key: 'PCD', label: 'PCD', title: 'CLASSIFICAÇÃO PCD', desc: 'Pessoas com Deficiência', defaultVisible: false },
+      { key: 'AGE_50', label: '+50', title: 'CLASSIFICAÇÃO +50', desc: 'Atletas com 50 anos ou mais', defaultVisible: false },
+      { key: 'AGE_45_49', label: '45-49', title: 'CLASSIFICAÇÃO 45-49', desc: 'Faixa etária de 45 a 49 anos', defaultVisible: false }
     ];
 
     function isRunnerLocal(a) {
@@ -2368,7 +2551,7 @@
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         }
       } catch (e) { }
-      return RK_STANDARD_CATEGORIES.map(c => c.key);
+      return RK_STANDARD_CATEGORIES.filter(c => c.defaultVisible !== false).map(c => c.key);
     }
 
     function renderCategoryTabs() {
@@ -2449,7 +2632,11 @@
       const filtered = sorted.filter(matchFilter);
       const tbody = document.getElementById('rkTableBody');
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="rk-empty">Nenhuma chegada nesta categoria.</td></tr>';
+        if (isLoadingArrivals) {
+          tbody.innerHTML = '<tr><td colspan="6" style="padding: 24px 16px; text-align: center;"><div class="rk-loading-box"><div class="rk-spinner"></div><span class="rk-loading-text">Carregando classificação...</span></div></td></tr>';
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="rk-empty">Nenhuma chegada nesta categoria.</td></tr>';
+        }
         return;
       }
       tbody.innerHTML = filtered.map((a, i) => {
@@ -2543,7 +2730,7 @@
     }
 
     function configureCategoriesResetDefault() {
-      const defaultSet = new Set(RK_STANDARD_CATEGORIES.map(c => c.key));
+      const defaultSet = new Set(RK_STANDARD_CATEGORIES.filter(c => c.defaultVisible !== false).map(c => c.key));
       const container = document.getElementById('configureCategoriesList');
       if (!container) return;
       const checkboxes = container.querySelectorAll('input[type="checkbox"]');
@@ -2815,6 +3002,7 @@
       );
 
       unsubscribeResultsListener = window.fbOnSnapshot(q, (snap) => {
+        isLoadingArrivals = false;
         let raceObj = getActiveRaceSafe();
         const startMs = raceObj?.startTime ? Date.parse(raceObj.startTime) : NaN;
 
@@ -2914,6 +3102,7 @@
           arrivals = recomputedArrivals;
           saveArrivalsCache(raceId, arrivals);
           renderArrivals();
+          updateRankingViewIfActive();
         }
       });
 
@@ -2975,7 +3164,11 @@
             : arrivals.filter(a => String(a.category || '').toUpperCase().includes(activeCategoryFilter));
 
       if (filtered.length === 0) {
-        arrivalsList.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>';
+        if (isLoadingArrivals) {
+          arrivalsList.innerHTML = '<tr><td colspan="6" class="py-6 text-center"><div class="rk-loading-box"><div class="rk-spinner"></div><span class="rk-loading-text">Carregando chegadas...</span></div></td></tr>';
+        } else {
+          arrivalsList.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma chegada registrada até o momento.</td></tr>';
+        }
         return;
       }
       arrivalsList.innerHTML = filtered.map(a => `
@@ -3439,7 +3632,14 @@
         special: overrides.special !== undefined ? overrides.special : parts.special
       });
 
-      matches.forEach(a => { a.category = nextCategory; });
+      matches.forEach(a => {
+        a.category = nextCategory;
+        a.isLocal = nextCategory.includes('LOCAL');
+      });
+
+      try {
+        saveArrivalsCache(getActiveRaceId(), arrivals);
+      } catch (e) { }
 
       try {
         if (window.fbDb && window.fbSetDoc && window.fbDoc) {
@@ -4040,21 +4240,26 @@
     function applyLiveRaceState(race) {
       if (!race) return;
       const raceId = race.id || getActiveRaceId();
+      const endedMarker = getRaceEndedMarker(raceId);
+      const effectiveEndTime = race.endTime || endedMarker;
+      const elapsedMarker = getRaceElapsedMarker(raceId);
 
-      // CASO 0: CORRIDA ENCERRADA
-      if (race.endTime) {
-        setRaceEndedMarker(raceId, race.endTime);
+      // CASO 0: CORRIDA ENCERRADA (permanece encerrada até reset explícito do usuário)
+      if (effectiveEndTime) {
+        setRaceEndedMarker(raceId, effectiveEndTime);
         if (isRunning) {
           clearInterval(timer);
           isRunning = false;
         }
         raceFinished = true;
         const startMs = Date.parse(race.startTime) || 0;
-        const endMs = Date.parse(race.endTime) || 0;
+        const endMs = Date.parse(effectiveEndTime) || 0;
         if (startMs && endMs && endMs >= startMs) {
           elapsedTime = endMs - startMs;
         } else if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
           elapsedTime = race.elapsedAtPause;
+        } else if (elapsedMarker > 0) {
+          elapsedTime = elapsedMarker;
         }
         formatTime(elapsedTime);
 
@@ -4082,7 +4287,6 @@
 
       // CASO 1: CORRIDA NÃO INICIADA OU REINICIADA (startTime é nulo) -> SEMPRE ZERA EM 00:00:00
       if (!race.startTime) {
-        clearRaceEndedMarker(raceId);
         if (isRunning) {
           clearInterval(timer);
           isRunning = false;
@@ -4115,7 +4319,6 @@
 
       // CASO 2: CORRIDA PAUSADA (startTime existe e pauseTime existe)
       if (race.startTime && race.pauseTime && !race.endTime) {
-        clearRaceEndedMarker(raceId);
         raceFinished = false;
         if (isRunning) { clearInterval(timer); isRunning = false; }
 
@@ -4150,7 +4353,6 @@
 
       // CASO 3: CORRIDA EM ANDAMENTO (possui startTime e não possui endTime nem pauseTime)
       if (race.startTime && !race.endTime && !race.pauseTime) {
-        clearRaceEndedMarker(raceId);
         raceFinished = false;
         const startMs = Date.parse(race.startTime);
         if (startMs) {
@@ -4221,24 +4423,32 @@
 
     function initRaceState() {
       try {
+        restoreArrivalsFromCache();
         const race = getActiveRaceSafe();
         if (!race) return;
-        const endedAtMarker = getRaceEndedMarker(race.id || getActiveRaceId());
-        if (race.endTime === null) {
-          clearRaceEndedMarker(race.id || getActiveRaceId());
-        } else if (!race.endTime && endedAtMarker) {
-          race.endTime = endedAtMarker;
-          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+        const raceId = race.id || getActiveRaceId();
+        const endedAtMarker = getRaceEndedMarker(raceId);
+        const elapsedMarker = getRaceElapsedMarker(raceId);
+
+        if (endedAtMarker) {
+          race.endTime = race.endTime || endedAtMarker;
+          if (elapsedMarker > 0 && (!race.elapsedAtPause || race.elapsedAtPause <= 0)) {
+            race.elapsedAtPause = elapsedMarker;
+          }
+          try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race)); } catch(e){}
         }
 
         if (race.endTime) {
           raceFinished = true;
+          if (isRunning) { clearInterval(timer); isRunning = false; }
           const startMs = Date.parse(race.startTime) || 0;
           const endMs = Date.parse(race.endTime) || 0;
           if (startMs && endMs && endMs >= startMs) {
             elapsedTime = endMs - startMs;
           } else if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
             elapsedTime = race.elapsedAtPause;
+          } else if (elapsedMarker > 0) {
+            elapsedTime = elapsedMarker;
           } else {
             elapsedTime = 0;
           }
@@ -4263,7 +4473,9 @@
             btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 active:scale-95 transition-all';
             btn.onclick = showRankingView;
           }
+          return;
         } else if (!race.startTime) {
+          isLoadingArrivals = false;
           // CORRIDA NÃO INICIADA OU REINICIADA: ZERA SEMPRE EM 00:00:00
           raceFinished = false;
           if (isRunning) { clearInterval(timer); isRunning = false; }
@@ -4569,6 +4781,17 @@
     });
 
     initRaceState();
+    /* fallback loading timeout */
+    setTimeout(() => {
+      if (isLoadingArrivals) {
+        isLoadingArrivals = false;
+        if (arrivals.length === 0) {
+          renderArrivals();
+          renderRankingTable();
+        }
+      }
+    }, 2500);
+
 
     setTimeout(() => {
       if (typeof window.startFirebaseListening === 'function') {
