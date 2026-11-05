@@ -1862,6 +1862,11 @@
 
     function getActiveRaceId() {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromUrl = urlParams.get('t') || urlParams.get('raceId') || urlParams.get('corrida');
+        if (fromUrl && fromUrl !== 'live') {
+          return fromUrl;
+        }
         const byId = localStorage.getItem('pwa-qr-timing:active-race-id');
         if (byId) return byId;
         const raw = localStorage.getItem('pwa-qr-timing:active-race');
