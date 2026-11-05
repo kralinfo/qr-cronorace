@@ -1266,7 +1266,13 @@ useEffect(() => {
             <button
               type="button"
               className="race-config-start-btn race-config-start-btn--finished"
-              onClick={() => onNavigate?.('chronometer')}
+              onClick={() => {
+                try {
+                  sessionStorage.setItem('chrono_active_view', 'ranking')
+                  localStorage.setItem('chrono_active_view', 'ranking')
+                } catch(e){}
+                onNavigate?.('chronometer')
+              }}
             >
               <IconMenu size={20} /> VER INFORMAÇÕES
             </button>
@@ -1279,6 +1285,10 @@ useEffect(() => {
                   alert('Confirme a corrida antes de ir para o cronômetro.')
                   return
                 }
+                try {
+                  sessionStorage.setItem('chrono_active_view', 'chrono')
+                  localStorage.setItem('chrono_active_view', 'chrono')
+                } catch(e){}
                 onNavigate?.('chronometer')
               }}
             >

@@ -1877,6 +1877,10 @@
 
     function goToHome() {
       // NUNCA disparar RACE_RESET ao voltar para a home!
+      try {
+        sessionStorage.setItem('chrono_active_view', 'chrono');
+        localStorage.setItem('chrono_active_view', 'chrono');
+      } catch (e) { }
       try { if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'NAVIGATE', tab: 'home' }, '*'); return; } } catch (e) { }
       window.location.href = '/';
     }
@@ -2026,6 +2030,10 @@
       }
       if (isRunning) { clearInterval(timer); isRunning = false; }
       backToChrono();
+      try {
+        sessionStorage.setItem('chrono_active_view', 'chrono');
+        localStorage.setItem('chrono_active_view', 'chrono');
+      } catch (e) { }
 
       elapsedTime = 0; formatTime(0);
       arrivals = []; renderArrivals();
@@ -2175,6 +2183,7 @@
 
       try {
         sessionStorage.setItem('chrono_active_view', 'ranking');
+        localStorage.setItem('chrono_active_view', 'ranking');
         if (window.location.hash !== '#ranking') {
           history.replaceState(null, '', '#ranking');
         }
@@ -2189,6 +2198,7 @@
       document.getElementById('chronoView').classList.remove('hidden-view');
       try {
         sessionStorage.setItem('chrono_active_view', 'chrono');
+        localStorage.setItem('chrono_active_view', 'chrono');
         if (window.location.hash === '#ranking') {
           history.replaceState(null, '', window.location.pathname + window.location.search);
         }
@@ -4332,14 +4342,23 @@
 
       // Restaura a visualização anterior (Ranking vs Cronômetro) ao recarregar a página
       try {
-        const savedView = sessionStorage.getItem('chrono_active_view');
+        const savedView = sessionStorage.getItem('chrono_active_view') || localStorage.getItem('chrono_active_view');
         const isHashRanking = window.location.hash === '#ranking';
         const urlParams = new URLSearchParams(window.location.search);
         const isUrlRanking = urlParams.get('view') === 'ranking';
         const raceObj = getActiveRaceSafe();
 
-        if (savedView === 'ranking' || isHashRanking || isUrlRanking || (raceObj?.endTime && savedView !== 'chrono')) {
+        // Se a corrida NÃO foi iniciada (startTime nulo) ou foi reiniciada, NUNCA abre no ranking! Abre sempre no cronômetro zerado.
+        if (!raceObj?.startTime) {
+          try {
+            sessionStorage.setItem('chrono_active_view', 'chrono');
+            localStorage.setItem('chrono_active_view', 'chrono');
+          } catch(e){}
+          backToChrono();
+        } else if (savedView === 'ranking' || isHashRanking || isUrlRanking) {
           showRankingView();
+        } else {
+          backToChrono();
         }
       } catch (errView) {
         console.warn('Erro ao restaurar visualização ativa:', errView);
