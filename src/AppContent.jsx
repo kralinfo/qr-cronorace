@@ -190,12 +190,12 @@ function InnerAppContent() {
       } else if (event.data?.type === 'RECORD_ARRIVAL') {
         handleRecordArrival(event.data)
         if (navigator.vibrate) {
-          try { navigator.vibrate([350, 100, 350, 100, 500]) } catch (e) {}
+          try { navigator.vibrate([200]) } catch (e) {}
         }
       } else if (event.data?.type === 'VIBRATE') {
         if (navigator.vibrate) {
           try {
-            const pat = event.data?.pattern || [350, 100, 350, 100, 500]
+            const pat = event.data?.pattern || [200]
             navigator.vibrate(pat)
           } catch (e) {}
         }
@@ -304,7 +304,7 @@ function InnerAppContent() {
             ref={chronometerFrameRef}
             src={`/chronometer.html?t=${activeRace?.id || "live"}`}
             title="Cronômetro"
-            allow="autoplay"
+            allow="autoplay; vibrate"
             scrolling="no"
             tabIndex={0}
             onLoad={() => focusChronometerFrame()}

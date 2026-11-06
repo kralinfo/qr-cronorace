@@ -4289,7 +4289,7 @@
     // ── Vibração + Tremor de Tela + Bip Sonoro ao detectar nova chegada ──────────
     function triggerArrivalFeedback(lastArrival, count = 1) {
       // 1. Vibração de alta intensidade (padrão rítmico forte e longo)
-      const vibPattern = [350, 100, 350, 100, 500];
+      const vibPattern = [200];
       // 1a. Envia para a janela pai (top-level) furando restrição de permissão de iframe
       try {
         if (window.parent && window.parent !== window) {
