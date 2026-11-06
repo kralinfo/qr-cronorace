@@ -73,17 +73,35 @@ export function ActiveRaceProvider({ children }) {
     const handleResetEvent = (e) => {
       const data = e?.data
       if (data?.type === 'RACE_RESET') {
+        const resetId = data.raceId || activeRace?.id
+        if (resetId) {
+          try {
+            localStorage.removeItem(`pwa-qr-timing:race-ended-at:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:chronometer-arrivals:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:arrivals-cache:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:race-paused-at:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:race-paused-ms:${resetId}`)
+          } catch (err) {}
+        }
         setActiveRace(prev => {
           if (!prev) return null
-          const reset = { ...prev, startTime: null, endTime: null, elapsedAtPause: null, pauseTime: null }
+          const reset = { ...prev, startTime: null, originalStartTime: null, endTime: null, elapsedAtPause: null, pauseTime: null }
           try {
             localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(reset))
-            if (prev.id) {
-              localStorage.removeItem(`pwa-qr-timing:race-ended-at:${prev.id}`)
-              localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${prev.id}`)
-            }
           } catch (err) {}
           return reset
+        })
+      } else if (data?.type === 'RACE_PAUSED') {
+        setActiveRace(prev => {
+          if (!prev) return null
+          const updated = {
+            ...prev,
+            pauseTime: data.pauseTime || new Date().toISOString(),
+            elapsedAtPause: typeof data.elapsedAtPause === 'number' ? data.elapsedAtPause : prev.elapsedAtPause
+          }
+          try { localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(updated)) } catch (err) {}
+          return updated
         })
       } else if (data?.type === 'RACE_FINISHED') {
         const finishedId = data.raceId || activeRace?.id

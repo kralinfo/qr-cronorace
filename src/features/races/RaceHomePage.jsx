@@ -1293,7 +1293,13 @@ useEffect(() => {
                 onNavigate?.('chronometer')
               }}
             >
-              <IconPlay size={20} /> {activeRace?.startTime ? 'CONTINUAR CRONÔMETRO' : 'INICIAR CRONÔMETRO'}
+              <IconPlay size={20} /> {
+                activeRace?.pauseTime
+                  ? 'IR PARA O CRONÔMETRO (PAUSADO)'
+                  : activeRace?.startTime
+                    ? 'IR PARA O CRONÔMETRO'
+                    : 'INICIAR CRONÔMETRO'
+              }
             </button>
           )
           })()}

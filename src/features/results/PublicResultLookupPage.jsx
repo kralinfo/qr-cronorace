@@ -60,6 +60,7 @@ export default function PublicResultLookupPage() {
   const [bibInput, setBibInput] = useState('')
   const [searching, setSearching] = useState(false)
   const [result, setResult] = useState(null)
+  const [activeSearchedNum, setActiveSearchedNum] = useState(null)
 
   // 1. Busca dados da corrida (Firestore com fallback para localStorage)
   useEffect(() => {
@@ -301,10 +302,11 @@ export default function PublicResultLookupPage() {
     const digits = bibInput.trim().replace(/\D/g, '')
     if (!digits) return
 
+    const targetNum = parseInt(digits, 10)
+    setActiveSearchedNum(targetNum)
     setSearching(true)
     setResult(null)
 
-    const targetNum = parseInt(digits, 10)
     const ranked = buildRanking()
 
     const found = ranked.find((item) => {
@@ -324,6 +326,19 @@ export default function PublicResultLookupPage() {
       setSearching(false)
     }, 180)
   }
+
+  // 8. Atualiza em tempo real a colocação do corredor na tela quando novas chegadas entrarem
+  useEffect(() => {
+    if (!activeSearchedNum) return
+    const ranked = buildRanking()
+    const found = ranked.find((item) => {
+      const itemNum = String(item.bib).replace(/\D/g, '')
+      return itemNum && parseInt(itemNum, 10) === activeSearchedNum
+    })
+    if (found) {
+      setResult({ found: true, item: found })
+    }
+  }, [allPlacements, activeSearchedNum])
 
   if (notFound) {
     return (

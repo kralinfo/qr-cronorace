@@ -216,9 +216,12 @@ export function subscribeToRace(raceId, onChange) {
 
 /** @param {string} raceId */
 export async function resetRaceToPending(raceId) {
+  if (!raceId) return
   await updateDoc(doc(db, COLLECTIONS.races, raceId), {
     startTime: null,
     endTime: null,
-    elapsedAtPause: 0
+    pauseTime: null,
+    elapsedAtPause: null,
+    originalStartTime: null
   })
 }

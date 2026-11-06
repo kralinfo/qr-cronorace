@@ -7,6 +7,7 @@ import RaceHomePage from './features/races/RaceHomePage.jsx'
 import { ActiveRaceProvider, useActiveRace } from './features/races/ActiveRaceContext.jsx'
 import { useRunners } from './features/runners/useRunners.js'
 import { addResult, deleteAllResultsByRace } from './features/results/results.repository.js'
+import { resetRaceToPending } from './features/races/races.repository.js'
 import { getStoredActiveRaceId } from './features/races/active-race.storage.js'
 import { isBatchPrintActive } from './features/races/batch-print.controller.js'
 import BottomNav from './shared/BottomNav.jsx'
@@ -208,10 +209,30 @@ function InnerAppContent() {
             elapsedAtPause: typeof event.data.elapsedAtPause === 'number' ? event.data.elapsedAtPause : activeRace.elapsedAtPause
           })
         }
-      } else if (event.data?.type === 'RACE_RESET') {
-        // NÃO deletamos resultados aqui - chronometer.html já faz isso (evitar race condition)
+      } else if (event.data?.type === 'RACE_PAUSED') {
         if (activeRace) {
-          selectRace({ ...activeRace, startTime: null, endTime: null, elapsedAtPause: null, pauseTime: null })
+          selectRace({
+            ...activeRace,
+            pauseTime: event.data.pauseTime,
+            elapsedAtPause: typeof event.data.elapsedAtPause === 'number' ? event.data.elapsedAtPause : activeRace.elapsedAtPause
+          })
+        }
+      } else if (event.data?.type === 'RACE_RESET') {
+        const resetId = event.data?.raceId || activeRace?.id
+        if (resetId) {
+          resetRaceToPending(resetId).catch(console.error)
+          deleteAllResultsByRace(resetId).catch(console.error)
+          try {
+            localStorage.removeItem(`pwa-qr-timing:race-ended-at:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:chronometer-arrivals:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:arrivals-cache:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:race-paused-at:${resetId}`)
+            localStorage.removeItem(`pwa-qr-timing:race-paused-ms:${resetId}`)
+          } catch (e) {}
+        }
+        if (activeRace) {
+          selectRace({ ...activeRace, startTime: null, originalStartTime: null, endTime: null, elapsedAtPause: null, pauseTime: null })
         }
       }
     }
@@ -232,9 +253,30 @@ function InnerAppContent() {
               elapsedAtPause: typeof event.data.elapsedAtPause === 'number' ? event.data.elapsedAtPause : activeRace.elapsedAtPause
             })
           }
-        } else if (event.data?.type === 'RACE_RESET') {
+        } else if (event.data?.type === 'RACE_PAUSED') {
           if (activeRace) {
-            selectRace({ ...activeRace, startTime: null, endTime: null, elapsedAtPause: null, pauseTime: null })
+            selectRace({
+              ...activeRace,
+              pauseTime: event.data.pauseTime,
+              elapsedAtPause: typeof event.data.elapsedAtPause === 'number' ? event.data.elapsedAtPause : activeRace.elapsedAtPause
+            })
+          }
+        } else if (event.data?.type === 'RACE_RESET') {
+          const resetId = event.data?.raceId || activeRace?.id
+          if (resetId) {
+            resetRaceToPending(resetId).catch(console.error)
+            deleteAllResultsByRace(resetId).catch(console.error)
+            try {
+              localStorage.removeItem(`pwa-qr-timing:race-ended-at:${resetId}`)
+              localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${resetId}`)
+              localStorage.removeItem(`pwa-qr-timing:chronometer-arrivals:${resetId}`)
+              localStorage.removeItem(`pwa-qr-timing:arrivals-cache:${resetId}`)
+              localStorage.removeItem(`pwa-qr-timing:race-paused-at:${resetId}`)
+              localStorage.removeItem(`pwa-qr-timing:race-paused-ms:${resetId}`)
+            } catch (e) {}
+          }
+          if (activeRace) {
+            selectRace({ ...activeRace, startTime: null, originalStartTime: null, endTime: null, elapsedAtPause: null, pauseTime: null })
           }
         }
       }

@@ -66,7 +66,7 @@
       box-sizing: border-box;
     }
 
-        #chronoView>header,
+    #chronoView>header,
     #chronoView>footer {
       display: flex;
       align-items: center;
@@ -880,9 +880,13 @@
       animation: rkSpin 0.8s linear infinite;
       display: inline-block;
     }
+
     @keyframes rkSpin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
+
     .rk-loading-box {
       display: flex;
       flex-direction: column;
@@ -891,6 +895,7 @@
       gap: 10px;
       padding: 36px 16px;
     }
+
     .rk-loading-text {
       font-size: 0.86rem;
       font-weight: 700;
@@ -1063,11 +1068,13 @@
         border-radius: 14px !important;
         gap: 8px !important;
       }
+
       .edit-ranking-orient-bar {
         padding: 8px 10px !important;
         font-size: 0.73rem !important;
         gap: 6px !important;
       }
+
       .edit-ranking-orient-text {
         font-size: 0.73rem !important;
       }
@@ -1169,7 +1176,8 @@
         <div class="flex items-center gap-2">
           <div
             class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <i class="fa-solid fa-clock text-white text-base"></i></div>
+            <i class="fa-solid fa-clock text-white text-base"></i>
+          </div>
         </div>
       </div>
       <div id="statusBadge"
@@ -1276,13 +1284,18 @@
       </section>
     </main>
 
-        <footer
-      class="w-full shrink-0 bg-[#120d24]/95 border-t border-[#2a1f45] px-4 py-2.5 flex items-center justify-between gap-3 z-30 box-border">
-            <button id="btnFinish" onclick="confirmFinish()"
+    <footer
+      class="w-full shrink-0 bg-[#120d24]/95 border-t border-[#2a1f45] px-3 py-2.5 flex items-center justify-between gap-2 z-30 box-border">
+      <button id="btnFinish" onclick="confirmFinish()"
         class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all whitespace-nowrap">🏁
         ENCERRAR</button>
+      <button onclick="shareResultsLink()"
+        class="px-3.5 py-2.5 rounded-xl font-bold text-xs bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap"
+        title="Compartilhar link de consulta individual para os atletas">
+        <i class="fa-solid fa-share-nodes"></i> Compartilhar Link
+      </button>
       <button onclick="resetTimer()"
-        class="px-5 py-2.5 rounded-xl font-bold text-sm bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 active:scale-95 transition-all whitespace-nowrap">×
+        class="px-4 py-2.5 rounded-xl font-bold text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 active:scale-95 transition-all whitespace-nowrap">×
         Reiniciar</button>
     </footer>
 
@@ -1418,7 +1431,7 @@
       <button class="rk-btn rk-btn-ghost" onclick="backToChrono()">
         <i class="fa-solid fa-arrow-left"></i> Cronômetro
       </button>
-      
+
     </div>
 
   </div><!-- end rankingView -->
@@ -1504,14 +1517,16 @@
       <!-- Corpo -->
       <div style="background:#0d0920;border:1px solid #2a1f45;border-radius:12px;padding:14px 16px">
         <p style="margin:0;font-size:0.88rem;color:#cbd5e1;line-height:1.6">
-          Deseja realmente <strong style="color:#fff">encerrar esta corrida</strong>? O cronômetro será parado e a corrida passará para o status <strong style="color:#a78bfa">ENCERRADA</strong>.
+          Deseja realmente <strong style="color:#fff">encerrar esta corrida</strong>? O cronômetro será parado e a
+          corrida passará para o status <strong style="color:#a78bfa">ENCERRADA</strong>.
         </p>
       </div>
       <!-- Botões -->
       <div style="display:flex;gap:10px">
         <button onclick="closeConfirmFinishModal()"
           style="flex:1;padding:11px 0;border-radius:12px;font-weight:700;font-size:.9rem;background:rgba(255,255,255,.06);border:1px solid #3b2d64;color:#94a3b8;cursor:pointer;transition:all .15s"
-          onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+          onmouseover="this.style.background='rgba(255,255,255,.1)'"
+          onmouseout="this.style.background='rgba(255,255,255,.06)'">
           Cancelar
         </button>
         <button onclick="executeFinish()"
@@ -1538,14 +1553,16 @@
       <!-- Corpo -->
       <div style="background:#0d0920;border:1px solid #2a1f45;border-radius:12px;padding:14px 16px">
         <p style="margin:0;font-size:0.88rem;color:#cbd5e1;line-height:1.6">
-          Deseja realmente <strong style="color:#fff">reiniciar o cronômetro</strong> e zerar todo o ranking de chegadas? A corrida ficará aberta para uma <strong style="color:#fbbf24">nova largada</strong>.
+          Deseja realmente <strong style="color:#fff">reiniciar o cronômetro</strong> e zerar todo o ranking de
+          chegadas? A corrida ficará aberta para uma <strong style="color:#fbbf24">nova largada</strong>.
         </p>
       </div>
       <!-- Botões -->
       <div style="display:flex;gap:10px">
         <button onclick="closeConfirmResetModal()"
           style="flex:1;padding:11px 0;border-radius:12px;font-weight:700;font-size:.9rem;background:rgba(255,255,255,.06);border:1px solid #3b2d64;color:#94a3b8;cursor:pointer;transition:all .15s"
-          onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+          onmouseover="this.style.background='rgba(255,255,255,.1)'"
+          onmouseout="this.style.background='rgba(255,255,255,.06)'">
           Cancelar
         </button>
         <button onclick="executeReset()"
@@ -1778,8 +1795,7 @@
   <div id="editRankingOrderModal"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:9998;align-items:center;justify-content:center"
     onclick="if(event.target===this)closeEditRankingOrderModal()">
-    <div
-      class="edit-ranking-order-card"
+    <div class="edit-ranking-order-card"
       style="background:#151026;border:1px solid #2a1f45;border-radius:18px;padding:22px;max-width:760px;width:94%;max-height:90vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 24px 48px rgba(0,0,0,0.85);box-sizing:border-box"
       onclick="event.stopPropagation()">
 
@@ -1802,10 +1818,10 @@
       </div>
 
       <!-- Barra de Orientação -->
-      <div
-        class="edit-ranking-orient-bar"
+      <div class="edit-ranking-orient-bar"
         style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div class="edit-ranking-orient-text" style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#fbcfe8;font-weight:600">
+        <div class="edit-ranking-orient-text"
+          style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#fbcfe8;font-weight:600">
           <i class="fa-solid fa-hand-pointer" style="color:#ec4899;font-size:0.95rem;flex-shrink:0"></i>
           <span><strong>Como funciona:</strong> Arraste o atleta para a colocação desejada ou use ▲ ▼.</span>
         </div>
@@ -1873,9 +1889,9 @@
     if (typeof window.startRaceDocumentListening === 'function') {
       window.startRaceDocumentListening();
     }
-      if (typeof window.startRunnersListening === 'function') {
-        window.startRunnersListening();
-      }
+    if (typeof window.startRunnersListening === 'function') {
+      window.startRunnersListening();
+    }
   </script>
 
   <script>
@@ -1902,7 +1918,7 @@
     const arrivalsList = document.getElementById('arrivalsList');
     const countTotal = document.getElementById('countTotal');
 
-        function canFocusBibInput() {
+    function canFocusBibInput() {
       if (!bibInput) return false;
       if (bibInput.disabled) return false;
       if (raceFinished) return false;
@@ -1969,7 +1985,7 @@
       }
     }
 
-        function getRaceEndMarkerKey(raceId) {
+    function getRaceEndMarkerKey(raceId) {
       return raceId ? `pwa-qr-timing:race-ended-at:${raceId}` : null;
     }
 
@@ -2064,7 +2080,7 @@
       } catch (e) { }
     }
 
-        
+
     function updateRankingViewIfActive() {
       const rankingView = document.getElementById('rankingView');
       if (!rankingView || !rankingView.classList.contains('active')) return;
@@ -2171,7 +2187,13 @@
         // Salva startTime na corrida ao iniciar/retomar e limpa pauseTime
         try {
           const race = getActiveRaceSafe();
-          if (race?.id) {
+          const raceId = race?.id || getActiveRaceId();
+          if (raceId) {
+            try {
+              localStorage.removeItem(`pwa-qr-timing:race-paused-at:${raceId}`);
+              localStorage.removeItem(`pwa-qr-timing:race-paused-ms:${raceId}`);
+            } catch (e) { }
+
             const newStartIso = new Date(startTime).toISOString();
             const patch = {
               startTime: newStartIso,
@@ -2179,17 +2201,19 @@
               elapsedAtPause: null,
               endTime: null
             };
-            if (!race.originalStartTime) {
-              patch.originalStartTime = race.startTime || newStartIso;
+            if (!race?.originalStartTime) {
+              patch.originalStartTime = race?.startTime || newStartIso;
             }
-            localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
+            if (race) {
+              localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
+            }
             if (window.fbDb && window.fbSetDoc && window.fbDoc) {
-              window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
+              window.fbSetDoc(window.fbDoc(window.fbDb, 'races', raceId), patch, { merge: true });
             }
             try {
               const startMsg = {
                 type: 'RACE_STARTED',
-                raceId: race.id,
+                raceId: raceId,
                 startTime: patch.startTime,
                 originalStartTime: patch.originalStartTime
               };
@@ -2207,15 +2231,33 @@
         statusText.textContent = 'Pausado';
         scheduleBibInputFocus();
 
-        // Salva estado de pausa no Firestore para sincronizar com celular
+        // Salva estado de pausa no Firestore e notifica parent para manter pausado
         try {
           const race = getActiveRaceSafe();
-          if (race?.id) {
-            const patch = { pauseTime: new Date().toISOString(), elapsedAtPause: elapsedTime };
-            localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
-            if (window.fbDb && window.fbSetDoc && window.fbDoc) {
-              window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), patch, { merge: true });
+          const raceId = race?.id || getActiveRaceId();
+          if (raceId) {
+            const nowIso = new Date().toISOString();
+            const patch = { pauseTime: nowIso, elapsedAtPause: elapsedTime };
+            try {
+              localStorage.setItem(`pwa-qr-timing:race-paused-at:${raceId}`, nowIso);
+              localStorage.setItem(`pwa-qr-timing:race-paused-ms:${raceId}`, String(elapsedTime));
+            } catch (e) { }
+            if (race) {
+              localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify({ ...race, ...patch }));
             }
+            if (window.fbDb && window.fbSetDoc && window.fbDoc) {
+              window.fbSetDoc(window.fbDoc(window.fbDb, 'races', raceId), patch, { merge: true });
+            }
+            try {
+              const pauseMsg = {
+                type: 'RACE_PAUSED',
+                raceId: raceId,
+                pauseTime: nowIso,
+                elapsedAtPause: elapsedTime
+              };
+              if (window.parent && window.parent !== window) window.parent.postMessage(pauseMsg, '*');
+              const bcPause = new BroadcastChannel('qr-cronorace-channel'); bcPause.postMessage(pauseMsg); bcPause.close();
+            } catch (e) { }
           }
         } catch (e) { }
       }
@@ -2294,39 +2336,47 @@
       btn.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
       btn.onclick = confirmFinish;
 
-      // 1. Apaga todos os resultados desta corrida no Firestore
+      // 1. Apaga todos os resultados desta corrida no Firestore (tempo dos corredores e ordem)
       await deleteAllResultsForRace();
 
-      // 2. Reabre a corrida no Firestore e no localStorage (limpando startTime e endTime)
+      // 2. Limpa todos os tempos da corrida no Firestore e no localStorage
       try {
         const race = getActiveRaceSafe();
-        if (race) {
-          race.startTime = null;
-          race.endTime = null;
-          race.pauseTime = null;
-          race.elapsedAtPause = null;
-          race.originalStartTime = null;
-          localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+        const raceId = race?.id || getActiveRaceId();
+        if (raceId) {
+          clearRaceEndedMarker(raceId);
+          clearArrivalsCache(raceId);
+          try { localStorage.removeItem(`pwa-qr-timing:race-ended-at:${raceId}`); } catch (e) { }
+          try { localStorage.removeItem(`pwa-qr-timing:race-elapsed-ms:${raceId}`); } catch (e) { }
+          try { localStorage.removeItem(`pwa-qr-timing:chronometer-arrivals:${raceId}`); } catch (e) { }
+          try { localStorage.removeItem(`pwa-qr-timing:arrivals-cache:${raceId}`); } catch (e) { }
 
-          if (window.fbDb && window.fbSetDoc && window.fbDoc && race.id) {
-            await window.fbSetDoc(window.fbDoc(window.fbDb, 'races', race.id), {
-              startTime: null,
-              endTime: null,
-              pauseTime: null,
-              elapsedAtPause: null,
-              originalStartTime: null
-            }, { merge: true });
+          const resetPatch = {
+            startTime: null,
+            endTime: null,
+            pauseTime: null,
+            elapsedAtPause: null,
+            originalStartTime: null
+          };
+
+          if (race) {
+            Object.assign(race, resetPatch);
+            localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
+          }
+
+          if (window.fbDb && window.fbDoc) {
+            await window.fbSetDoc(window.fbDoc(window.fbDb, 'races', raceId), resetPatch, { merge: true });
           }
 
           // Notifica React parent
           if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'RACE_RESET', raceId: race.id }, '*');
+            window.parent.postMessage({ type: 'RACE_RESET', raceId: raceId }, '*');
           }
 
           // BroadcastChannel
           try {
             const bc = new BroadcastChannel('qr-cronorace-channel');
-            bc.postMessage({ type: 'RACE_RESET', raceId: race.id });
+            bc.postMessage({ type: 'RACE_RESET', raceId: raceId });
             bc.close();
           } catch (e) { }
         }
@@ -2369,7 +2419,7 @@
         localStorage.setItem('pwa-qr-timing:active-race', JSON.stringify(race));
         setRaceEndedMarker(raceId, nowIso);
         setRaceElapsedMarker(raceId, finalElapsedMs);
-      } catch(e){}
+      } catch (e) { }
 
       // Atualiza o Firestore imediatamente (essencial para sincronizar todos os dispositivos/PWA)
       if (window.fbDb && window.fbSetDoc && window.fbDoc && raceId) {
@@ -2530,7 +2580,7 @@
     }
 
     // ── Definições de Categorias e Filtros Configuráveis ──
-        const RK_STANDARD_CATEGORIES = [
+    const RK_STANDARD_CATEGORIES = [
       { key: 'ALL', label: 'GERAL', title: 'CLASSIFICAÇÃO GERAL', desc: 'Classificação geral com todos os corredores', defaultVisible: true },
       { key: 'MASCULINO', label: 'MASCULINO', title: 'CLASSIFICAÇÃO MASCULINO', desc: 'Todos os atletas masculinos (geral e local)', defaultVisible: true },
       { key: 'FEMININO', label: 'FEMININO', title: 'CLASSIFICAÇÃO FEMININO', desc: 'Todas as atletas femininas (geral e local)', defaultVisible: true },
@@ -3725,7 +3775,7 @@
     // Aplica mudanças de categoria a um corredor (id do documento na coleção 'runners'),
     // atualizando a lista de chegadas em memória, o cache local e persistindo no Firestore
     // (sem isso a edição parecia funcionar na hora, mas era perdida ao recarregar a página).
-        async function editLocaisUpdateRunnerCategory(runnerId, overrides) {
+    async function editLocaisUpdateRunnerCategory(runnerId, overrides) {
       const targetRunnerId = String(runnerId);
       let targetBib = null;
       let matches = arrivals.filter(a => {
@@ -4504,15 +4554,21 @@
         return;
       }
 
-      // CASO 2: CORRIDA PAUSADA (startTime existe e pauseTime existe)
-      if (race.startTime && race.pauseTime && !race.endTime) {
+      // CASO 2: CORRIDA PAUSADA (startTime existe e pauseTime existe ou flag local gravado)
+      const isPausedState = Boolean(race.pauseTime || localStorage.getItem(`pwa-qr-timing:race-paused-at:${raceId}`));
+      if (race.startTime && isPausedState && !race.endTime) {
         raceFinished = false;
         if (isRunning) { clearInterval(timer); isRunning = false; }
 
+        const localPausedMs = Number(localStorage.getItem(`pwa-qr-timing:race-paused-ms:${raceId}`));
         if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
           elapsedTime = race.elapsedAtPause;
-        } else {
+        } else if (localPausedMs > 0) {
+          elapsedTime = localPausedMs;
+        } else if (race.pauseTime) {
           elapsedTime = Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime));
+        } else {
+          elapsedTime = 0;
         }
         formatTime(elapsedTime);
         startTime = Date.now() - elapsedTime;
@@ -4574,7 +4630,7 @@
       }
     }
 
-    
+
     let unsubscribeRunnersListener = null;
     let listeningRunnersRaceId = null;
 
@@ -4600,7 +4656,7 @@
 
       unsubscribeRunnersListener = window.fbOnSnapshot(q, (snap) => {
         const runnersList = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-        
+
         try {
           localStorage.setItem('pwa-qr-timing:runners-lookup', JSON.stringify(runnersList));
         } catch (e) { }
@@ -4753,13 +4809,20 @@
             btnInit.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20 active:scale-95 transition-all';
             btnInit.onclick = confirmFinish;
           }
-        } else if (race.startTime && race.pauseTime) {
+        } else if (race.startTime && (race.pauseTime || localStorage.getItem(`pwa-qr-timing:race-paused-at:${raceId}`))) {
           // CASO PAUSADO
           raceFinished = false;
           if (isRunning) { clearInterval(timer); isRunning = false; }
-          elapsedTime = typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0
-            ? race.elapsedAtPause
-            : Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime));
+          const localPausedMs = Number(localStorage.getItem(`pwa-qr-timing:race-paused-ms:${raceId}`));
+          if (typeof race.elapsedAtPause === 'number' && race.elapsedAtPause > 0) {
+            elapsedTime = race.elapsedAtPause;
+          } else if (localPausedMs > 0) {
+            elapsedTime = localPausedMs;
+          } else if (race.pauseTime) {
+            elapsedTime = Math.max(0, Date.parse(race.pauseTime) - Date.parse(race.startTime));
+          } else {
+            elapsedTime = 0;
+          }
           formatTime(elapsedTime);
           startTime = Date.now() - elapsedTime;
           isRunning = false;
@@ -4816,7 +4879,7 @@
           try {
             sessionStorage.setItem('chrono_active_view', 'chrono');
             localStorage.setItem('chrono_active_view', 'chrono');
-          } catch(e){}
+          } catch (e) { }
           backToChrono();
         } else if (savedView === 'ranking' || isHashRanking || isUrlRanking) {
           showRankingView();
@@ -5018,9 +5081,9 @@
         if (typeof window.startRaceDocumentListening === 'function') {
           window.startRaceDocumentListening(true);
         }
-      if (typeof window.startRunnersListening === 'function') {
-        window.startRunnersListening(true);
-      }
+        if (typeof window.startRunnersListening === 'function') {
+          window.startRunnersListening(true);
+        }
         scheduleBibInputFocus();
       }
     });
@@ -5034,9 +5097,9 @@
         if (typeof window.startRaceDocumentListening === 'function') {
           window.startRaceDocumentListening(true);
         }
-      if (typeof window.startRunnersListening === 'function') {
-        window.startRunnersListening(true);
-      }
+        if (typeof window.startRunnersListening === 'function') {
+          window.startRunnersListening(true);
+        }
       }
     });
 
@@ -5091,9 +5154,9 @@
         if (typeof window.startRaceDocumentListening === 'function') {
           window.startRaceDocumentListening(true);
         }
-      if (typeof window.startRunnersListening === 'function') {
-        window.startRunnersListening(true);
-      }
+        if (typeof window.startRunnersListening === 'function') {
+          window.startRunnersListening(true);
+        }
       }
     }, 1500);
 
