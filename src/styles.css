@@ -225,8 +225,31 @@ main.no-header {
   flex-direction: column !important;
 }
 
+.app.app--nav-minimized {
+  min-height: 0 !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.chronometer-main-wrap {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
 .app--nav-minimized .chronometer-main-wrap {
-  height: 100vh !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
 }
 
 .results-main-wrap {

@@ -88,13 +88,22 @@
       z-index: 50;
     }
 
-    #chronoView>footer {
-      padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+    #chronoView>footer,
+    #chronoView footer {
+      padding-top: 10px !important;
+      padding-bottom: max(22px, env(safe-area-inset-bottom, 22px)) !important;
       padding-left: max(16px, env(safe-area-inset-left, 16px)) !important;
       padding-right: max(16px, env(safe-area-inset-right, 16px)) !important;
       position: sticky;
       bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
       z-index: 50;
+      background: rgba(18, 13, 36, 0.98);
+      border-top: 1px solid #2a1f45;
+      flex-shrink: 0;
+      box-sizing: border-box;
     }
 
     #chronoMain {
@@ -1032,6 +1041,18 @@
         padding-top: 10px !important;
         padding-bottom: 10px !important;
         font-size: 0.8rem !important;
+      }
+
+      #chronoView>footer,
+      #chronoView footer {
+        padding-top: 8px !important;
+        padding-bottom: max(28px, env(safe-area-inset-bottom, 28px)) !important;
+      }
+
+      #chronoView footer>button:first-child,
+      #chronoView footer>button:last-child {
+        height: 42px !important;
+        font-size: 0.92rem !important;
       }
 
       /* Ranking view mobile */
