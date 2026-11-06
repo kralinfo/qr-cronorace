@@ -1055,6 +1055,23 @@
         font-size: 0.92rem !important;
       }
 
+      /* Modal Editar Classificação Mobile */
+      .edit-ranking-order-card {
+        padding: 14px 10px !important;
+        width: 96% !important;
+        max-height: 94vh !important;
+        border-radius: 14px !important;
+        gap: 8px !important;
+      }
+      .edit-ranking-orient-bar {
+        padding: 8px 10px !important;
+        font-size: 0.73rem !important;
+        gap: 6px !important;
+      }
+      .edit-ranking-orient-text {
+        font-size: 0.73rem !important;
+      }
+
       /* Ranking view mobile */
       .rk-header {
         padding: 8px 12px !important;
@@ -1762,7 +1779,8 @@
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:9998;align-items:center;justify-content:center"
     onclick="if(event.target===this)closeEditRankingOrderModal()">
     <div
-      style="background:#151026;border:1px solid #2a1f45;border-radius:18px;padding:22px;max-width:760px;width:94%;max-height:90vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 24px 48px rgba(0,0,0,0.85)"
+      class="edit-ranking-order-card"
+      style="background:#151026;border:1px solid #2a1f45;border-radius:18px;padding:22px;max-width:760px;width:94%;max-height:90vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 24px 48px rgba(0,0,0,0.85);box-sizing:border-box"
       onclick="event.stopPropagation()">
 
       <!-- Topo -->
@@ -1785,11 +1803,11 @@
 
       <!-- Barra de Orientação -->
       <div
+        class="edit-ranking-orient-bar"
         style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#fbcfe8;font-weight:600">
-          <i class="fa-solid fa-hand-pointer" style="color:#ec4899;font-size:0.95rem"></i>
-          <span><strong>Como funciona:</strong> Arraste o corredor da posição atual até a desejada (ex: arraste o 5º
-            para o 1º lugar). A lista se ajusta automaticamente.</span>
+        <div class="edit-ranking-orient-text" style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#fbcfe8;font-weight:600">
+          <i class="fa-solid fa-hand-pointer" style="color:#ec4899;font-size:0.95rem;flex-shrink:0"></i>
+          <span><strong>Como funciona:</strong> Arraste o atleta para a colocação desejada ou use ▲ ▼.</span>
         </div>
         <span id="editRankingOrderTotalCount"
           style="font-size:0.75rem;font-weight:800;color:#a78bfa;white-space:nowrap;background:#0d0920;padding:4px 8px;border-radius:8px;border:1px solid #2a1f45">0
@@ -3424,31 +3442,31 @@
       ontouchstart="editRankingOnTouchStart(event, ${index})"
       ontouchmove="editRankingOnTouchMove(event)"
       ontouchend="editRankingOnTouchEnd(event)"
-      style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0d0920;border:1.5px solid #2a1f45;border-radius:12px;transition:border-color .15s;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none"
+      style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0d0920;border:1.5px solid #2a1f45;border-radius:12px;transition:border-color .15s;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;box-sizing:border-box"
     >
       <!-- Alça de Arrasto (Drag Handle) -->
-      <div style="color:#4b5563;font-size:1.15rem;display:flex;align-items:center;padding:0 3px;flex-shrink:0" title="Arraste para reposicionar">
+      <div style="color:#64748b;font-size:1.05rem;display:flex;align-items:center;padding:0 2px;flex-shrink:0" title="Arraste para reposicionar">
         <i class="fa-solid fa-grip-vertical"></i>
       </div>
 
       <!-- Badge de Colocação -->
-      <div style="min-width:48px;height:28px;border-radius:8px;${posBadgeStyle}display:flex;align-items:center;justify-content:center;font-size:0.82rem;font-family:monospace;letter-spacing:0.02em;flex-shrink:0">
+      <div style="min-width:44px;height:28px;border-radius:8px;${posBadgeStyle}display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-family:monospace;letter-spacing:0.02em;flex-shrink:0">
         ${posIcon}<span>${pos}º</span>
       </div>
 
       <!-- Número de Peito -->
-      <span style="font-family:monospace;font-weight:900;color:#c084fc;font-size:.9rem;min-width:44px;flex-shrink:0">#${a.bib}</span>
+      <span style="font-family:monospace;font-weight:900;color:#c084fc;font-size:.88rem;min-width:38px;flex-shrink:0">#${a.bib}</span>
 
-      <!-- Nome e Categoria -->
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-        <span style="font-size:.85rem;font-weight:700;color:${hasName ? '#fff' : '#f59e0b'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${displayName}</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:.65rem;font-weight:800;color:#94a3b8;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;border:1px solid #2a1f45">${a.category || 'GERAL'}</span>
+      <!-- Nome e Metadados (Categoria + Tempo embaixo) -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;justify-content:center">
+        <span style="font-size:.88rem;font-weight:700;color:${hasName ? '#fff' : '#f59e0b'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${displayName}">${displayName}</span>
+        <div style="display:flex;align-items:center;gap:6px;overflow:hidden">
+          <span style="font-size:.65rem;font-weight:800;color:#c084fc;background:rgba(168,85,247,0.12);padding:1px 6px;border-radius:4px;border:1px solid rgba(168,85,247,0.3);white-space:nowrap;flex-shrink:0">${a.category || 'GERAL'}</span>
+          <span style="font-family:monospace;font-weight:800;color:#94a3b8;font-size:.74rem;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;flex-shrink:0">
+            <i class="fa-regular fa-clock" style="font-size:0.65rem;color:#64748b"></i>${a.time || '--:--:--'}
+          </span>
         </div>
       </div>
-
-      <!-- Tempo Registrado -->
-      <span style="font-family:monospace;font-weight:800;color:#e2e8f0;font-size:.85rem;margin-right:6px;flex-shrink:0">${a.time || '--:--:--'}</span>
 
       <!-- Botões Rápidos Subir / Descer (Mobile Friendly) -->
       <div style="display:inline-flex;align-items:center;gap:3px;flex-shrink:0">
@@ -3457,7 +3475,7 @@
           onclick="event.stopPropagation();editRankingMoveItem(${index}, ${index - 1})"
           ondragstart="event.stopPropagation();event.preventDefault()"
           ${isFirst ? 'disabled' : ''}
-          style="width:28px;height:28px;border-radius:6px;border:1px solid #2a1f45;background:${isFirst ? 'rgba(255,255,255,0.02)' : 'rgba(124,58,237,0.18)'};color:${isFirst ? '#475569' : '#c4b5fd'};cursor:${isFirst ? 'not-allowed' : 'pointer'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .15s"
+          style="width:28px;height:28px;border-radius:6px;border:1px solid #2a1f45;background:${isFirst ? 'rgba(255,255,255,0.02)' : 'rgba(124,58,237,0.22)'};color:${isFirst ? '#475569' : '#c4b5fd'};cursor:${isFirst ? 'not-allowed' : 'pointer'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .15s"
           title="Subir 1 posição"
         >▲</button>
         <button
@@ -3465,7 +3483,7 @@
           onclick="event.stopPropagation();editRankingMoveItem(${index}, ${index + 1})"
           ondragstart="event.stopPropagation();event.preventDefault()"
           ${isLast ? 'disabled' : ''}
-          style="width:28px;height:28px;border-radius:6px;border:1px solid #2a1f45;background:${isLast ? 'rgba(255,255,255,0.02)' : 'rgba(124,58,237,0.18)'};color:${isLast ? '#475569' : '#c4b5fd'};cursor:${isLast ? 'not-allowed' : 'pointer'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .15s"
+          style="width:28px;height:28px;border-radius:6px;border:1px solid #2a1f45;background:${isLast ? 'rgba(255,255,255,0.02)' : 'rgba(124,58,237,0.22)'};color:${isLast ? '#475569' : '#c4b5fd'};cursor:${isLast ? 'not-allowed' : 'pointer'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .15s"
           title="Descer 1 posição"
         >▼</button>
       </div>
