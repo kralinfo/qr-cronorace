@@ -181,6 +181,18 @@ export async function getAllRaces() {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
+/**
+ * Escuta em tempo real a lista de todas as corridas.
+ * @param {(races: Array<import('./races.types.js').Race>) => void} onChange
+ * @returns {() => void} função para cancelar a inscrição (unsubscribe)
+ */
+export function subscribeToAllRaces(onChange) {
+  const q = query(collection(db, COLLECTIONS.races), orderBy('createdAt', 'desc'))
+  return onSnapshot(q, (snap) => {
+    onChange(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+  })
+}
+
 /** @param {string} id @returns {Promise<import('./races.types.js').Race | undefined>} */
 export async function getRaceById(id) {
   const snap = await getDoc(doc(db, COLLECTIONS.races, id))

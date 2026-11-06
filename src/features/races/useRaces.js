@@ -4,6 +4,7 @@ import {
   addRace,
   deleteRace,
   getAllRaces,
+  subscribeToAllRaces,
   reopenRace as repoReopenRace,
   updateRaceDetails,
   updateRaceEndTime,
@@ -17,6 +18,7 @@ export function useRaces() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  // Carrega a lista e mantém em tempo real via onSnapshot
   const loadRaces = useCallback(async () => {
     setLoading(true)
     try {
@@ -28,7 +30,14 @@ export function useRaces() {
     }
   }, [])
 
-  useEffect(() => { loadRaces() }, [loadRaces])
+  useEffect(() => {
+    setLoading(true)
+    const unsubscribe = subscribeToAllRaces((list) => {
+      setRaces(list)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [])
 
   const createRace = useCallback(async (name, eventDate, distanceKm) => {
     setError(null)

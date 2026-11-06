@@ -60,16 +60,22 @@ export default function ImportRunnersModal({ raceId, onClose }) {
   const isRaceRunning = Boolean(race?.startTime && !race?.endTime)
   const isRaceFinished = Boolean(race?.endTime)
 
-  // Indexa corredores já cadastrados na corrida atual
+  // Indexa corredores já cadastrados na corrida atual.
+  // Durante a importação (importing=true), congela o mapa para evitar race condition:
+  // o onSnapshot do Firestore dispara enquanto o batch ainda está sendo processado,
+  // fazendo os corredores recém-importados aparecerem como "já cadastrados" na prévia.
+  const existingRef = useRef({ byNumber: new Map(), byName: new Map() })
   const existing = useMemo(() => {
+    if (importing) return existingRef.current  // congela durante o import
     const byNumber = new Map()
     const byName = new Map()
     for (const r of (runners || [])) {
       if (r.number) byNumber.set(normalizeComparable(r.number), r)
       if (r.name) byName.set(normalizeComparable(r.name), r)
     }
-    return { byNumber, byName }
-  }, [runners])
+    existingRef.current = { byNumber, byName }
+    return existingRef.current
+  }, [runners, importing])
 
   // Processa e valida linha por linha
   const prepareRow = useCallback(
