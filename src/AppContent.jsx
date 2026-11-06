@@ -310,7 +310,8 @@ function InnerAppContent() {
             onLoad={() => focusChronometerFrame()}
             style={{
               width: '100%',
-              height: isNavMinimized ? '100vh' : 'calc(100vh - var(--bottom-nav-h))',
+              height: '100%',
+              flex: 1,
               border: 'none',
               display: 'block',
               overflow: 'hidden'
