@@ -357,7 +357,7 @@ function InnerAppContent() {
   if (loading) return <div className="app"><main><p>Carregando...</p></main></div>
 
   return (
-    <div className={`app ${isNavMinimized ? 'app--nav-minimized' : ''}`}>
+    <div className={`app ${isNavMinimized && tab === 'chronometer' ? 'app--nav-minimized' : ''}`}>
       {tab !== 'home' && tab !== 'chronometer' && tab !== 'results' && (
         <header className="app-header">
           <div className="app-header-inner">

@@ -205,12 +205,15 @@ main.no-header {
   user-select: none;
 }
 
-.app--nav-minimized main {
+.app--nav-minimized .chronometer-main-wrap {
   padding-bottom: 0 !important;
 }
 
-.app--nav-minimized .race-config-main-wrap {
-  padding-bottom: 0 !important;
+.race-config-main-wrap {
+  min-height: 100%;
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 70px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chronometer-main-wrap {
@@ -226,7 +229,10 @@ main.no-header {
 }
 
 .app.app--nav-minimized {
-  min-height: 0 !important;
+  min-height: 0;
+}
+
+.app.app--nav-minimized:has(.chronometer-main-wrap) {
   height: 100% !important;
   height: 100dvh !important;
   max-height: 100dvh !important;
@@ -3623,16 +3629,21 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 20px;
+  margin-bottom: 32px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
 }
 .registered-races-pagination button {
-  height: 36px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 16px;
   background: #20003F;
   border: 1px solid #301344;
   border-radius: 10px;
   color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .registered-races-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 .race-config-split {
@@ -5455,7 +5466,7 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
     font-size: 11px !important;
   }
   .race-config-main {
-    padding: 5px 14px 14px !important;
+    padding: 5px 14px calc(env(safe-area-inset-bottom, 20px) + 70px) !important;
   }
   .race-config-title-left {
     display: none !important;

@@ -1527,20 +1527,57 @@ useEffect(() => {
             })()}
           </div>
           {filteredRaces.length > 6 && (
-            <div className="registered-races-pagination" style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+            <div className="registered-races-pagination" style={{
+              display: 'flex',
+              gap: 12,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: 20,
+              marginBottom: 40,
+              paddingBottom: 'max(24px, env(safe-area-inset-bottom, 24px))'
+            }}>
               <button
                 type="button"
                 disabled={registeredPage === 0}
-                onClick={() => setRegisteredPage(p => p - 1)}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#1f1633', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
+                onClick={() => {
+                  setRegisteredPage(p => p - 1)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+                style={{
+                  minHeight: 44,
+                  padding: '8px 16px',
+                  borderRadius: 10,
+                  background: registeredPage === 0 ? '#150d24' : '#270845',
+                  color: registeredPage === 0 ? '#64748b' : '#fff',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: registeredPage === 0 ? 'not-allowed' : 'pointer'
+                }}
               >
                 ◀ Anterior
               </button>
+              <span style={{ color: '#c4b5fd', fontSize: '13px', fontWeight: 600, userSelect: 'none' }}>
+                {registeredPage + 1} / {Math.ceil(filteredRaces.length / 6)}
+              </span>
               <button
                 type="button"
                 disabled={(registeredPage + 1) * 6 >= filteredRaces.length}
-                onClick={() => setRegisteredPage(p => p + 1)}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#1f1633', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
+                onClick={() => {
+                  setRegisteredPage(p => p + 1)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+                style={{
+                  minHeight: 44,
+                  padding: '8px 16px',
+                  borderRadius: 10,
+                  background: (registeredPage + 1) * 6 >= filteredRaces.length ? '#150d24' : '#270845',
+                  color: (registeredPage + 1) * 6 >= filteredRaces.length ? '#64748b' : '#fff',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: (registeredPage + 1) * 6 >= filteredRaces.length ? 'not-allowed' : 'pointer'
+                }}
               >
                 Próximo ▶
               </button>
