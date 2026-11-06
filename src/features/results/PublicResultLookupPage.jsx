@@ -28,6 +28,14 @@ function getRaceIdFromUrl() {
 function loadCachedArrivals(raceId) {
   try {
     if (!raceId) return []
+    // Se a corrida ativa localmente estiver sem largada (resetada), não carrega cache antigo
+    const rawRace = localStorage.getItem('pwa-qr-timing:active-race')
+    if (rawRace) {
+      const r = JSON.parse(rawRace)
+      if (r?.id === raceId && !r.startTime && !r.endTime) {
+        return []
+      }
+    }
     const raw = localStorage.getItem('pwa-qr-timing:chronometer-arrivals:' + raceId)
       || localStorage.getItem('pwa-qr-timing:arrivals-cache:' + raceId)
     if (!raw) return []
@@ -54,6 +62,7 @@ export default function PublicResultLookupPage() {
   const [race, setRace] = useState(null)
   const [notFound, setNotFound] = useState(false)
   const [allPlacements, setAllPlacements] = useState([])
+  const [liveOverrides, setLiveOverrides] = useState([])
   const [loadingResults, setLoadingResults] = useState(false)
   const { runners } = useRunners(raceId)
 
@@ -102,7 +111,56 @@ export default function PublicResultLookupPage() {
     return unsubRace
   }, [raceId])
 
-  // 2. Busca resultados (Carrega do cache local imediatamente + escuta Firestore)
+  // 2. Escuta chegadas e resets em tempo real instantâneo (idêntico à tela do Telão)
+  useEffect(() => {
+    const handleArrivalData = (data) => {
+      if (data?.type === 'RECORD_ARRIVAL') {
+        if (!data.raceId || data.raceId === raceId) {
+          setLiveOverrides(prev => {
+            const cleanBib = data.bib ? String(parseInt(data.bib, 10)) : ''
+            const incomingBarcode = data.barcode || (raceId ? `${raceId}_bib_${cleanBib}` : `bib_${cleanBib}`)
+            const newItem = {
+              barcode: incomingBarcode,
+              runnerNumber: data.bib,
+              runnerName: data.runnerName,
+              time: data.time || null,
+              elapsedMs: typeof data.elapsedMs === 'number' ? data.elapsedMs : null,
+              dateTime: new Date().toISOString(),
+              timestamp: String(Date.now()),
+              raceId: data.raceId || raceId
+            }
+            const exists = prev.find(p => p.barcode === incomingBarcode || (cleanBib && String(p.runnerNumber) === cleanBib))
+            if (exists) {
+              return prev.map(p => (p.barcode === incomingBarcode || (cleanBib && String(p.runnerNumber) === cleanBib)) ? { ...p, ...newItem } : p)
+            }
+            return [...prev, newItem]
+          })
+        }
+      } else if (data?.type === 'RACE_RESET') {
+        if (!data.raceId || data.raceId === raceId) {
+          setLiveOverrides([])
+          setAllPlacements([])
+          setResult(null)
+        }
+      }
+    }
+
+    let bc = null
+    try {
+      bc = new BroadcastChannel('qr-cronorace-channel')
+      bc.onmessage = (e) => handleArrivalData(e.data)
+    } catch(err) {}
+
+    const onWindowMsg = (e) => handleArrivalData(e.data)
+    window.addEventListener('message', onWindowMsg)
+
+    return () => {
+      if (bc) bc.close()
+      window.removeEventListener('message', onWindowMsg)
+    }
+  }, [raceId])
+
+  // 3. Busca resultados do Firestore (com cache local inicial)
   useEffect(() => {
     if (!raceId) return
 
@@ -114,17 +172,44 @@ export default function PublicResultLookupPage() {
     setLoadingResults(cached.length === 0)
     const unsubResults = subscribeToResultsByRace(raceId, (rows) => {
       if (Array.isArray(rows) && rows.length > 0) {
-        setAllPlacements(sortByPlacement(rows, race?.startTime))
+        // Normaliza rows do Firestore
+        const normalized = rows.map(r => ({
+          ...r,
+          runnerNumber: r.runnerNumber || r.bib || '',
+          barcode: r.barcode || (r.raceId ? `${r.raceId}_bib_${String(r.runnerNumber || r.bib || '').replace(/\D/g, '')}` : `bib_${String(r.runnerNumber || r.bib || '').replace(/\D/g, '')}`)
+        }))
+        setAllPlacements(normalized)
       } else {
-        const fallback = loadCachedArrivals(raceId)
-        if (fallback.length > 0) {
-          setAllPlacements(fallback)
-        }
+        // Se o Firestore esvaziou (ex: após reset), zera tudo
+        setAllPlacements([])
+        setLiveOverrides([])
+        setResult(null)
       }
       setLoadingResults(false)
     })
     return unsubResults
-  }, [raceId, race?.startTime])
+  }, [raceId])
+
+  // 4. Combina chegadas do Firestore com liveOverrides em tempo real
+  const combinedList = useMemo(() => {
+    const map = new Map()
+    for (const p of (allPlacements || [])) {
+      const cleanBib = String(p.runnerNumber || p.bib || '').replace(/\D/g, '')
+      const key = cleanBib ? `bib_${parseInt(cleanBib, 10)}` : (p.barcode || p.id)
+      if (key) map.set(key, p)
+    }
+    for (const r of liveOverrides) {
+      const cleanBib = String(r.runnerNumber || r.bib || '').replace(/\D/g, '')
+      const key = cleanBib ? `bib_${parseInt(cleanBib, 10)}` : (r.barcode || r.id)
+      if (key) {
+        const existing = map.get(key)
+        map.set(key, { ...existing, ...r })
+      }
+    }
+    const list = Array.from(map.values())
+    const startT = race?.startTime || null
+    return sortByPlacement(list, startT)
+  }, [allPlacements, liveOverrides, race?.startTime])
 
   // 3. Mapeamento de corredores cadastrados (Firestore + runners-lookup local)
   const allRunnersMap = useMemo(() => {
@@ -203,19 +288,36 @@ export default function PublicResultLookupPage() {
   // 6. Monta o ranking com identificação garantida de Localidade e Gênero
   function buildRanking() {
     const startTime = getEffectiveStartTime()
-    const placementsWithTime = withElapsedTime(allPlacements, startTime)
+    const placementsWithTime = withElapsedTime(combinedList, startTime)
     const allRanked = []
     const seen = new Set()
 
     placementsWithTime.forEach((p) => {
-      const cleanNum = String(p.runnerNumber || p.bib || '').replace(/\D/g, '')
-      const bibKey = cleanNum ? String(parseInt(cleanNum, 10)) : ''
-      const dedupeKey = bibKey || p.barcode
+      // 1. Identificação segura do número de peito por múltiplos caminhos
+      let cleanNum = String(p.runnerNumber || p.bib || '').replace(/\D/g, '')
+      if (!cleanNum && p.barcode) {
+        const match = String(p.barcode).match(/(?:bib_|_bib_|:)(\d+)/i)
+        if (match) cleanNum = match[1]
+      }
+
+      let runner = null
+      if (cleanNum) {
+        runner = allRunnersMap.get(String(parseInt(cleanNum, 10)))
+      }
+      if (!runner && p.barcode) {
+        runner = allRunnersMap.get(String(p.barcode))
+      }
+      if (!cleanNum && runner?.number) {
+        cleanNum = String(runner.number).replace(/\D/g, '')
+      }
+
+      const finalBibKey = cleanNum ? String(parseInt(cleanNum, 10)) : ''
+      const effectiveBarcode = p.barcode || (raceId && finalBibKey ? `${raceId}_bib_${finalBibKey}` : finalBibKey ? `bib_${finalBibKey}` : null)
+      const dedupeKey = finalBibKey || effectiveBarcode || p.id
       if (!dedupeKey || seen.has(dedupeKey)) return
       seen.add(dedupeKey)
 
-      const runner = (bibKey ? allRunnersMap.get(bibKey) : null) || allRunnersMap.get(String(p.barcode))
-      const cachedArr = bibKey ? arrivalsCacheMap.get(bibKey) : null
+      const cachedArr = finalBibKey ? arrivalsCacheMap.get(finalBibKey) : null
 
       let displayTime = null
       if (p.time) {
@@ -247,9 +349,6 @@ export default function PublicResultLookupPage() {
         catRunner.includes('FEM')
       )
 
-      // Regra estrita solicitada:
-      // Se local: LOCAL MASC ou LOCAL FEM
-      // Se visitante: MASCULINO ou FEMININO
       let assignedCat = 'GERAL'
       if (isLocal) {
         assignedCat = isFem ? 'LOCAL FEM' : 'LOCAL MASC'
@@ -258,12 +357,12 @@ export default function PublicResultLookupPage() {
       }
 
       const runnerName = cachedArr?.runnerName || p.runnerName || runner?.name || p.name || 'Sem nome'
-      const runnerBib = cachedArr?.runnerNumber || runner?.number || p.runnerNumber || p.bib || bibKey || '?'
+      const runnerBib = finalBibKey || cachedArr?.runnerNumber || runner?.number || p.runnerNumber || p.bib || '?'
 
       allRanked.push({
         barcode: p.barcode,
         bib: runnerBib,
-        bibKey,
+        bibKey: finalBibKey,
         name: runnerName,
         category: assignedCat,
         isLocal,
@@ -310,6 +409,7 @@ export default function PublicResultLookupPage() {
     const ranked = buildRanking()
 
     const found = ranked.find((item) => {
+      if (item.bibKey && parseInt(item.bibKey, 10) === targetNum) return true
       const itemNum = String(item.bib).replace(/\D/g, '')
       return itemNum && parseInt(itemNum, 10) === targetNum
     })
@@ -332,13 +432,21 @@ export default function PublicResultLookupPage() {
     if (!activeSearchedNum) return
     const ranked = buildRanking()
     const found = ranked.find((item) => {
+      if (item.bibKey && parseInt(item.bibKey, 10) === activeSearchedNum) return true
       const itemNum = String(item.bib).replace(/\D/g, '')
       return itemNum && parseInt(itemNum, 10) === activeSearchedNum
     })
     if (found) {
       setResult({ found: true, item: found })
     }
-  }, [allPlacements, activeSearchedNum])
+  }, [combinedList, activeSearchedNum])
+
+  // 9. Se a corrida for reiniciada e a lista zerar, limpa resultado exibido
+  useEffect(() => {
+    if (combinedList.length === 0 && result) {
+      setResult(null)
+    }
+  }, [combinedList.length])
 
   if (notFound) {
     return (

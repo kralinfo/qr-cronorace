@@ -15,15 +15,17 @@ export function deduplicateByLatestReading(results, startTime) {
 
   for (const result of (results || [])) {
     const arrivalMs = toComparableTime(result)
-    // Se a corrida tem largada definida, descarta leituras feitas antes da largada atual
-    if (Number.isFinite(startMs) && arrivalMs < (startMs - 2000)) {
+    // Se a corrida tem largada definida, descarta leituras sem tempo gravado feitas antes da largada atual
+    const hasRecordedTime = (typeof result.elapsedMs === 'number' && result.elapsedMs > 0) || Boolean(result.time)
+    if (!hasRecordedTime && Number.isFinite(startMs) && arrivalMs < (startMs - 2000)) {
       continue
     }
 
-    const current = latestByBarcode.get(result.barcode)
+    const key = result.barcode || (result.runnerNumber ? `num_${result.runnerNumber}` : (result.id || String(Math.random())))
+    const current = latestByBarcode.get(key)
     // Mantém o registro mais recente (última corrida / última passagem)
     if (!current || arrivalMs > toComparableTime(current)) {
-      latestByBarcode.set(result.barcode, result)
+      latestByBarcode.set(key, result)
     }
   }
 
@@ -43,7 +45,7 @@ export function sortByPlacement(results, startTime) {
   return deduplicateByLatestReading(results, startTime)
     .sort((a, b) => {
       const posA = (typeof a.posGeral === 'number' && Number.isFinite(a.posGeral)) ? a.posGeral : null
-      const posB = (typeof b.posGeral === 'number' && Number.isFinite(b.posB)) ? b.posGeral : null
+      const posB = (typeof b.posGeral === 'number' && Number.isFinite(b.posGeral)) ? b.posGeral : null
       if (posA !== null && posB !== null && posA !== posB) {
         return posA - posB
       }

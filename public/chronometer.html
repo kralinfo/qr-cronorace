@@ -2601,6 +2601,80 @@
       openShareLinkModal(url, copied);
     }
 
+    function copyShareLinkFromModal() {
+      const inp = document.getElementById('shareLinkInput');
+      const url = inp ? inp.value : getPublicResultLookupUrl();
+      const btn = document.getElementById('shareLinkCopyBtn');
+
+      // 1. Mensagem para janela pai (React App no contexto principal)
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'COPY_TO_CLIPBOARD', text: url }, '*');
+        }
+      } catch (e) { }
+
+      // 2. ExecCommand síncrono imediato com textarea
+      let copiedOk = false;
+      try {
+        if (inp) {
+          inp.focus();
+          inp.select();
+          inp.setSelectionRange(0, 99999);
+        }
+        copiedOk = document.execCommand('copy');
+      } catch (e) { }
+
+      if (!copiedOk) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '-9999px';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          ta.setSelectionRange(0, 99999);
+          copiedOk = document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch (e) { }
+      }
+
+      // 3. Navigator clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          markShareLinkCopied(btn);
+        }).catch(() => {
+          if (copiedOk) markShareLinkCopied(btn);
+        });
+      } else if (copiedOk) {
+        markShareLinkCopied(btn);
+      } else {
+        markShareLinkCopied(btn);
+      }
+    }
+
+    function markShareLinkCopied(btn) {
+      if (!btn) btn = document.getElementById('shareLinkCopyBtn');
+      if (btn) {
+        btn.textContent = '✓ Copiado!';
+        btn.style.background = 'rgba(16,185,129,0.25)';
+        btn.style.borderColor = 'rgba(16,185,129,0.5)';
+        btn.style.color = '#34d399';
+        setTimeout(() => {
+          const b = document.getElementById('shareLinkCopyBtn');
+          if (b) {
+            b.textContent = 'Copiar';
+            b.style.background = 'rgba(124,58,237,0.25)';
+            b.style.borderColor = 'rgba(124,58,237,0.5)';
+            b.style.color = '#c4b5fd';
+          }
+        }, 2500);
+      }
+      try { showToast('Link copiado com sucesso!'); } catch (e) { }
+    }
+
     function openShareLinkModal(url, alreadyCopied) {
       // Remove modal anterior se existir
       const old = document.getElementById('shareLinkModal');
@@ -2612,58 +2686,39 @@
       modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
       modal.innerHTML = `
-        <div style="background:#151026;border:1.5px solid #7c3aed;border-radius:20px;padding:24px 22px 20px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 50px rgba(0,0,0,0.85)" onclick="event.stopPropagation()">
+        <div style="background:#151026;border:1.5px solid #7c3aed;border-radius:20px;padding:24px 22px 20px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 50px rgba(0,0,0,0.85)" onclick="event.stopPropagation()">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <h3 style="margin:0;font-size:1.05rem;font-weight:800;color:#fff">Compartilhar Link</h3>
-              <span style="font-size:0.78rem;color:#94a3b8">Envie para os corredores consultarem a colocação</span>
+              <span style="font-size:0.78rem;color:#94a3b8">Envie para os atletas consultarem a colocação</span>
             </div>
             <button onclick="document.getElementById('shareLinkModal').remove()" style="background:rgba(255,255,255,.07);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;cursor:pointer;padding:6px 10px;font-size:0.85rem;line-height:1" title="Fechar">✕</button>
           </div>
           <div style="background:#0d0920;border:1px solid #2a1f45;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:8px">
             <input id="shareLinkInput" type="text" value="${url}" readonly
               style="flex:1;background:transparent;border:none;outline:none;color:#c4b5fd;font-size:0.82rem;font-family:monospace;cursor:text;min-width:0"
-              onclick="this.select()"
+              onclick="this.select(); copyShareLinkFromModal();"
             />
-            <button id="shareLinkCopyBtn" onclick="
-              const inp = document.getElementById('shareLinkInput');
-              inp.select();
-              try {
-                navigator.clipboard.writeText(inp.value).then(() => {
-                  document.getElementById('shareLinkCopyBtn').textContent = '✓ Copiado!';
-                  document.getElementById('shareLinkCopyBtn').style.background = 'rgba(16,185,129,0.25)';
-                  document.getElementById('shareLinkCopyBtn').style.color = '#34d399';
-                  setTimeout(() => {
-                    const b = document.getElementById('shareLinkCopyBtn');
-                    if(b){b.textContent='Copiar';b.style.background='rgba(124,58,237,0.25)';b.style.color='#c4b5fd';}
-                  }, 2000);
-                }).catch(() => { document.execCommand('copy'); });
-              } catch(e) { try { document.execCommand('copy'); } catch(_){} }
-            "
-              style="flex-shrink:0;background:rgba(124,58,237,0.25);border:1px solid rgba(124,58,237,0.5);border-radius:8px;color:#c4b5fd;cursor:pointer;padding:7px 14px;font-size:0.82rem;font-weight:700;white-space:nowrap;transition:all .15s">
+            <button id="shareLinkCopyBtn" onclick="copyShareLinkFromModal()"
+              style="flex-shrink:0;background:${alreadyCopied ? 'rgba(16,185,129,0.25)' : 'rgba(124,58,237,0.25)'};border:1px solid ${alreadyCopied ? 'rgba(16,185,129,0.5)' : 'rgba(124,58,237,0.5)'};border-radius:8px;color:${alreadyCopied ? '#34d399' : '#c4b5fd'};cursor:pointer;padding:7px 14px;font-size:0.82rem;font-weight:700;white-space:nowrap;transition:all .15s">
               ${alreadyCopied ? '✓ Copiado!' : 'Copiar'}
             </button>
           </div>
-          <p style="margin:0;font-size:0.78rem;color:#64748b;line-height:1.5">O corredor acessa o link, digita seu número de peito e consulta a colocação e tempo oficial.</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <p style="margin:0;font-size:0.78rem;color:#64748b;line-height:1.4;flex:1">O atleta acessa, digita o número de peito e vê a colocação e tempo oficial em tempo real.</p>
+            <button onclick="window.open('${url}', '_blank')" style="background:rgba(255,255,255,0.06);border:1px solid #2a1f45;border-radius:8px;color:#94a3b8;cursor:pointer;padding:6px 10px;font-size:0.75rem;font-weight:600;white-space:nowrap">
+              Testar ↗
+            </button>
+          </div>
         </div>`;
 
       document.body.appendChild(modal);
 
-      // Seleciona o input automaticamente
       setTimeout(() => {
         const inp = document.getElementById('shareLinkInput');
-        if (inp) inp.select();
-        // Muda botão se já foi copiado
-        if (alreadyCopied) {
-          const btn = document.getElementById('shareLinkCopyBtn');
-          if (btn) {
-            btn.style.background = 'rgba(16,185,129,0.25)';
-            btn.style.color = '#34d399';
-            setTimeout(() => {
-              const b = document.getElementById('shareLinkCopyBtn');
-              if (b) { b.textContent = 'Copiar'; b.style.background = 'rgba(124,58,237,0.25)'; b.style.color = '#c4b5fd'; }
-            }, 2000);
-          }
+        if (inp) {
+          inp.focus();
+          inp.select();
         }
       }, 80);
     }

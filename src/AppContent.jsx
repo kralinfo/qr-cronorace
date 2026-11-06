@@ -200,6 +200,33 @@ function InnerAppContent() {
             navigator.vibrate(pat)
           } catch (e) {}
         }
+      } else if (event.data?.type === 'COPY_TO_CLIPBOARD') {
+        const textToCopy = event.data?.text || ''
+        if (textToCopy) {
+          try {
+            navigator.clipboard.writeText(textToCopy).catch(() => {
+              const ta = document.createElement('textarea')
+              ta.value = textToCopy
+              ta.style.position = 'fixed'
+              ta.style.left = '-9999px'
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              document.body.removeChild(ta)
+            })
+          } catch (e) {
+            try {
+              const ta = document.createElement('textarea')
+              ta.value = textToCopy
+              ta.style.position = 'fixed'
+              ta.style.left = '-9999px'
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              document.body.removeChild(ta)
+            } catch (_) {}
+          }
+        }
       } else if (event.data?.type === 'RACE_FINISHED') {
         if (activeRace) {
           const endTime = event.data.endTime || new Date().toISOString()
@@ -244,7 +271,34 @@ function InnerAppContent() {
       bc.onmessage = (event) => {
         if (event.data?.type === 'RECORD_ARRIVAL') {
           handleRecordArrival(event.data)
-        } else if (event.data?.type === 'RACE_FINISHED') {
+        } else if (event.data?.type === 'COPY_TO_CLIPBOARD') {
+        const textToCopy = event.data?.text || ''
+        if (textToCopy) {
+          try {
+            navigator.clipboard.writeText(textToCopy).catch(() => {
+              const ta = document.createElement('textarea')
+              ta.value = textToCopy
+              ta.style.position = 'fixed'
+              ta.style.left = '-9999px'
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              document.body.removeChild(ta)
+            })
+          } catch (e) {
+            try {
+              const ta = document.createElement('textarea')
+              ta.value = textToCopy
+              ta.style.position = 'fixed'
+              ta.style.left = '-9999px'
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              document.body.removeChild(ta)
+            } catch (_) {}
+          }
+        }
+      } else if (event.data?.type === 'RACE_FINISHED') {
           if (activeRace) {
             const endTime = event.data.endTime || new Date().toISOString()
             selectRace({
@@ -346,7 +400,7 @@ function InnerAppContent() {
             ref={chronometerFrameRef}
             src={`/chronometer.html?t=${activeRace?.id || "live"}`}
             title="Cronômetro"
-            allow="autoplay; vibrate"
+            allow="autoplay; vibrate; clipboard-write"
             scrolling="no"
             tabIndex={0}
             onLoad={() => focusChronometerFrame()}
