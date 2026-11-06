@@ -197,11 +197,12 @@ export async function generateRunnerThermalLabel(runner, options = {}) {
     fontSize: 24          // Dígitos do barcode grandes e visíveis
   })
 
-  // Desenha o código de barras centralizado ocupando generosamente a base da etiqueta
-  const rawBcWidth = barcodeCanvas.width
-  const targetBcWidth = Math.min(width - 32, Math.max(rawBcWidth, 520))
+    // Margem física de 1cm em cada lado (1cm × 8 dots/mm = 80px).
+  // Largura e posição SEMPRE FIXAS — garante que bcX seja idêntico em todas as etiquetas,
+  // independente do número de dígitos.
+  const targetBcWidth = width - 160  // 80px margem em cada lado (1cm × 8 dots/mm)
   const targetBcHeight = 190
-  const bcX = Math.floor((width - targetBcWidth) / 2)
+  const bcX = 80                     // 1cm de margem esquerda — fixo e igual para todos
   const bcY = height - targetBcHeight - 10
 
   ctx.drawImage(barcodeCanvas, bcX, bcY, targetBcWidth, targetBcHeight)
