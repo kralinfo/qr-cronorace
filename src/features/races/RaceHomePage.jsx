@@ -874,7 +874,7 @@ useEffect(() => {
               <span style={{ fontSize: '20px', display: 'inline-flex' }}>⚙</span>
               <h1>CONFIGURAR CORRIDA</h1>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div className="race-config-actions-row">
               <button
                 type="button"
                 className="race-config-batch-btn"
