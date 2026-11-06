@@ -2911,7 +2911,7 @@
       const fallbackRunnerId = activeRaceId ? `${activeRaceId}_bib_${cleanBib}` : `bib_${cleanBib}`;
       const effectiveRunnerId = runner?.id || fallbackRunnerId;
       const runnerName = (runner?.name && runner.name !== '-' && runner.name !== '—') ? runner.name : 'Sem nome';
-      const runnerCat = res.category || runner?.category || 'GERAL';
+      const runnerCat = runner?.category || 'GERAL';
 
       let effectiveRunner = runner;
       if (!effectiveRunner) {
