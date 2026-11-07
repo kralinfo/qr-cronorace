@@ -217,15 +217,23 @@ main.no-header {
 }
 
 .chronometer-main-wrap {
-  padding: 0 !important;
-  margin: 0 !important;
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   width: 100% !important;
+  width: 100vw !important;
   height: 100% !important;
   height: 100dvh !important;
-  flex: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: 99 !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
+  border: none !important;
 }
 
 .app.app--nav-minimized {
@@ -5557,6 +5565,12 @@ section h2 { font-size: 1.1rem; margin-bottom: 8px; }
   /* Ajusta main para compensar safe area */
   main {
     padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 16px) !important;
+  }
+  main.chronometer-main-wrap {
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
   }
   main.no-header { padding-top: 16px; }
 }
