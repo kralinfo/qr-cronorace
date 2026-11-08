@@ -398,6 +398,8 @@ export default function RaceHomePage({ onNavigate, onOpenScanner }) {
   const [printingBt, setPrintingBt] = useState(false)
   const [printingBatchCat, setPrintingBatchCat] = useState(null)
   const [batchPrintState, setBatchPrintState] = useState(() => getBatchPrintState())
+  const [batchRangeStart, setBatchRangeStart] = useState('')
+  const [batchRangeEnd, setBatchRangeEnd] = useState('')
 
   // Modal de QR individual, todos os corredores e reabrir corrida
   const [selectedRunnerModal, setSelectedRunnerModal] = useState(null)
@@ -781,6 +783,54 @@ useEffect(() => {
       })
   }, [runners])
 
+  const parseBibToInt = useCallback((value) => {
+    const digits = String(value || '').replace(/\D/g, '')
+    if (!digits) return null
+    const parsed = parseInt(digits, 10)
+    return Number.isFinite(parsed) ? parsed : null
+  }, [])
+
+  const filterRunnersByRange = useCallback((runnersList) => {
+    const list = Array.isArray(runnersList) ? runnersList : []
+    const hasStart = Boolean(batchRangeStart)
+    const hasEnd = Boolean(batchRangeEnd)
+    if (!hasStart && !hasEnd) return list
+
+    const startParsed = hasStart ? parseBibToInt(batchRangeStart) : null
+    const endParsed = hasEnd ? parseBibToInt(batchRangeEnd) : null
+
+    if (hasStart && startParsed == null) return []
+    if (hasEnd && endParsed == null) return []
+
+    const min = Number.isFinite(startParsed) ? startParsed : endParsed
+    const max = Number.isFinite(endParsed) ? endParsed : startParsed
+    const rangeStart = Math.min(min, max)
+    const rangeEnd = Math.max(min, max)
+
+    return list.filter((runner) => {
+      const bibInt = parseBibToInt(runner?.number)
+      return Number.isFinite(bibInt) && bibInt >= rangeStart && bibInt <= rangeEnd
+    })
+  }, [batchRangeStart, batchRangeEnd, parseBibToInt])
+
+  const maleRunnersInRange = useMemo(() => filterRunnersByRange(maleRunners), [maleRunners, filterRunnersByRange])
+  const femaleRunnersInRange = useMemo(() => filterRunnersByRange(femaleRunners), [femaleRunners, filterRunnersByRange])
+  const allRunnersInRange = useMemo(() => filterRunnersByRange(runners || []), [runners, filterRunnersByRange])
+
+  const hasBatchRangeFilter = Boolean(batchRangeStart || batchRangeEnd)
+
+  const handleBatchPrintWithRange = async (runnersList, catKey, label) => {
+    const candidates = filterRunnersByRange(runnersList)
+    if (!candidates.length) {
+      const rangeHint = hasBatchRangeFilter
+        ? ` no intervalo Nº ${batchRangeStart || '...'} até Nº ${batchRangeEnd || '...'}`
+        : ''
+      alert(`Nenhum corredor encontrado${rangeHint} para impressão em lote de ${label}.`)
+      return
+    }
+    await handlePrintBatchBt(candidates, catKey)
+  }
+
   const isBatchRunning = batchPrintState.status === 'running'
   const isBatchPaused = batchPrintState.status === 'paused'
   const isBatchActive = isBatchRunning || isBatchPaused
@@ -1001,8 +1051,8 @@ useEffect(() => {
                   <button
                     type="button"
                     className="card-batch-btn bt"
-                    onClick={() => handlePrintBatchBt(maleRunners, 'male')}
-                    disabled={maleRunners.length === 0 || isAnyBatchActive}
+                    onClick={() => handleBatchPrintWithRange(maleRunners, 'male', 'Masculino')}
+                    disabled={maleRunnersInRange.length === 0 || isAnyBatchActive}
                     title="Imprimir todos os cupons QR masculinos na Impressora Térmica Bluetooth"
                   >
                     {isCategoryBatchActive('male') ? '⏳' : '🖨'}
@@ -1133,8 +1183,8 @@ useEffect(() => {
                   <button
                     type="button"
                     className="card-batch-btn bt"
-                    onClick={() => handlePrintBatchBt(femaleRunners, 'female')}
-                    disabled={femaleRunners.length === 0 || isAnyBatchActive}
+                    onClick={() => handleBatchPrintWithRange(femaleRunners, 'female', 'Feminino')}
+                    disabled={femaleRunnersInRange.length === 0 || isAnyBatchActive}
                     title="Imprimir todos os cupons QR femininos na Impressora Térmica Bluetooth"
                   >
                     {isCategoryBatchActive('female') ? '⏳' : '🖨'}
@@ -1304,6 +1354,41 @@ useEffect(() => {
           )
           })()}
 
+          <div className="race-batch-range-row">
+            <span className="race-batch-range-label">Intervalo para lote:</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="race-batch-range-input"
+              placeholder="Nº de"
+              value={batchRangeStart}
+              onChange={(e) => setBatchRangeStart(e.target.value.replace(/\D/g, ''))}
+              aria-label="Número inicial do intervalo de impressão"
+            />
+            <span className="race-batch-range-sep">até</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="race-batch-range-input"
+              placeholder="Nº até"
+              value={batchRangeEnd}
+              onChange={(e) => setBatchRangeEnd(e.target.value.replace(/\D/g, ''))}
+              aria-label="Número final do intervalo de impressão"
+            />
+            <button
+              type="button"
+              className="race-batch-range-clear"
+              onClick={() => { setBatchRangeStart(''); setBatchRangeEnd('') }}
+              disabled={!hasBatchRangeFilter}
+              title="Limpar filtro de intervalo"
+            >
+              Limpar
+            </button>
+            <span className="race-batch-range-count" title="Quantidade no intervalo selecionado">
+              {hasBatchRangeFilter ? `${allRunnersInRange.length} no intervalo` : `${(runners || []).length} total`}
+            </span>
+          </div>
+
           {/* Link para abrir modal com todos os corredores */}
           <div className="race-config-view-all-row">
             <button
@@ -1317,8 +1402,8 @@ useEffect(() => {
             <button
               type="button"
               className="race-config-view-all-btn"
-              onClick={() => handlePrintBatchBt(runners || [], 'all')}
-              disabled={!runners?.length || isAnyBatchActive}
+              onClick={() => handleBatchPrintWithRange(runners || [], 'all', 'Todos os corredores')}
+              disabled={!allRunnersInRange.length || isAnyBatchActive}
               title="Imprimir todos os corredores em lote"
             >
               🖨 {isAnyBatchActive ? 'Imprimindo lote...' : 'Impressão em lote'}
